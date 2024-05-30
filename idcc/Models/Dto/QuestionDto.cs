@@ -2,6 +2,7 @@
 
 public record QuestionDto
 {
+    public string Topic { get; set; }
     public string Question { get; set; }
     public List<AnswerDto> Answers { get; set; } = new();
 }

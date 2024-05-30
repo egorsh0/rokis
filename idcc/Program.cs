@@ -18,6 +18,7 @@ builder.Services.AddDbContext<IdccContext>(options =>
 builder.Services.AddScoped<IRoleRepository, RoleRepository>();
 builder.Services.AddScoped<IUserRepository, UserRepository>();
 builder.Services.AddScoped<IQuestionRepository, QuestionRepository>();
+builder.Services.AddScoped<IUserGradeRepository, UserGradeRepository>();
 
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen(c =>
@@ -57,11 +58,16 @@ app.MapPost("/user", async (UserDto userDto, IRoleRepository roleRepository, IUs
     return Results.Ok(resultUser);
 });
 
-app.MapGet("/question", async (int userId, IQuestionRepository questionRepository) =>
+app.MapGet("/question", async (int userId, IUserGradeRepository userGradeRepository, IQuestionRepository questionRepository) =>
 {
-    
+    var userGrade = userGradeRepository.GetActualUserDataAsync(userId);
+    var question = await questionRepository.GetQuestionAsync(userGrade.Topic, userGrade.Current, userGrade.Score);
+    return Results.Ok(question);
 });
 
-app.MapPatch("/updateScore", () => { });
+app.MapPatch("/updateScore", (int userId, IUserGradeRepository userGradeRepository) => { });
+
+
+app.MapPatch("/result", (int userId, IUserGradeRepository userGradeRepository) => { });
 
 app.Run();

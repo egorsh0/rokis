@@ -2,6 +2,7 @@
 using idcc.Models;
 using idcc.Models.Dto;
 using idcc.Repository.Interfaces;
+using Microsoft.EntityFrameworkCore;
 
 namespace idcc.Repository;
 
@@ -14,18 +15,19 @@ public class QuestionRepository : IQuestionRepository
         _context = context;
     }
     
-    public QuestionDto GetQuestionAsync(Topic topic, Grade grade, double rank)
+    public async Task<QuestionDto> GetQuestionAsync(Topic topic, Grade grade, double rank)
     {
         var rlGrades = _context.RlGrades.SingleOrDefault(_ => _.CurrentGrade == grade);
-        var nextGrade = _context.Grades.Find(rlGrades.NextGrade);
+        var nextGrade = _context.Grades.Single(_ => _.Id == rlGrades.NextGrade.Id);
         
         var question =  _context.Questions.Where(_ => _.Topic == topic && _.Rank >= rank && _.Rank < nextGrade.Score).OrderBy(o => Guid.NewGuid()).First();
         var questionDto = new QuestionDto()
         {
+            Topic = topic.Name,
             Question = question.Name
         };
         
-        var rlQuestions = _context.RlQuestions.Where(_ => _.Question == question);
+        var rlQuestions = await _context.RlQuestions.Where(_ => _.Question.Id == question.Id).ToListAsync();
         if (rlQuestions.Any())
         {
             foreach (var rlQuestion in rlQuestions)

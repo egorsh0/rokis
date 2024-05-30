@@ -26,5 +26,4 @@ public class IdccContext : DbContext
     
     public DbSet<Answer> Answers { get; set; }
     public DbSet<UserGrade> UserGrades { get; set; }
-
 }

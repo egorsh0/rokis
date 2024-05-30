@@ -5,5 +5,5 @@ namespace idcc.Repository.Interfaces;
 
 public interface IQuestionRepository
 {
-    QuestionDto GetQuestionAsync(Topic topic, Grade grade, double rank);
+    Task<QuestionDto> GetQuestionAsync(Topic topic, Grade grade, double rank);
 }
