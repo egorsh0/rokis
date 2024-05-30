@@ -1,0 +1,11 @@
+﻿using System.ComponentModel.DataAnnotations;
+
+namespace idcc.Models;
+
+public class Topic
+{
+    [Key]
+    public int Id { get; set; }
+    public string Name { get; set; }
+    public virtual Role Role { get; set; }
+}
