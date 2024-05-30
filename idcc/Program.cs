@@ -62,12 +62,27 @@ app.MapGet("/question", async (int userId, IUserGradeRepository userGradeReposit
 {
     var userGrade = userGradeRepository.GetActualUserDataAsync(userId);
     var question = await questionRepository.GetQuestionAsync(userGrade.Topic, userGrade.Current, userGrade.Score);
+    question.UserGradeId = userGrade.Id;
     return Results.Ok(question);
 });
 
-app.MapPatch("/updateScore", (int userId, IUserGradeRepository userGradeRepository) => { });
+app.MapPatch("/updateScore", async (int userGradeId, double score, IUserGradeRepository userGradeRepository) =>
+{
+    await userGradeRepository.UpdateScoreAsync(userGradeId, score);
+    return Results.Ok();
+});
 
-
-app.MapPatch("/result", (int userId, IUserGradeRepository userGradeRepository) => { });
+app.MapPatch("/calculate", async (int userId, IUserGradeRepository userGradeRepository) =>
+{
+    var score = await userGradeRepository.CalculateAsync(userId);
+    if (score is null)
+    {
+        Results.BadRequest();
+    }
+    return Results.Ok(new
+    {
+        Score = score
+    });
+});
 
 app.Run();
