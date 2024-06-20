@@ -72,6 +72,13 @@ app.MapPatch("/updateScore", async (int userGradeId, double score, IUserGradeRep
     return Results.Ok();
 });
 
+app.MapPatch("/finished", async (int userGradeId, IUserGradeRepository userGradeRepository) =>
+{
+    await userGradeRepository.UpdateFinishedAsync(userGradeId);
+    return Results.Ok();
+});
+
+
 app.MapPatch("/calculate", async (int userId, IUserGradeRepository userGradeRepository) =>
 {
     var score = await userGradeRepository.CalculateAsync(userId);

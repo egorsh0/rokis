@@ -9,9 +9,12 @@ public class UserGradeRepository : IUserGradeRepository
 {
     private readonly IdccContext _context;
 
-    public UserGradeRepository(IdccContext context)
+    private readonly ILogger<UserGradeRepository> _logger;
+
+    public UserGradeRepository(IdccContext context, ILogger<UserGradeRepository> logger)
     {
         _context = context;
+        _logger = logger;
     }
     
     public UserGrade GetActualUserDataAsync(int userId)
@@ -22,9 +25,18 @@ public class UserGradeRepository : IUserGradeRepository
 
     public async Task UpdateScoreAsync(int userGradeId, double score)
     {
-        var userGrade = _context.UserGrades.Find(userGradeId);
+        var userGrade = await _context.UserGrades.FindAsync(userGradeId);
         var oldScore = userGrade.Score;
         userGrade.Score = oldScore + score;
+        _logger.LogInformation("Old score = " + oldScore);
+        _logger.LogInformation("New score = " + userGrade.Score);
+        await _context.SaveChangesAsync();
+    }
+    
+    public async Task UpdateFinishedAsync(int userGradeId)
+    {
+        var userGrade = await _context.UserGrades.FindAsync(userGradeId);
+        userGrade.IsFinished = true;
         await _context.SaveChangesAsync();
     }
 
