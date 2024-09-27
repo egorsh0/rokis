@@ -49,22 +49,14 @@ public class DataRepository : IDataRepository
 
     public async Task<double> GetPercentOrDefaultAsync(string code, double value)
     {
-        var percent = await _context.Settings.FirstOrDefaultAsync(_ => _.Code == code && _.Category == "Percent");
-        if (percent is null)
-        {
-            return value;
-        }
-        return (double)percent.Value;
+        var percent = await _context.Persents.FirstOrDefaultAsync(_ => _.Code == code);
+        return percent?.Value ?? value;
     }
     
-    public async Task<double> GetCountOrDefaultAsync(string code, double value)
+    public async Task<int> GetCountOrDefaultAsync(string code, int value)
     {
-        var count = await _context.Settings.FirstOrDefaultAsync(_ => _.Code == code && _.Category == "Count");
-        if (count is null)
-        {
-            return value;
-        }
-        return (double)count.Value;
+        var count = await _context.Counts.FirstOrDefaultAsync(_ => _.Code == code);
+        return count?.Value ?? value;
     }
 
     public async Task<(Grade? prev, Grade? next)> GetRelationAsync(Grade current)

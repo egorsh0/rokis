@@ -17,18 +17,24 @@ public class QuestionRepository : IQuestionRepository
     
     public async Task<QuestionDto?> GetQuestionAsync(UserTopic userTopic)
     {
-        var weight = await _context.Weights.SingleOrDefaultAsync(_ => _.Grade == userTopic.Current);
+        var weight = await _context.Weights.SingleOrDefaultAsync(_ => _.Grade == userTopic.Grade);
         if (weight is null)
         {
             return null;
         }
-
-        var question =  await _context.Questions.Where(_ => _.Topic == userTopic.Topic && _.Weight >= userTopic.Weight && _.Weight <= weight.Max).OrderBy(o => Guid.NewGuid()).FirstAsync();
-        var answers = _context.Answers.Where(_ => _.Question == question).Select(a => new AnswerDto()
+        
+        var question = await _context.Questions.Where(_ => _.Topic == userTopic.Topic && _.Weight >= userTopic.Weight && _.Weight <= weight.Max).OrderBy(o => Guid.NewGuid()).FirstOrDefaultAsync();
+        if (question is null)
+        {
+            return null;
+        }
+        
+        // TODO проверить на отсутствие ответов к вопросу
+        var answers = await _context.Answers.Where(_ => _.Question == question).Select(a => new AnswerDto()
         {
             Id = a.Id,
             Content = a.Content
-        }).ToList();
+        }).ToListAsync();
 
         var dto = new QuestionDto()
         {

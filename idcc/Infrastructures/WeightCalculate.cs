@@ -4,25 +4,26 @@ namespace idcc.Infrastructures;
 
 public class WeightCalculate : IWeightCalculate
 {
-    public double GetNewWeight(double current, double max, double gainPercent, double lessPercent, bool isCorrect)
+    public double GetNewWeight(double actual, double current, double max, double gainPercent, double lessPercent, bool isCorrect)
     {
-        return isCorrect ? GainWeight(current, gainPercent, max) : LessWeight(current, lessPercent);
+        return isCorrect ? GainWeight(actual, current, gainPercent, max) : LessWeight(current, lessPercent);
     }
 
-    internal Func<double, double, double, double> GainWeight { get; } =
-        (current, gainPercent, max) =>
+    internal Func<double, double, double, double, double> GainWeight { get; } =
+        (actual, current, gainPercent, max) =>
         {
             var tmp = (current + max) / 2;
-            if (tmp > 0.2 * current)
+            var gainPercentValue = actual + (gainPercent * actual);
+            if (tmp > gainPercentValue)
             {
-                tmp = current + (gainPercent * current);
+                tmp = gainPercentValue;
             }
 
             return tmp;
         };
     
     internal Func<double, double, double> LessWeight { get; } =
-        (current, lessPercent) => current - (lessPercent * current);
+        (actual, lessPercent) => actual - (lessPercent * actual);
 }
  
         

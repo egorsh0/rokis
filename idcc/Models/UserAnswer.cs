@@ -10,9 +10,7 @@ public class UserAnswer
     public virtual Session Session { get; set; }
     
     public virtual Question Question { get; set; }
-    
-    public virtual List<Answer> Answers { get; set; }
-    
+
     public double TimeSpent { get; set; }
     
     public double Score { get; set; }

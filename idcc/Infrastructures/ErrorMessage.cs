@@ -11,7 +11,9 @@ public static class ErrorMessage
         (grade) => $"В базе отсутствует конфигурация для средних значений весов грейда {grade}.";
     
     public static string QUESTION_IS_NULL = "Вопрос не был найден.";
+    public static string QUESTION_IS_NOT_MULTIPLY = "Вопрос с одним вариантом ответа.";
     
     public static string SESSION_IS_FINISHED = "Сессия завершена.";
-    public static string TOPIC_IS_NOT_EXIST = "Сессия завершена.";
+    public static string SESSION_IS_NOT_EXIST = "Сессии не существует.";
+    public static string TOPIC_IS_NOT_EXIST = "Темы не существует.";
 }

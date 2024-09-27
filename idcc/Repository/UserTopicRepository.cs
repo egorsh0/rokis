@@ -44,13 +44,33 @@ public class UserTopicRepository : IUserTopicRepository
             }
             if (grade is not null)
             {
-                userTopic.Current = grade;
+                userTopic.Grade = grade;
             }
             
             await _context.SaveChangesAsync();
         }
     }
-    
+
+    public async Task RefreshActualTopicInfoAsync(int id, int userId)
+    {
+        var userTopics = await _context.UserTopics.Where(_ => _.User.Id == userId).ToListAsync();
+        foreach (var userTopic in userTopics)
+        {
+            if (userTopic.Id == id)
+            {
+                userTopic.Actual = true;
+                userTopic.WasPrevious = true;
+            }
+            else
+            {
+                userTopic.Actual = false;
+                userTopic.WasPrevious = false;
+            }
+        }
+
+        await _context.SaveChangesAsync();
+    }
+
     public async Task CloseTopicAsync(int id)
     {
         var userTopic = await _context.UserTopics.Where(_ => _.Id == id).FirstOrDefaultAsync();

@@ -32,8 +32,6 @@ public class UserRepository : IUserRepository
         var entryUser = await _context.Users.AddAsync(user);
         var middleGrade = _context.Grades.Single(_ => _.Code == "Middle");
         var weight = _context.Weights.Single(_ => _.Grade == middleGrade);
-
-        var randWeight = weight.Min + new Random().NextDouble()*(weight.Max - weight.Min);
         var topics = _context.Topics.Where(_ => _.Role == user.Role);
 
         foreach (var topic in topics)
@@ -42,8 +40,8 @@ public class UserRepository : IUserRepository
             {
                 User = entryUser.Entity,
                 Topic = topic,
-                Weight = randWeight,
-                Current = middleGrade,
+                Weight = weight.Min,
+                Grade = middleGrade,
                 IsFinished = false,
                 WasPrevious = false,
                 Actual = false
@@ -56,8 +54,8 @@ public class UserRepository : IUserRepository
         return entryUser.Entity;
     }
     
-    public Task<Role?> GetRoleAsync(string name)
+    public Task<Role?> GetRoleAsync(string code)
     {
-        return _context.Roles.SingleOrDefaultAsync(_ => _.Name == name);
+        return _context.Roles.SingleOrDefaultAsync(_ => _.Code == code);
     }
 }

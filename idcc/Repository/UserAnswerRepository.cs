@@ -14,13 +14,12 @@ public class UserAnswerRepository : IUserAnswerRepository
         _context = context;
     }
     
-    public async Task CreateUserAnswerAsync(Session session, Question question, List<Answer> answers, int timeSpent, double score,
+    public async Task CreateUserAnswerAsync(Session session, Question question, int timeSpent, double score,
         DateTime answerTime)
     {
         var userAnswer = new UserAnswer()
         {
             Question = question,
-            Answers = answers,
             Session = session,
             Score = score,
             AnswerTime = answerTime,
@@ -30,14 +29,14 @@ public class UserAnswerRepository : IUserAnswerRepository
         await _context.SaveChangesAsync();
     }
 
-    public async Task<bool> CanRaiseAsync(int sessionId, double min, int count)
+    public async Task<bool> CanRaiseAsync(int sessionId, int count)
     {
         var userAnswers = await _context.UserAnswers.Where(_ => _.Session.Id == sessionId).OrderByDescending(_ => _.AnswerTime).ToListAsync();
         var correctCount = count;
         foreach (var userAnswer in userAnswers)
         {
             bool hasCorrect;
-            if (userAnswer.Score >= min)
+            if (userAnswer.Score > 0)
             {
                 correctCount--;
                 hasCorrect = true;

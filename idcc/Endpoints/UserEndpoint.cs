@@ -1,6 +1,7 @@
 ﻿using idcc.Models;
 using idcc.Models.Dto;
 using idcc.Repository.Interfaces;
+using Microsoft.OpenApi.Models;
 
 namespace idcc.Endpoints;
 
@@ -12,10 +13,10 @@ public static class UserEndpoint
       
         users.MapPost("", async (UserDto userDto, IUserRepository userRepository) =>
         {
-            var role = await userRepository.GetRoleAsync(userDto.Role.Name);
+            var role = await userRepository.GetRoleAsync(userDto.Role.Code);
             if (role is null)
             {
-                return Results.BadRequest(string.Format("Role with name {name} not found", userDto.Role.Name));
+                return Results.BadRequest($"Role with code {userDto.Role.Code} not found");
             }
 
             var user = new User()
@@ -28,6 +29,11 @@ public static class UserEndpoint
     
             var resultUser = await userRepository.CreateAsync(user);
             return Results.Ok(resultUser);
+        }).WithOpenApi(x => new OpenApiOperation(x)
+        {
+            Summary = "Сreate a user account",
+            Description = "Returns information about created user.",
+            Tags = new List<OpenApiTag> { new() { Name = "User" } }
         });
     }
 }

@@ -10,7 +10,7 @@ public class UserTopic
     public virtual User User { get; set; }
     public virtual Topic Topic { get; set; }
     
-    public virtual Grade Current { get; set; }
+    public virtual Grade Grade { get; set; }
     
     public double Weight { get; set; }
     

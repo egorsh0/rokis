@@ -2,6 +2,7 @@
 using idcc.Infrastructures;
 using idcc.Models.Dto;
 using idcc.Repository.Interfaces;
+using Microsoft.OpenApi.Models;
 
 namespace idcc.Endpoints;
 
@@ -16,31 +17,42 @@ public static class QuestionEndpoint
             // Проверка на открытые темы
         
             var hasOpenTopics = await userTopicRepository.HasOpenTopic(userId);
-            if (hasOpenTopics)
+            if (!hasOpenTopics)
             {
-                var session = await sessionRepository.GetSessionAsync(userId);
-                if (session?.EndTime is not null)
-                {
-                    // Получение рандомной темы
-                    var userTopic = await userTopicRepository.GetRandomTopicAsync(userId);
-                    if (userTopic is null)
-                    {
-                        return Results.NoContent();
-                    }
-                
-                    var question = await questionRepository.GetQuestionAsync(userTopic);
-                    if (question is null)
-                    {
-                        return Results.BadRequest();
-                    }
-                
-                    await userTopicRepository.UpdateTopicInfoAsync(userTopic.Id, true, true);
-                    Results.Ok(question);
-                }
+                return Results.BadRequest(ErrorMessage.TOPIC_IS_NOT_EXIST);
+            }
+            var session = await sessionRepository.GetSessionAsync(userId);
+            if (session is null)
+            {
+                return Results.BadRequest(ErrorMessage.SESSION_IS_NOT_EXIST);
+            }
+
+            if (session.EndTime is not null)
+            {
                 return Results.BadRequest(ErrorMessage.SESSION_IS_FINISHED);
             }
             
-            return Results.BadRequest(ErrorMessage.TOPIC_IS_NOT_EXIST);
+            // Получение рандомной темы
+            var userTopic = await userTopicRepository.GetRandomTopicAsync(userId);
+            if (userTopic is null)
+            {
+                return Results.NoContent();
+            }
+                
+            var question = await questionRepository.GetQuestionAsync(userTopic);
+            if (question is null)
+            {
+                return Results.BadRequest();
+            }
+                
+            await userTopicRepository.RefreshActualTopicInfoAsync(userTopic.Id, userId);
+            return Results.Ok(question);
+
+        }).WithOpenApi(x => new OpenApiOperation(x)
+        {
+            Summary = "Get random question",
+            Description = "Returns random question with list answers.",
+            Tags = new List<OpenApiTag> { new() { Name = "Question" } }
         });
         
         questions.MapPost("/sendAnswers", async (int userId, TimeSpan dateInterval, QuestionDto question,
@@ -55,15 +67,20 @@ public static class QuestionEndpoint
                 return Results.NotFound();
             }
             // Посчитать и сохранить Score за ответ
-            var result = await idccApplication.CalculateScoreAsync(session, userId, dateInterval.Seconds, question.Id,
+            var result = await idccApplication.CalculateScoreAsync(session, userId, Convert.ToInt32(dateInterval.TotalSeconds), question.Id,
                 question.Answers.Select(_ => _.Id));
-            if (result is null)
+            if (result is not null)
             {
                 return Results.NotFound(result);
             }
             // Пересчитать вес текущего топика
             result = await idccApplication.CalculateTopicWeightAsync(session, userId);
             return result is not null ? Results.NotFound(result) : Results.Ok();
+        }).WithOpenApi(x => new OpenApiOperation(x)
+        {
+            Summary = "Send answers",
+            Description = "Returns fact about sending answers.",
+            Tags = new List<OpenApiTag> { new() { Name = "Question" } }
         });
     }
 }

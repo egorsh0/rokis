@@ -8,5 +8,6 @@ public interface IUserTopicRepository
     Task<UserTopic?> GetRandomTopicAsync(int userId);
     Task<UserTopic?> GetActualTopicAsync(int userId);
     Task UpdateTopicInfoAsync(int id, bool actual, bool previous, Grade? grade = null, double? weight = null);
+    Task RefreshActualTopicInfoAsync(int id, int userId);
     Task CloseTopicAsync(int id);
 }

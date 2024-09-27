@@ -79,9 +79,14 @@ public class IdccContext : DbContext
     /// Контекст для таблицы "Связи грейдов"
     /// </summary>
     public DbSet<GradeRelation> GradeRelations { get; set; }
+
+    /// <summary>
+    /// Контекст для таблицы "Проценты"
+    /// </summary>
+    public DbSet<Persent> Persents { get; set; }
     
     /// <summary>
-    /// Контекст для таблицы "Настройки"
+    /// Контекст для таблицы "Количества"
     /// </summary>
-    public DbSet<Setting> Settings { get; set; }
+    public DbSet<Count> Counts { get; set; }
 }

@@ -4,8 +4,8 @@ namespace idcc.Repository.Interfaces;
 
 public interface IUserAnswerRepository
 {
-    Task CreateUserAnswerAsync(Session session, Question question, List<Answer> answers, int timeSpent,
+    Task CreateUserAnswerAsync(Session session, Question question, int timeSpent,
         double score, DateTime answerTime);
 
-    Task<bool> CanRaiseAsync(int sessionId, double min, int count);
+    Task<bool> CanRaiseAsync(int sessionId, int count);
 }

@@ -2,5 +2,5 @@
 
 public interface IWeightCalculate
 {
-    double GetNewWeight(double current, double max, double gainPercent, double lessPercent, bool isCorrect);
+    double GetNewWeight(double actual, double current, double max, double gainPercent, double lessPercent, bool isCorrect);
 }

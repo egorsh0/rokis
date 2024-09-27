@@ -6,7 +6,13 @@ public class ScoreCalculate : IScoreCalculate
 {
     public double GetScore(double weight, double k, int answered, int total)
     {
-        return k * NewScore(weight, answered, total);
+        var score = k * NewScore(weight, answered, total);
+        if (score <= 0)
+        {
+            return 0;
+        }
+
+        return score;
     }
 
     internal Func<double, int, int, double> NewScore { get; } =
