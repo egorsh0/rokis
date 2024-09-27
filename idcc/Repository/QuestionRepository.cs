@@ -15,33 +15,43 @@ public class QuestionRepository : IQuestionRepository
         _context = context;
     }
     
-    public async Task<QuestionDto> GetQuestionAsync(Topic topic, Grade grade, double rank)
+    public async Task<QuestionDto?> GetQuestionAsync(UserTopic userTopic)
     {
-        var rlGrades = _context.RlGrades.SingleOrDefault(_ => _.CurrentGrade == grade);
-        var nextGrade = _context.Grades.Single(_ => _.Id == rlGrades.NextGrade.Id);
-        
-        var question =  _context.Questions.Where(_ => _.Topic == topic && _.Rank >= rank && _.Rank < nextGrade.Score).OrderBy(o => Guid.NewGuid()).First();
-        var questionDto = new QuestionDto()
+        var weight = await _context.Weights.SingleOrDefaultAsync(_ => _.Grade == userTopic.Current);
+        if (weight is null)
         {
-            Topic = topic.Name,
-            Question = question.Name
-        };
-        
-        var rlQuestions = await _context.RlQuestions.Where(_ => _.Question.Id == question.Id).ToListAsync();
-        if (rlQuestions.Any())
-        {
-            foreach (var rlQuestion in rlQuestions)
-            {
-                var answer = rlQuestion.Answer;
-                var answerDto = new AnswerDto()
-                {
-                    Answer = answer.Name,
-                    Score = answer.Score
-                };
-                questionDto.Answers.Add(answerDto);
-            }
+            return null;
         }
 
-        return questionDto;
+        var question =  await _context.Questions.Where(_ => _.Topic == userTopic.Topic && _.Weight >= userTopic.Weight && _.Weight <= weight.Max).OrderBy(o => Guid.NewGuid()).FirstAsync();
+        var answers = _context.Answers.Where(_ => _.Question == question).Select(a => new AnswerDto()
+        {
+            Id = a.Id,
+            Content = a.Content
+        }).ToList();
+
+        var dto = new QuestionDto()
+        {
+            Id = question.Id,
+            Topic = userTopic.Topic,
+            Content = question.Content,
+            Answers = answers
+        };
+
+        return dto;
+    }
+
+    public async Task<QuestionDataDto?> GetQuestionAsync(int id)
+    {
+        var question =  await _context.Questions.Where(_ => _.Id == id).FirstAsync();
+        var answers = await _context.Answers.Where(_ => _.Question.Id == id).ToListAsync();
+
+        var dto = new QuestionDataDto()
+        {
+            Question = question,
+            Answers = answers
+        };
+
+        return dto;
     }
 }

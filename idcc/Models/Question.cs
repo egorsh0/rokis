@@ -6,7 +6,8 @@ public class Question
 {
     [Key]
     public int Id { get; set; }
-    public string Name { get; set; }
+    public string Content { get; set; }
     public virtual Topic Topic { get; set; }
-    public double Rank { get; set; }
+    public double Weight { get; set; }
+    public bool IsMultipleChoice { get; set; }
 }

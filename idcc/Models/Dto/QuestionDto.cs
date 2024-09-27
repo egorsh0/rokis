@@ -2,14 +2,20 @@
 
 public record QuestionDto
 {
-    public int UserGradeId { get; set; }
-    public string Topic { get; set; }
-    public string Question { get; set; }
+    public int Id { get; set; }
+    public Topic Topic { get; set; }
+    public string Content { get; set; }
     public List<AnswerDto> Answers { get; set; } = new();
 }
 
 public record AnswerDto
 {
-    public string Answer { get; set; }
-    public double Score { get; set; }
+    public int Id { get; set; }
+    public string Content { get; set; }
+}
+
+public record QuestionDataDto
+{
+    public Question Question;
+    public List<Answer> Answers { get; set; } = new();
 }

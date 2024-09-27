@@ -2,13 +2,21 @@
 
 namespace idcc.Models;
 
-public class UserGrade
+public class UserTopic
 {
     [Key]
     public int Id { get; set; }
+    
     public virtual User User { get; set; }
     public virtual Topic Topic { get; set; }
-    public double Score { get; set; }
+    
     public virtual Grade Current { get; set; }
+    
+    public double Weight { get; set; }
+    
     public bool IsFinished { get; set; }
+    
+    public bool WasPrevious { get; set; }
+
+    public bool Actual { get; set; }
 }
