@@ -39,7 +39,7 @@ public class QuestionRepository : IQuestionRepository
         var dto = new QuestionDto()
         {
             Id = question.Id,
-            Topic = userTopic.Topic,
+            Topic = userTopic.Topic.Name,
             Content = question.Content,
             Answers = answers
         };

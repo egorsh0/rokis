@@ -13,7 +13,7 @@ public record AnswerShortDto
 
 public record QuestionDto : QuestionShortDto
 {
-    public Topic Topic { get; set; }
+    public string Topic { get; set; }
     public string Content { get; set; }
     public List<AnswerDto> Answers { get; set; } = new();
 }
