@@ -47,17 +47,15 @@ public class QuestionRepository : IQuestionRepository
         return dto;
     }
 
-    public async Task<QuestionDataDto?> GetQuestionAsync(int id)
+    public async Task<Question?> GetQuestionAsync(int id)
     {
-        var question =  await _context.Questions.Where(_ => _.Id == id).FirstAsync();
-        var answers = await _context.Answers.Where(_ => _.Question.Id == id).ToListAsync();
-
-        var dto = new QuestionDataDto()
-        {
-            Question = question,
-            Answers = answers
-        };
-
-        return dto;
+        var question =  await _context.Questions.Where(_ => _.Id == id).FirstOrDefaultAsync();
+        return question ?? null;
+    }
+    
+    public async Task<List<Answer>> GetAnswersAsync(Question question)
+    {
+        var answers = await _context.Answers.Where(_ => _.Question == question).ToListAsync();
+        return answers;
     }
 }

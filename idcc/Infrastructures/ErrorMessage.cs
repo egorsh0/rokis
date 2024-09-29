@@ -14,6 +14,8 @@ public static class ErrorMessage
     public static string QUESTION_IS_NOT_MULTIPLY = "Вопрос с одним вариантом ответа.";
     
     public static string SESSION_IS_FINISHED = "Сессия завершена.";
+    public static string SESSION_IS_NOT_FINISHED = "Сессия не завершена.";
     public static string SESSION_IS_NOT_EXIST = "Сессии не существует.";
     public static string TOPIC_IS_NOT_EXIST = "Темы не существует.";
+    public static string GET_RANDOM_TOPIC = "Не получилось получить рандомную тему.";
 }

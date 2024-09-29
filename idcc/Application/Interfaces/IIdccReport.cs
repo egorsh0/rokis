@@ -1,8 +1,9 @@
-﻿using idcc.Models.Dto;
+﻿using idcc.Models;
+using idcc.Models.Dto;
 
 namespace idcc.Application.Interfaces;
 
 public interface IIdccReport
 {
-    Task<ReportDto?> GenerateAsync(int userId);
+    Task<ReportDto?> GenerateAsync(Session session);
 }

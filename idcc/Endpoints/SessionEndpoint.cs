@@ -1,4 +1,5 @@
-﻿using idcc.Repository.Interfaces;
+﻿using idcc.Infrastructures;
+using idcc.Repository.Interfaces;
 using Microsoft.OpenApi.Models;
 
 namespace idcc.Endpoints;
@@ -31,15 +32,15 @@ public static class SessionEndpoint
             var session = await sessionRepository.GetSessionAsync(sessioId);
             if (session is null)
             {
-                return Results.BadRequest();
+                return Results.BadRequest(ErrorMessage.SESSION_IS_NOT_EXIST);
             }
-
+            
             if (session.EndTime is not null)
             {
-                return Results.BadRequest();
+                return Results.BadRequest(ErrorMessage.SESSION_IS_FINISHED);
             }
-            await sessionRepository.EndSessionAsync(sessioId);
-            return Results.Ok();
+            var isFinished = await sessionRepository.EndSessionAsync(sessioId);
+            return isFinished ? Results.Ok() : Results.BadRequest(ErrorMessage.SESSION_IS_NOT_FINISHED);
         }).WithOpenApi(x => new OpenApiOperation(x)
         {
             Summary = "Stop test session",

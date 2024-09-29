@@ -31,20 +31,22 @@ public class SessionRepository : ISessionRepository
         return session;
     }
 
-    public async Task EndSessionAsync(int id)
+    public async Task<bool> EndSessionAsync(int id)
     {
         var session = await _context.Sessions.FindAsync(id);
-        if (session is not null)
+        if (session is null)
         {
-            session.EndTime = DateTime.Now;
-
-            var userTopics = await _context.UserTopics.Where(_ => _.Session == session && _.IsFinished == false).ToListAsync();
-            foreach (var userTopic in userTopics)
-            {
-                userTopic.IsFinished = true;
-            }
-            await _context.SaveChangesAsync();
+            return false;
         }
+        session.EndTime = DateTime.Now;
+
+        var userTopics = await _context.UserTopics.Where(_ => _.Session == session && _.IsFinished == false).ToListAsync();
+        foreach (var userTopic in userTopics)
+        {
+            userTopic.IsFinished = true;
+        }
+        await _context.SaveChangesAsync();
+        return true;
     }
 
     public async Task<Session?> GetSessionAsync(int id)

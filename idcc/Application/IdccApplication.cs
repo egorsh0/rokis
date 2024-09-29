@@ -8,6 +8,8 @@ namespace idcc.Application;
 
 public class IdccApplication : IIdccApplication
 {
+    private ILogger<IdccApplication> _logger;
+    
     private IUserTopicRepository _userTopicRepository;
     private IDataRepository _dataRepository;
     private IQuestionRepository _questionRepository;
@@ -20,7 +22,9 @@ public class IdccApplication : IIdccApplication
     private bool _isCorrectAnswer;
     private double _weight;
 
-    public IdccApplication(IUserTopicRepository userTopicRepository,
+    public IdccApplication(
+        ILogger<IdccApplication> logger,
+        IUserTopicRepository userTopicRepository,
         IDataRepository dataRepository,
         IQuestionRepository questionRepository,
         IUserAnswerRepository userAnswerRepository,
@@ -29,6 +33,7 @@ public class IdccApplication : IIdccApplication
         IWeightCalculate weightCalculate,
         IGradeCalculate gradeCalculate)
     {
+        _logger = logger;
         _userTopicRepository = userTopicRepository;
         _dataRepository = dataRepository;
         _questionRepository = questionRepository;
@@ -47,18 +52,20 @@ public class IdccApplication : IIdccApplication
             return ErrorMessage.QUESTION_IS_NULL;
         }
         
-        _weight = question.Question.Weight;
+        _weight = question.Weight;
         
         if (!answerIds.Any())
         {
+            _logger.LogInformation($"Список ответов для сессии {session.Id} и вопроса {questionId} пустой.");
+            
             _isCorrectAnswer = false;
-            await _userAnswerRepository.CreateUserAnswerAsync(session, question.Question,
+            await _userAnswerRepository.CreateUserAnswerAsync(session, question,
                 interval, 0, DateTime.Now);
         
             return null;
         }
         
-        if (!question.Question.IsMultipleChoice && answerIds.Count > 1)
+        if (!question.IsMultipleChoice && answerIds.Count > 1)
         {
             return ErrorMessage.QUESTION_IS_NOT_MULTIPLY;
         }
@@ -81,14 +88,16 @@ public class IdccApplication : IIdccApplication
     
         // Посчитать и сохранить Score за ответ
 
-        var answeredCount = (from userAnswerId in answerIds let answers = question.Answers where answers.Any(_ => _.Id == userAnswerId && _.IsCorrect) select userAnswerId).Count();
+        var answers = await _questionRepository.GetAnswersAsync(question);
+        var answeredCount = (from userAnswerId in answerIds let ans = answers where ans.Any(_ => _.Id == userAnswerId && _.IsCorrect) select userAnswerId).Count();
 
-        var totalCount = question.Answers.Count(_ => _.IsCorrect);
+        var totalCount = answers.Count(_ => _.IsCorrect);
         
-
         var score = _scoreCalculate.GetScore(_weight, k, answeredCount, totalCount);
         _isCorrectAnswer = score > 0;
-        await _userAnswerRepository.CreateUserAnswerAsync(session, question.Question,
+
+        _logger.LogInformation($"Сессия: {session.Id}; Вопрос: {questionId}; Коэффицент времени K: {k}; Score: {score}.");
+        await _userAnswerRepository.CreateUserAnswerAsync(session, question,
             interval, score, DateTime.Now);
         
         return null;
@@ -102,23 +111,23 @@ public class IdccApplication : IIdccApplication
             return ErrorMessage.ACTUAL_TOPIC_IS_NULL;
         }
         
-        var gradeWeight = await _dataRepository.GetGradeWeightInfoAsync(actualTopic.Grade.Id);
-        if (gradeWeight is null)
+        var gradeWeights = await _dataRepository.GetGradeWeightInfoAsync(actualTopic.Grade.Id);
+        if (gradeWeights is null)
         {
             return ErrorMessage.GRADE_WEIGHT_IS_NULL(actualTopic.Grade.Name);
         }
 
         var gainWeightPersent = await _dataRepository.GetPercentOrDefaultAsync("GainWeight", 0.2);
         var lessWeightPersent = await _dataRepository.GetPercentOrDefaultAsync("LessWeight", 0.1);
-        var newWeight = _weightCalculate.GetNewWeight(actualTopic.Weight, _weight, gradeWeight.Value.max, gainWeightPersent, lessWeightPersent, _isCorrectAnswer);
+        var newWeight = _weightCalculate.GetNewWeight(actualTopic.Weight, _weight, gradeWeights.Value.max, gainWeightPersent, lessWeightPersent, _isCorrectAnswer);
         // Сравнить прошлый вес и текущий
 
         var raisePercent = await _dataRepository.GetPercentOrDefaultAsync("RaiseData", 0.2);
-        var raiseValue = (gradeWeight.Value.max - gradeWeight.Value.min) * raisePercent;
+        var raiseValue = (gradeWeights.Value.max - gradeWeights.Value.min) * raisePercent;
         
         var raiseCount = await _dataRepository.GetCountOrDefaultAsync("Raise", 3);
         var canRaise = false;
-        if (actualTopic.Weight >= (gradeWeight.Value.max - raiseValue))
+        if (actualTopic.Weight >= (gradeWeights.Value.max - raiseValue))
         {
             canRaise =
                 await _userAnswerRepository.CanRaiseAsync(session, raiseCount);
@@ -127,20 +136,20 @@ public class IdccApplication : IIdccApplication
 
         // Senior -> Middle => конец топика, фикс веса
         var (prev, next) = await _dataRepository.GetRelationAsync(actualTopic.Grade);
-        var grade = _gradeCalculate.Calculate(actualTopic.Grade, gradeWeight.Value.min, prev, next, newWeight, canRaise);
+        var grade = _gradeCalculate.Calculate(actualTopic.Grade, gradeWeights.Value.min, prev, next, newWeight, canRaise);
         if (grade is null)
         {
+            _logger.LogInformation($"Сессия: {session.Id}; Топик: {actualTopic.Id}; Статус: Закрыт.");
             await _userTopicRepository.CloseTopicAsync(actualTopic.Id);
-            
-            await ReduceTopicQuestionCountAndCloseTopic(actualTopic.Id);
             return null;
         }
 
         if (grade == actualTopic.Grade)
         {
+            _logger.LogInformation($"Сессия: {session.Id}; Топик: {actualTopic.Id}; Статус: Сохранение грейда {grade.Name}.");
             await _userTopicRepository.UpdateTopicInfoAsync(actualTopic.Id, false, true, actualTopic.Grade, newWeight);
             
-            await ReduceTopicQuestionCountAndCloseTopic(actualTopic.Id);
+            await ReduceTopicQuestionCountAndCloseTopic(session, actualTopic.Id);
             return null;
         }
 
@@ -150,19 +159,25 @@ public class IdccApplication : IIdccApplication
             return ErrorMessage.GRADE_WEIGHT_IS_NULL(grade.Name);
         }
         var raiseLevel = await _dataRepository.GetPercentOrDefaultAsync("RaiseLevel", 0.3);
-        await _userTopicRepository.UpdateTopicInfoAsync(actualTopic.Id, false, true, grade, (weight.Value.min * raiseLevel) + weight.Value.min);
+
+        var gradeWeight = (weight.Value.min * raiseLevel) + weight.Value.min;
         
-        await ReduceTopicQuestionCountAndCloseTopic(actualTopic.Id);
+        _logger.LogInformation($"Сессия: {session.Id}; Топик: {actualTopic.Id}; Статус: Смена грейда {actualTopic.Grade.Name} на {grade.Name} с весом {gradeWeight}.");
+
+        await _userTopicRepository.UpdateTopicInfoAsync(actualTopic.Id, false, true, grade, gradeWeight);
+        
+        await ReduceTopicQuestionCountAndCloseTopic(session, actualTopic.Id);
         
         return null;
     }
 
-    private async Task ReduceTopicQuestionCountAndCloseTopic(int id)
+    private async Task ReduceTopicQuestionCountAndCloseTopic(Session session, int id)
     {
         await _userTopicRepository.ReduceTopicQuestionCountAsync(id);
         var topic = await _userTopicRepository.GetTopicAsync(id);
         if (topic is not null && topic.Count == 0)
         {
+            _logger.LogInformation($"Сессия: {session.Id}; Топик: {id}; Статус: Закрытие по количеству вопросов.");
             await _userTopicRepository.CloseTopicAsync(id);
         }
     }

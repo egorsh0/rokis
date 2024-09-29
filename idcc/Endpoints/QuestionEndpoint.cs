@@ -37,13 +37,13 @@ public static class QuestionEndpoint
             var userTopic = await userTopicRepository.GetRandomTopicAsync(session);
             if (userTopic is null)
             {
-                return Results.BadRequest();
+                return Results.BadRequest(ErrorMessage.GET_RANDOM_TOPIC);
             }
                 
             var question = await questionRepository.GetQuestionAsync(userTopic);
             if (question is null)
             {
-                return Results.BadRequest();
+                return Results.BadRequest(ErrorMessage.QUESTION_IS_NULL);
             }
                 
             await userTopicRepository.RefreshActualTopicInfoAsync(userTopic.Id, session);
@@ -65,7 +65,12 @@ public static class QuestionEndpoint
             var session = await sessionRepository.GetSessionAsync(sessionId);
             if (session is null)
             {
-                return Results.BadRequest();
+                return Results.BadRequest(ErrorMessage.SESSION_IS_NOT_EXIST);
+            }
+            
+            if (session.EndTime is not null)
+            {
+                return Results.BadRequest(ErrorMessage.SESSION_IS_FINISHED);
             }
             // Посчитать и сохранить Score за ответ
             var result = await idccApplication.CalculateScoreAsync(session, Convert.ToInt32(dateInterval.TotalSeconds), question.Id,
