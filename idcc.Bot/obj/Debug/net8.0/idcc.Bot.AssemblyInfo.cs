@@ -14,7 +14,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("idcc.Bot")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+3844a0ffe7fc0d692ed607c73cae25be11946d36")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+ed48b7378ab0d65903b566467cde478b328dd82d")]
 [assembly: System.Reflection.AssemblyProductAttribute("idcc.Bot")]
 [assembly: System.Reflection.AssemblyTitleAttribute("idcc.Bot")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]
