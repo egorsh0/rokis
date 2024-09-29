@@ -132,3 +132,6 @@ $RECYCLE.BIN/
 .DS_Store
 
 _NCrunch*
+/idcc.Bot/logs/
+/idcc.Bot/bin/
+/idcc.Bot/obj/
