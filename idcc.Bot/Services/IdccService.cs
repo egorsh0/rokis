@@ -1,17 +1,18 @@
 ﻿using System.Net;
+using System.Net.Http.Json;
 using idcc.Bot.Models;
 
 namespace idcc.Bot.Services;
 
 public class IdccService : IIdccService
 {
+    private readonly BotConfiguration _settings;
     private readonly HttpClient _httpClient;
-    private readonly AppSettings _settings;
 
-    public IdccService(HttpClient httpClient, AppSettings settings)
+    public IdccService(BotConfiguration settings, HttpClient httpClient)
     {
-        _httpClient = httpClient;
         _settings = settings;
+        _httpClient = httpClient;
     }
     public async Task<(SessionDto?, string?)> StartSessionAsync(int userId)
     {

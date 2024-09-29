@@ -1,18 +1,15 @@
 ﻿using System.Text.RegularExpressions;
 using Telegram.Bot;
 using Telegram.Bot.Exceptions;
+using Telegram.Bot.Polling;
 using Telegram.Bot.Types;
 using Telegram.Bot.Types.Enums;
 using Telegram.Bot.Types.ReplyMarkups;
 
 namespace idcc.Bot.Services;
 
-public class BotService : IBotService
+public class UpdateHandler(ITelegramBotClient bot, IIdccService idccService, ILogger<UpdateHandler> logger) : IUpdateHandler
 {
-    private readonly ILogger<BotService> _logger;
-    private readonly IIdccService _idccService;
-    private readonly ITelegramBotClient _telegramBot;
-
     private int? _userId = null;
     private int? _sessionId = null;
 
@@ -20,19 +17,9 @@ public class BotService : IBotService
 
     private readonly string _pattern = @"question\((.+),answer:(.+)\)";
 
-    public BotService(
-        ILogger<BotService> logger,
-        IIdccService idccService,
-        ITelegramBotClient telegramBot)
+    public async Task HandleErrorAsync(ITelegramBotClient botClient, Exception exception, HandleErrorSource source, CancellationToken cancellationToken)
     {
-        _logger = logger;
-        _idccService = idccService;
-        _telegramBot = telegramBot;
-    }
-
-    public async Task HandleErrorAsync(ITelegramBotClient botClient, Exception exception, CancellationToken cancellationToken)
-    {
-        _logger.LogInformation("HandleError: {Exception}", exception);
+        logger.LogInformation("HandleError: {Exception}", exception);
         // Cooldown in case of network connection error
         if (exception is RequestException)
             await Task.Delay(TimeSpan.FromSeconds(2), cancellationToken);
@@ -55,7 +42,7 @@ public class BotService : IBotService
     
     private async Task OnMessage(Message msg)
     {
-        _logger.LogInformation("Receive message type: {MessageType}", msg.Type);
+        logger.LogInformation("Receive message type: {MessageType}", msg.Type);
         if (msg.Text is not { } messageText)
             return;
 
@@ -66,13 +53,13 @@ public class BotService : IBotService
             "/question" => GetQuestion(msg),
             _ => throw new ArgumentOutOfRangeException()
         });
-        _logger.LogInformation("The message was sent with id: {SentMessageId}", sentMessage.MessageId);
+        logger.LogInformation("The message was sent with id: {SentMessageId}", sentMessage.MessageId);
     }
     
     async Task<Message> Start(Message msg)
     {
-        _logger.LogInformation("Create user");
-        await _telegramBot.SendTextMessageAsync(msg.Chat, "Добро пожаловать на тестирование своих навыков.", parseMode: ParseMode.Html, replyMarkup: new ReplyKeyboardRemove());
+        logger.LogInformation("Create user");
+        await bot.SendTextMessageAsync(msg.Chat, "Добро пожаловать на тестирование своих навыков.", parseMode: ParseMode.Html, replyMarkup: new ReplyKeyboardRemove());
         
         var inlineKeyboard = new InlineKeyboardMarkup(
             new List<InlineKeyboardButton[]>
@@ -83,7 +70,7 @@ public class BotService : IBotService
                 }
             });
                                 
-        return await _telegramBot.SendTextMessageAsync(
+        return await bot.SendTextMessageAsync(
             msg.Chat.Id,
             "Выберите вашу роль",
             replyMarkup: inlineKeyboard); // Все клавиатуры передаются в параметр replyMarkup
@@ -93,20 +80,20 @@ public class BotService : IBotService
     {
         if (_userId is null)
         {
-            return await _telegramBot.SendTextMessageAsync(
+            return await bot.SendTextMessageAsync(
                 msg.Chat.Id,
                 "Вы не зарегистрированы",
                 parseMode: ParseMode.Html, replyMarkup: new ReplyKeyboardRemove());
         }
-
-        var (session, error) = await _idccService.StartSessionAsync(_userId.Value);
+        
+        var (session, error) = await idccService.StartSessionAsync(_userId.Value);
         if (error is not null)
         {
-            return await _telegramBot.SendTextMessageAsync(msg.Chat, error, parseMode: ParseMode.Html, replyMarkup: new ReplyKeyboardRemove());
+            return await bot.SendTextMessageAsync(msg.Chat, error, parseMode: ParseMode.Html, replyMarkup: new ReplyKeyboardRemove());
         }
         
         _sessionId = session!.Id;
-        return await _telegramBot.SendTextMessageAsync(
+        return await bot.SendTextMessageAsync(
             msg.Chat.Id,
             "Сессия запущена",
             parseMode: ParseMode.Html, replyMarkup: new ReplyKeyboardRemove());
@@ -116,17 +103,17 @@ public class BotService : IBotService
     {
         if (_sessionId is null)
         {
-            return await _telegramBot.SendTextMessageAsync(
+            return await bot.SendTextMessageAsync(
                 msg.Chat.Id,
                 "Сессия не запущена",
                 parseMode: ParseMode.Html, replyMarkup: new ReplyKeyboardRemove());
         }
 
-        var (question, message) = await _idccService.GetQuestionAsync(_sessionId.Value);
+        var (question, message) = await idccService.GetQuestionAsync(_sessionId.Value);
 
         if (message is not null)
         {
-            return await _telegramBot.SendTextMessageAsync(msg.Chat, message, parseMode: ParseMode.Html, replyMarkup: new ReplyKeyboardRemove());
+            return await bot.SendTextMessageAsync(msg.Chat, message, parseMode: ParseMode.Html, replyMarkup: new ReplyKeyboardRemove());
         }
 
         var answers = question?.Answers;
@@ -143,7 +130,7 @@ public class BotService : IBotService
         var inlineKeyboard = new InlineKeyboardMarkup(callbackAnswerData);
                   
         _questionTime = DateTime.Now;
-        return await _telegramBot.SendTextMessageAsync(
+        return await bot.SendTextMessageAsync(
             msg.Chat.Id,
             question?.Content!,
             replyMarkup: inlineKeyboard);
@@ -152,9 +139,9 @@ public class BotService : IBotService
     // Process Inline Keyboard callback data
     private async Task OnCallbackQuery(CallbackQuery callbackQuery)
     {
-        _logger.LogInformation("Received inline keyboard callback from: {CallbackQueryId}", callbackQuery.Id);
+        logger.LogInformation("Received inline keyboard callback from: {CallbackQueryId}", callbackQuery.Id);
         var user = callbackQuery.From;
-        _logger.LogInformation($"{user.FirstName} ({user.Id}) нажал на кнопку: {callbackQuery.Data}");
+        logger.LogInformation($"{user.FirstName} ({user.Id}) нажал на кнопку: {callbackQuery.Data}");
         var chat = callbackQuery.Message?.Chat;
 
         var data = callbackQuery.Data?.ToLower();
@@ -164,17 +151,17 @@ public class BotService : IBotService
         {
             case "qa":
             {
-                var (userFullDto, message) = await _idccService.CreateUserAsync(user.Username!, "QA");
+                var (userFullDto, message) = await idccService.CreateUserAsync(user.Username!, "QA");
                 if (message is not null)
                 {
-                    _logger.LogInformation(message);
-                    await _telegramBot.SendTextMessageAsync(chat!, $"Ошибка при создании пользователя {message}");
+                    logger.LogInformation(message);
+                    await bot.SendTextMessageAsync(chat!, $"Ошибка при создании пользователя {message}");
                 }
 
                 _userId = userFullDto!.Id;
-                _logger.LogInformation("Пользователь создан!");
+                logger.LogInformation("Пользователь создан!");
                 
-                await _telegramBot.SendTextMessageAsync(chat!, $"Пользователь зарегистрирован в системе от {userFullDto.RegistrationDate}");
+                await bot.SendTextMessageAsync(chat!, $"Пользователь зарегистрирован в системе от {userFullDto.RegistrationDate}");
                 return;
             }
             default:
@@ -182,16 +169,16 @@ public class BotService : IBotService
                 if (parseData is not null)
                 {
                     var sessionId = _sessionId!.Value;
-                    var message = await _idccService.SendAnswerAsync(sessionId, parseData.Value.Item1, parseData.Value.Item2,
+                    var message = await idccService.SendAnswerAsync(sessionId, parseData.Value.Item1, parseData.Value.Item2,
                         _questionTime);
 
                     if (message is not null)
                     {
-                        await _telegramBot.SendTextMessageAsync(chat!, message, parseMode: ParseMode.Html, replyMarkup: new ReplyKeyboardRemove());
+                        await bot.SendTextMessageAsync(chat!, message, parseMode: ParseMode.Html, replyMarkup: new ReplyKeyboardRemove());
                         return;
                     }
                     
-                    _logger.LogInformation("Ответ отправлен!");
+                    logger.LogInformation("Ответ отправлен!");
                 }
                 break;
             }
@@ -201,7 +188,7 @@ public class BotService : IBotService
     
     private Task UnknownUpdateHandlerAsync(Update update)
     {
-        _logger.LogInformation("Unknown update type: {UpdateType}", update.Type);
+        logger.LogInformation("Unknown update type: {UpdateType}", update.Type);
         return Task.CompletedTask;
     }
 
