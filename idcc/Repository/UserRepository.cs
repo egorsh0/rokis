@@ -8,12 +8,10 @@ namespace idcc.Repository;
 public class UserRepository : IUserRepository
 {
     private readonly IdccContext _context;
-    private readonly ILogger<UserRepository> _logger;
 
-    public UserRepository(IdccContext context, ILogger<UserRepository> logger)
+    public UserRepository(IdccContext context)
     {
         _context = context;
-        _logger = logger;
     }
     
     public async Task<User?> GetUserAsync(int id)

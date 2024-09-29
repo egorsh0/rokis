@@ -7,5 +7,6 @@ public interface IQuestionRepository
 {
     Task<QuestionDto?> GetQuestionAsync(UserTopic userTopic);
     
-    Task<QuestionDataDto?> GetQuestionAsync(int id);
+    Task<Question?> GetQuestionAsync(int id);
+    Task<List<Answer>> GetAnswersAsync(Question question);
 }

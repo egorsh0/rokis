@@ -8,41 +8,32 @@ namespace idcc.Application;
 
 public class IdccReport : IIdccReport
 {
-    private ISessionRepository _sessionRepository;
     private IDataRepository _dataRepository;
     private IUserTopicRepository _userTopicRepository;
     private IUserAnswerRepository _userAnswerRepository;
     private IScoreCalculate _scoreCalculate;
 
     public IdccReport(
-        ISessionRepository sessionRepository,
         IDataRepository dataRepository,
         IUserTopicRepository userTopicRepository,
         IUserAnswerRepository userAnswerRepository,
         IScoreCalculate scoreCalculate)
     {
-        _sessionRepository = sessionRepository;
         _dataRepository = dataRepository;
         _userTopicRepository = userTopicRepository;
         _userAnswerRepository = userAnswerRepository;
         _scoreCalculate = scoreCalculate;
     }
     
-    public async Task<ReportDto?> GenerateAsync(int sessionId)
+    public async Task<ReportDto?> GenerateAsync(Session session)
     {
-        var report = new ReportDto();
-
-        var session = await _sessionRepository.GetSessionAsync(sessionId);
-
-        if (session?.EndTime is null)
+        var report = new ReportDto
         {
-            return null;
-        }
-        
-        report.Name = session.User.UserName;
-        report.StartSession = session.StartTime;
-        report.EndSession = session.EndTime.Value;
-        report.TestingTime = (session.StartTime - session.EndTime.Value);
+            Name = session.User.UserName,
+            StartSession = session.StartTime,
+            EndSession = session.EndTime!.Value,
+            TestingTime = (session.StartTime - session.EndTime.Value)
+        };
 
         var finalScoreDto = await CalculateFinalScoreAsync(session);
 

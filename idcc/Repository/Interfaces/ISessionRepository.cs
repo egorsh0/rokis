@@ -6,7 +6,7 @@ public interface ISessionRepository
 {
     Task<Session> StartSessionAsync(User user);
     
-    Task EndSessionAsync(int id);
+    Task<bool> EndSessionAsync(int id);
 
     Task<Session?> GetSessionAsync(int id);
 }
