@@ -1,16 +1,25 @@
 ﻿namespace idcc.Models.Dto;
 
-public record QuestionDto
+public record QuestionShortDto
 {
     public int Id { get; set; }
+    public List<AnswerShortDto> Answers { get; set; } = new();
+}
+
+public record AnswerShortDto
+{
+    public int Id { get; set; }
+}
+
+public record QuestionDto : QuestionShortDto
+{
     public Topic Topic { get; set; }
     public string Content { get; set; }
     public List<AnswerDto> Answers { get; set; } = new();
 }
 
-public record AnswerDto
+public record AnswerDto : AnswerShortDto
 {
-    public int Id { get; set; }
     public string Content { get; set; }
 }
 

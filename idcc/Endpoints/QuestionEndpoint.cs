@@ -60,7 +60,7 @@ public static class QuestionEndpoint
             Tags = new List<OpenApiTag> { new() { Name = "Question" } }
         });
         
-        questions.MapPost("/sendAnswers", async (int userId, TimeSpan dateInterval, QuestionDto question,
+        questions.MapPost("/sendAnswers", async (int userId, TimeSpan dateInterval, QuestionShortDto question,
             IUserRepository userRepository,
             ISessionRepository sessionRepository,
             IIdccApplication idccApplication
