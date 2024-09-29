@@ -12,14 +12,19 @@ public static class QuestionEndpoint
     {
         var questions = routes.MapGroup("/api/v1/question");
       
-        questions.MapGet("/{userId}", async (int userId, IUserTopicRepository userTopicRepository, IQuestionRepository questionRepository, ISessionRepository sessionRepository) =>
+        questions.MapGet("/{userId}", async (int userId, IUserRepository userRepository, IUserTopicRepository userTopicRepository, IQuestionRepository questionRepository, ISessionRepository sessionRepository) =>
         {
+            var user = await userRepository.GetUserAsync(userId);
+            if (user is null)
+            {
+                return Results.NotFound();
+            }
             // Проверка на открытые темы
         
             var hasOpenTopics = await userTopicRepository.HasOpenTopic(userId);
             if (!hasOpenTopics)
             {
-                return Results.BadRequest(ErrorMessage.TOPIC_IS_NOT_EXIST);
+                return Results.NoContent();
             }
             var session = await sessionRepository.GetSessionAsync(userId);
             if (session is null)
@@ -36,7 +41,7 @@ public static class QuestionEndpoint
             var userTopic = await userTopicRepository.GetRandomTopicAsync(userId);
             if (userTopic is null)
             {
-                return Results.NoContent();
+                return Results.BadRequest();
             }
                 
             var question = await questionRepository.GetQuestionAsync(userTopic);
@@ -64,18 +69,18 @@ public static class QuestionEndpoint
             var session = await sessionRepository.GetSessionAsync(userId);
             if (session is null)
             {
-                return Results.NotFound();
+                return Results.BadRequest();
             }
             // Посчитать и сохранить Score за ответ
             var result = await idccApplication.CalculateScoreAsync(session, userId, Convert.ToInt32(dateInterval.TotalSeconds), question.Id,
-                question.Answers.Select(_ => _.Id));
+                question.Answers.Select(_ => _.Id).ToList());
             if (result is not null)
             {
-                return Results.NotFound(result);
+                return Results.BadRequest(result);
             }
             // Пересчитать вес текущего топика
             result = await idccApplication.CalculateTopicWeightAsync(session, userId);
-            return result is not null ? Results.NotFound(result) : Results.Ok();
+            return result is not null ? Results.BadRequest(result) : Results.Ok();
         }).WithOpenApi(x => new OpenApiOperation(x)
         {
             Summary = "Send answers",

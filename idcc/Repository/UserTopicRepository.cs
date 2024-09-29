@@ -31,6 +31,12 @@ public class UserTopicRepository : IUserTopicRepository
         return userTopic;
     }
 
+    public async Task<UserTopic?> GetTopicAsync(int id)
+    {
+        var userTopic = await _context.UserTopics.Where(_ => _.Id == id).FirstOrDefaultAsync();
+        return userTopic;
+    }
+
     public async Task UpdateTopicInfoAsync(int id, bool actual, bool previous, Grade? grade, double? weight = null)
     {
         var userTopic = await _context.UserTopics.Where(_ => _.Id == id).FirstOrDefaultAsync();
@@ -47,6 +53,17 @@ public class UserTopicRepository : IUserTopicRepository
                 userTopic.Grade = grade;
             }
             
+            await _context.SaveChangesAsync();
+        }
+    }
+
+    public async Task ReduceTopicQuestionCountAsync(int id)
+    {
+        var userTopic = await _context.UserTopics.Where(_ => _.Id == id).FirstOrDefaultAsync();
+        if (userTopic is not null)
+        {
+            var count = userTopic.Count;
+            userTopic.Count = count - 1;
             await _context.SaveChangesAsync();
         }
     }

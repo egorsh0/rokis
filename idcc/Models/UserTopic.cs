@@ -19,4 +19,6 @@ public class UserTopic
     public bool WasPrevious { get; set; }
 
     public bool Actual { get; set; }
+    
+    public int Count { get; set; }
 }

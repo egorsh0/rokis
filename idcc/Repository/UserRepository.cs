@@ -33,6 +33,13 @@ public class UserRepository : IUserRepository
         var middleGrade = _context.Grades.Single(_ => _.Code == "Middle");
         var weight = _context.Weights.Single(_ => _.Grade == middleGrade);
         var topics = _context.Topics.Where(_ => _.Role == user.Role);
+        var settingQuestion = await _context.Counts.FirstOrDefaultAsync(_ => _.Code == "Question");
+
+        var questionCount = 10;
+        if (settingQuestion is not null)
+        {
+            questionCount = settingQuestion.Value;
+        }
 
         foreach (var topic in topics)
         {
@@ -44,7 +51,8 @@ public class UserRepository : IUserRepository
                 Grade = middleGrade,
                 IsFinished = false,
                 WasPrevious = false,
-                Actual = false
+                Actual = false,
+                Count = questionCount
             };
             _logger.LogInformation($"Create user topic {JsonSerializer.Serialize(userTopic)}");
             _context.UserTopics.Add(userTopic);

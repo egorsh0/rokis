@@ -39,7 +39,7 @@ public class IdccApplication : IIdccApplication
         _gradeCalculate = gradeCalculate;
     }
 
-    public async Task<string?> CalculateScoreAsync(Session session, int userId, int interval, int questionId, IEnumerable<int> answerIds)
+    public async Task<string?> CalculateScoreAsync(Session session, int userId, int interval, int questionId, List<int> answerIds)
     {
         var question = await _questionRepository.GetQuestionAsync(questionId);
         if (question is null)
@@ -58,7 +58,7 @@ public class IdccApplication : IIdccApplication
             return null;
         }
         
-        if (!question.Question.IsMultipleChoice && answerIds.Count() > 1)
+        if (!question.Question.IsMultipleChoice && answerIds.Count > 1)
         {
             return ErrorMessage.QUESTION_IS_NOT_MULTIPLY;
         }
@@ -131,12 +131,16 @@ public class IdccApplication : IIdccApplication
         if (grade is null)
         {
             await _userTopicRepository.CloseTopicAsync(actualTopic.Id);
+            
+            await ReduceTopicQuestionCountAndCloseTopic(actualTopic.Id);
             return null;
         }
 
         if (grade == actualTopic.Grade)
         {
             await _userTopicRepository.UpdateTopicInfoAsync(actualTopic.Id, false, true, actualTopic.Grade, newWeight);
+            
+            await ReduceTopicQuestionCountAndCloseTopic(actualTopic.Id);
             return null;
         }
 
@@ -147,7 +151,19 @@ public class IdccApplication : IIdccApplication
         }
         var raiseLevel = await _dataRepository.GetPercentOrDefaultAsync("RaiseLevel", 0.3);
         await _userTopicRepository.UpdateTopicInfoAsync(actualTopic.Id, false, true, grade, (weight.Value.min * raiseLevel) + weight.Value.min);
-
+        
+        await ReduceTopicQuestionCountAndCloseTopic(actualTopic.Id);
+        
         return null;
+    }
+
+    private async Task ReduceTopicQuestionCountAndCloseTopic(int id)
+    {
+        await _userTopicRepository.ReduceTopicQuestionCountAsync(id);
+        var topic = await _userTopicRepository.GetTopicAsync(id);
+        if (topic is not null && topic.Count == 0)
+        {
+            await _userTopicRepository.CloseTopicAsync(id);
+        }
     }
 }

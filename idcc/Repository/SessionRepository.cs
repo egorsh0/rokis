@@ -33,6 +33,12 @@ public class SessionRepository : ISessionRepository
         if (session is not null)
         {
             session.EndTime = DateTime.Now;
+
+            var userTopics = await _context.UserTopics.Where(_ => _.User == user && _.IsFinished == false).ToListAsync();
+            foreach (var userTopic in userTopics)
+            {
+                userTopic.IsFinished = true;
+            }
             await _context.SaveChangesAsync();
         }
     }
