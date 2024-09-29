@@ -1,0 +1,29 @@
+2024-09-29 17:55:46.217 +03:00 [Information] <s:idcc.Bot.Startup> Removing webhook
+2024-09-29 17:55:56.695 +03:00 [Fatal] <s:Microsoft.Extensions.Hosting.Internal.ApplicationLifetime> An error occurred stopping the application
+System.AggregateException: One or more errors occurred. (One or more errors occurred. (Unauthorized: invalid token specified))
+ ---> System.AggregateException: One or more errors occurred. (Unauthorized: invalid token specified)
+ ---> Telegram.Bot.Exceptions.ApiRequestException: Unauthorized: invalid token specified
+   at Telegram.Bot.TelegramBotClient.MakeRequestAsync[TResponse](IRequest`1 request, CancellationToken cancellationToken)
+   at Telegram.Bot.TelegramBotClientExtensions.DeleteWebhookAsync(ITelegramBotClient botClient, Nullable`1 dropPendingUpdates, CancellationToken cancellationToken)
+   --- End of inner exception stack trace ---
+   at System.Threading.Tasks.Task.ThrowIfExceptional(Boolean includeTaskCanceledExceptions)
+   at System.Threading.Tasks.Task.Wait(Int32 millisecondsTimeout, CancellationToken cancellationToken)
+   at System.Threading.Tasks.Task.Wait()
+   at idcc.Bot.StartupExtensions.<>c__DisplayClass0_0.<UseTelegramBotWebhook>b__1() in E:\Projects\dotnet\idcc\idcc.Bot\StartupExtensions.cs:line 42
+   at System.Threading.CancellationTokenSource.Invoke(Delegate d, Object state, CancellationTokenSource source)
+   at System.Threading.ExecutionContext.RunInternal(ExecutionContext executionContext, ContextCallback callback, Object state)
+--- End of stack trace from previous location ---
+   at System.Threading.ExecutionContext.RunInternal(ExecutionContext executionContext, ContextCallback callback, Object state)
+   at System.Threading.CancellationTokenSource.ExecuteCallbackHandlers(Boolean throwOnFirstException)
+   --- End of inner exception stack trace ---
+   at System.Threading.CancellationTokenSource.ExecuteCallbackHandlers(Boolean throwOnFirstException)
+   at Microsoft.Extensions.Hosting.Internal.ApplicationLifetime.StopApplication()
+2024-09-29 17:56:36.851 +03:00 [Information] <s:idcc.Bot.Startup> Removing webhook
+2024-09-29 17:56:40.298 +03:00 [Information] <s:idcc.Bot.Startup> Setting webhook to https://yourserver.example.com/api/captchaupdate
+2024-09-29 17:57:19.589 +03:00 [Information] <s:idcc.Bot.Startup> Webhook removed
+2024-09-29 17:58:09.649 +03:00 [Information] <s:idcc.Bot.Startup> Removing webhook
+2024-09-29 17:58:10.041 +03:00 [Information] <s:idcc.Bot.Startup> Setting webhook to https://yourserver.example.com/api/captchaupdate
+2024-09-29 17:58:38.046 +03:00 [Information] <s:idcc.Bot.Startup> Removing webhook
+2024-09-29 17:58:38.389 +03:00 [Information] <s:idcc.Bot.Startup> Setting webhook to https://yourserver.example.com/api/captchaupdate
+2024-09-29 18:00:02.922 +03:00 [Information] <s:idcc.Bot.Startup> Removing webhook
+2024-09-29 18:00:03.288 +03:00 [Information] <s:idcc.Bot.Startup> Setting webhook to https://yourserver.example.com/api/captchaupdate

@@ -1,0 +1,6 @@
+@idcc.Bot_HostAddress = http://localhost:5205
+
+GET {{idcc.Bot_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###

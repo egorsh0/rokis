@@ -2,6 +2,8 @@
 Microsoft Visual Studio Solution File, Format Version 12.00
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "idcc", "idcc.csproj", "{F7E4FAEC-2516-47E5-A3D5-49728AD833EE}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "idcc.Bot", "..\idcc.Bot\idcc.Bot.csproj", "{9102F024-E602-4F5D-AE57-874ECF263A93}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -12,5 +14,9 @@ Global
 		{F7E4FAEC-2516-47E5-A3D5-49728AD833EE}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{F7E4FAEC-2516-47E5-A3D5-49728AD833EE}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{F7E4FAEC-2516-47E5-A3D5-49728AD833EE}.Release|Any CPU.Build.0 = Release|Any CPU
+		{9102F024-E602-4F5D-AE57-874ECF263A93}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{9102F024-E602-4F5D-AE57-874ECF263A93}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{9102F024-E602-4F5D-AE57-874ECF263A93}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{9102F024-E602-4F5D-AE57-874ECF263A93}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 EndGlobal
