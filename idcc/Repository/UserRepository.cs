@@ -1,5 +1,4 @@
-﻿using System.Text.Json;
-using idcc.Context;
+﻿using idcc.Context;
 using idcc.Models;
 using idcc.Repository.Interfaces;
 using Microsoft.EntityFrameworkCore;
@@ -30,34 +29,6 @@ public class UserRepository : IUserRepository
     public async Task<User> CreateAsync(User user)
     {
         var entryUser = await _context.Users.AddAsync(user);
-        var middleGrade = _context.Grades.Single(_ => _.Code == "Middle");
-        var weight = _context.Weights.Single(_ => _.Grade == middleGrade);
-        var topics = _context.Topics.Where(_ => _.Role == user.Role);
-        var settingQuestion = await _context.Counts.FirstOrDefaultAsync(_ => _.Code == "Question");
-
-        var questionCount = 10;
-        if (settingQuestion is not null)
-        {
-            questionCount = settingQuestion.Value;
-        }
-
-        foreach (var topic in topics)
-        {
-            var userTopic = new UserTopic()
-            {
-                User = entryUser.Entity,
-                Topic = topic,
-                Weight = weight.Min,
-                Grade = middleGrade,
-                IsFinished = false,
-                WasPrevious = false,
-                Actual = false,
-                Count = questionCount
-            };
-            _logger.LogInformation($"Create user topic {JsonSerializer.Serialize(userTopic)}");
-            _context.UserTopics.Add(userTopic);
-        }
-
         await _context.SaveChangesAsync();
         return entryUser.Entity;
     }

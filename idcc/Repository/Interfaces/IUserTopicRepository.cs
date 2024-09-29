@@ -4,12 +4,13 @@ namespace idcc.Repository.Interfaces;
 
 public interface IUserTopicRepository
 {
-    Task<bool> HasOpenTopic(int userId);
-    Task<UserTopic?> GetRandomTopicAsync(int userId);
-    Task<UserTopic?> GetActualTopicAsync(int userId);
+    Task<bool> HasOpenTopic(Session session);
+    Task<UserTopic?> GetRandomTopicAsync(Session session);
+    Task<UserTopic?> GetActualTopicAsync(Session session);
     Task<UserTopic?> GetTopicAsync(int id);
+    Task<List<UserTopic>> GetAllTopicsAsync(Session session);
     Task UpdateTopicInfoAsync(int id, bool actual, bool previous, Grade? grade = null, double? weight = null);
     Task ReduceTopicQuestionCountAsync(int id);
-    Task RefreshActualTopicInfoAsync(int id, int userId);
+    Task RefreshActualTopicInfoAsync(int id, Session session);
     Task CloseTopicAsync(int id);
 }

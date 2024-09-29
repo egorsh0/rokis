@@ -39,7 +39,7 @@ public class IdccApplication : IIdccApplication
         _gradeCalculate = gradeCalculate;
     }
 
-    public async Task<string?> CalculateScoreAsync(Session session, int userId, int interval, int questionId, List<int> answerIds)
+    public async Task<string?> CalculateScoreAsync(Session session, int interval, int questionId, List<int> answerIds)
     {
         var question = await _questionRepository.GetQuestionAsync(questionId);
         if (question is null)
@@ -65,7 +65,7 @@ public class IdccApplication : IIdccApplication
         
         // Посчитать коэффицент времени K
         
-        var actualTopic = await _userTopicRepository.GetActualTopicAsync(userId);
+        var actualTopic = await _userTopicRepository.GetActualTopicAsync(session);
         if (actualTopic is null)
         {
             return ErrorMessage.ACTUAL_TOPIC_IS_NULL;
@@ -94,9 +94,9 @@ public class IdccApplication : IIdccApplication
         return null;
     }
 
-    public async Task<string?> CalculateTopicWeightAsync(Session session, int userId)
+    public async Task<string?> CalculateTopicWeightAsync(Session session)
     {
-        var actualTopic = await _userTopicRepository.GetActualTopicAsync(userId);
+        var actualTopic = await _userTopicRepository.GetActualTopicAsync(session);
         if (actualTopic is null)
         {
             return ErrorMessage.ACTUAL_TOPIC_IS_NULL;
@@ -121,7 +121,7 @@ public class IdccApplication : IIdccApplication
         if (actualTopic.Weight >= (gradeWeight.Value.max - raiseValue))
         {
             canRaise =
-                await _userAnswerRepository.CanRaiseAsync(session.Id, raiseCount);
+                await _userAnswerRepository.CanRaiseAsync(session, raiseCount);
         }
         // Junior -> Middle => конец топика, фикс веса
 

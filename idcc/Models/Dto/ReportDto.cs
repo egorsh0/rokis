@@ -23,17 +23,17 @@ public record ReportDto
     /// <summary>
     /// Общая продолжительность тестирования.
     /// </summary>
-    public DateTime TestingTime { get; set; }
+    public TimeSpan TestingTime { get; set; }
     
     /// <summary>
     /// Итоговая оценка.
     /// </summary>
-    public FinalScoreDto FinalScoreDto { get; set; }
+    public FinalScoreDto? FinalScoreDto { get; set; }
     
     /// <summary>
     /// Итог по темам.
     /// </summary>
-    public List<FinalTopicData> FinalTopicDatas { get; set; }
+    public List<FinalTopicData>? FinalTopicDatas { get; set; }
 }
 
 /// <summary>
@@ -49,7 +49,7 @@ public record FinalScoreDto
     /// <summary>
     /// Интерпритация уровня.
     /// </summary>
-    public Grade Grade { get; set; }
+    public string Grade { get; set; }
 }
 
 /// <summary>
@@ -60,7 +60,7 @@ public record FinalTopicData
     /// <summary>
     /// Название темы.
     /// </summary>
-    public string Name { get; set; }
+    public string Topic { get; set; }
     
     /// <summary>
     /// Общий балл по теме.

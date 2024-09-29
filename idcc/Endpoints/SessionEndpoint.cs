@@ -16,14 +16,9 @@ public static class SessionEndpoint
             {
                 return Results.NotFound();
             }
-
-            var session = await sessionRepository.GetSessionAsync(userId);
-            if (session is not null)
-            {
-                return Results.BadRequest();
-            }
-            await sessionRepository.StartSessionAsync(user);
-            return Results.Ok();
+            
+            var session = await sessionRepository.StartSessionAsync(user);
+            return Results.Ok(session);
         }).WithOpenApi(x => new OpenApiOperation(x)
         {
             Summary = "Start new test session",
@@ -31,15 +26,9 @@ public static class SessionEndpoint
             Tags = new List<OpenApiTag> { new() { Name = "Session" } }
         });
 
-        sessions.MapPost("/stop", async (int userId, ISessionRepository sessionRepository, IUserRepository userRepository) =>
+        sessions.MapPost("/stop", async (int sessioId, ISessionRepository sessionRepository, IUserRepository userRepository) =>
         {
-            var user = await userRepository.GetUserAsync(userId);
-            if (user is null)
-            {
-                return Results.NotFound();
-            }
-
-            var session = await sessionRepository.GetSessionAsync(userId);
+            var session = await sessionRepository.GetSessionAsync(sessioId);
             if (session is null)
             {
                 return Results.BadRequest();
@@ -49,7 +38,7 @@ public static class SessionEndpoint
             {
                 return Results.BadRequest();
             }
-            await sessionRepository.EndSessionAsync(user);
+            await sessionRepository.EndSessionAsync(sessioId);
             return Results.Ok();
         }).WithOpenApi(x => new OpenApiOperation(x)
         {

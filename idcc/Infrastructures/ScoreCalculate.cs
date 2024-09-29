@@ -14,6 +14,12 @@ public class ScoreCalculate : IScoreCalculate
 
         return score;
     }
+    
+    public double GetTopicScore(List<double> scores, double weight)
+    {
+        var score = TopicScore(scores, weight);
+        return score;
+    }
 
     internal Func<double, int, int, double> NewScore { get; } =
         (weight, answered, total) =>
@@ -29,6 +35,14 @@ public class ScoreCalculate : IScoreCalculate
             }
             
             return weight * (answered / total);
+        };
+    
+    internal Func<List<double>, double, double> TopicScore { get; } =
+        (scores, weight) =>
+        {
+            var score = scores.Average();
+            
+            return weight * score;
         };
 }
  

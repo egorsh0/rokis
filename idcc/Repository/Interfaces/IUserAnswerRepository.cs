@@ -6,6 +6,8 @@ public interface IUserAnswerRepository
 {
     Task CreateUserAnswerAsync(Session session, Question question, int timeSpent,
         double score, DateTime answerTime);
+    
+    Task<List<UserAnswer>> GetAllUserAnswers(Session session);
 
-    Task<bool> CanRaiseAsync(int sessionId, int count);
+    Task<bool> CanRaiseAsync(Session session, int count);
 }

@@ -12,33 +12,29 @@ public static class QuestionEndpoint
     {
         var questions = routes.MapGroup("/api/v1/question");
       
-        questions.MapGet("/{userId}", async (int userId, IUserRepository userRepository, IUserTopicRepository userTopicRepository, IQuestionRepository questionRepository, ISessionRepository sessionRepository) =>
+        questions.MapGet("/{sessionId}", async (int sessionId, IUserTopicRepository userTopicRepository, IQuestionRepository questionRepository, ISessionRepository sessionRepository) =>
         {
-            var user = await userRepository.GetUserAsync(userId);
-            if (user is null)
-            {
-                return Results.NotFound();
-            }
-            // Проверка на открытые темы
-        
-            var hasOpenTopics = await userTopicRepository.HasOpenTopic(userId);
-            if (!hasOpenTopics)
-            {
-                return Results.NoContent();
-            }
-            var session = await sessionRepository.GetSessionAsync(userId);
+            // Проверка на открытую сессию
+            var session = await sessionRepository.GetSessionAsync(sessionId);
             if (session is null)
             {
                 return Results.BadRequest(ErrorMessage.SESSION_IS_NOT_EXIST);
             }
-
+            
             if (session.EndTime is not null)
             {
                 return Results.BadRequest(ErrorMessage.SESSION_IS_FINISHED);
             }
             
+            // Проверка на открытые темы
+            var hasOpenTopics = await userTopicRepository.HasOpenTopic(session);
+            if (!hasOpenTopics)
+            {
+                return Results.NoContent();
+            }
+            
             // Получение рандомной темы
-            var userTopic = await userTopicRepository.GetRandomTopicAsync(userId);
+            var userTopic = await userTopicRepository.GetRandomTopicAsync(session);
             if (userTopic is null)
             {
                 return Results.BadRequest();
@@ -50,7 +46,7 @@ public static class QuestionEndpoint
                 return Results.BadRequest();
             }
                 
-            await userTopicRepository.RefreshActualTopicInfoAsync(userTopic.Id, userId);
+            await userTopicRepository.RefreshActualTopicInfoAsync(userTopic.Id, session);
             return Results.Ok(question);
 
         }).WithOpenApi(x => new OpenApiOperation(x)
@@ -60,26 +56,26 @@ public static class QuestionEndpoint
             Tags = new List<OpenApiTag> { new() { Name = "Question" } }
         });
         
-        questions.MapPost("/sendAnswers", async (int userId, TimeSpan dateInterval, QuestionShortDto question,
+        questions.MapPost("/sendAnswers", async (int sessionId, TimeSpan dateInterval, QuestionShortDto question,
             IUserRepository userRepository,
             ISessionRepository sessionRepository,
             IIdccApplication idccApplication
         ) =>
         {
-            var session = await sessionRepository.GetSessionAsync(userId);
+            var session = await sessionRepository.GetSessionAsync(sessionId);
             if (session is null)
             {
                 return Results.BadRequest();
             }
             // Посчитать и сохранить Score за ответ
-            var result = await idccApplication.CalculateScoreAsync(session, userId, Convert.ToInt32(dateInterval.TotalSeconds), question.Id,
+            var result = await idccApplication.CalculateScoreAsync(session, Convert.ToInt32(dateInterval.TotalSeconds), question.Id,
                 question.Answers.Select(_ => _.Id).ToList());
             if (result is not null)
             {
                 return Results.BadRequest(result);
             }
             // Пересчитать вес текущего топика
-            result = await idccApplication.CalculateTopicWeightAsync(session, userId);
+            result = await idccApplication.CalculateTopicWeightAsync(session);
             return result is not null ? Results.BadRequest(result) : Results.Ok();
         }).WithOpenApi(x => new OpenApiOperation(x)
         {

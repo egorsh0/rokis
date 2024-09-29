@@ -4,9 +4,9 @@ namespace idcc.Repository.Interfaces;
 
 public interface ISessionRepository
 {
-    Task StartSessionAsync(User user);
+    Task<Session> StartSessionAsync(User user);
     
-    Task EndSessionAsync(User user);
+    Task EndSessionAsync(int id);
 
-    Task<Session?> GetSessionAsync(int userId);
+    Task<Session?> GetSessionAsync(int id);
 }

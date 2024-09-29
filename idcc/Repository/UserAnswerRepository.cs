@@ -29,9 +29,14 @@ public class UserAnswerRepository : IUserAnswerRepository
         await _context.SaveChangesAsync();
     }
 
-    public async Task<bool> CanRaiseAsync(int sessionId, int count)
+    public async Task<List<UserAnswer>> GetAllUserAnswers(Session session)
     {
-        var userAnswers = await _context.UserAnswers.Where(_ => _.Session.Id == sessionId).OrderByDescending(_ => _.AnswerTime).ToListAsync();
+        return await _context.UserAnswers.Where(_ => _.Session == session).ToListAsync();
+    }
+
+    public async Task<bool> CanRaiseAsync(Session session, int count)
+    {
+        var userAnswers = await _context.UserAnswers.Where(_ => _.Session == session).OrderByDescending(_ => _.AnswerTime).ToListAsync();
         var correctCount = count;
         foreach (var userAnswer in userAnswers)
         {

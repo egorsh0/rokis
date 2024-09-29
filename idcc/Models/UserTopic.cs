@@ -7,7 +7,7 @@ public class UserTopic
     [Key]
     public int Id { get; set; }
     
-    public virtual User User { get; set; }
+    public virtual Session Session { get; set; }
     public virtual Topic Topic { get; set; }
     
     public virtual Grade Grade { get; set; }

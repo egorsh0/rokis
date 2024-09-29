@@ -14,20 +14,20 @@ public class UserTopicRepository : IUserTopicRepository
         _context = context;
     }
 
-    public async Task<bool> HasOpenTopic(int userId)
+    public async Task<bool> HasOpenTopic(Session session)
     {
-        return await _context.UserTopics.AnyAsync(_ => _.IsFinished == false && _.User.Id == userId);
+        return await _context.UserTopics.AnyAsync(_ => _.IsFinished == false && _.Session == session);
     }
 
-    public async Task<UserTopic?> GetRandomTopicAsync(int userId)
+    public async Task<UserTopic?> GetRandomTopicAsync(Session session)
     {
-        var userTopic = await _context.UserTopics.Where(_ => _.IsFinished == false && _.WasPrevious == false && _.User.Id == userId).OrderBy(o => Guid.NewGuid()).FirstOrDefaultAsync();
+        var userTopic = await _context.UserTopics.Where(_ => _.IsFinished == false && _.WasPrevious == false && _.Session == session).OrderBy(o => Guid.NewGuid()).FirstOrDefaultAsync();
         return userTopic;
     }
     
-    public async Task<UserTopic?> GetActualTopicAsync(int userId)
+    public async Task<UserTopic?> GetActualTopicAsync(Session session)
     {
-        var userTopic = await _context.UserTopics.Where(_ => _.IsFinished == false && _.Actual == true && _.User.Id == userId).FirstOrDefaultAsync();
+        var userTopic = await _context.UserTopics.Where(_ => _.IsFinished == false && _.Actual == true && _.Session == session).FirstOrDefaultAsync();
         return userTopic;
     }
 
@@ -35,6 +35,12 @@ public class UserTopicRepository : IUserTopicRepository
     {
         var userTopic = await _context.UserTopics.Where(_ => _.Id == id).FirstOrDefaultAsync();
         return userTopic;
+    }
+
+    public async Task<List<UserTopic>> GetAllTopicsAsync(Session session)
+    {
+        var userTopics = await _context.UserTopics.Where(_ => _.Session == session).ToListAsync();
+        return userTopics;
     }
 
     public async Task UpdateTopicInfoAsync(int id, bool actual, bool previous, Grade? grade, double? weight = null)
@@ -68,9 +74,9 @@ public class UserTopicRepository : IUserTopicRepository
         }
     }
 
-    public async Task RefreshActualTopicInfoAsync(int id, int userId)
+    public async Task RefreshActualTopicInfoAsync(int id, Session session)
     {
-        var userTopics = await _context.UserTopics.Where(_ => _.User.Id == userId).ToListAsync();
+        var userTopics = await _context.UserTopics.Where(_ => _.Session == session).ToListAsync();
         foreach (var userTopic in userTopics)
         {
             if (userTopic.Id == id)

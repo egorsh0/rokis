@@ -1,4 +1,5 @@
-﻿using Microsoft.OpenApi.Models;
+﻿using idcc.Application.Interfaces;
+using Microsoft.OpenApi.Models;
 
 namespace idcc.Endpoints;
 
@@ -8,9 +9,10 @@ public static class ReportEndpont
     {
         var reports = routes.MapGroup("/api/v1/report");
       
-        reports.MapGet("generate", async (int userId) =>
+        reports.MapGet("generate", async (int sessionId, IIdccReport idccReport) =>
         {
-            return Results.Ok();
+            var report = await idccReport.GenerateAsync(sessionId);
+            return report is null ? Results.BadRequest() : Results.Ok(report);
         }).WithOpenApi(x => new OpenApiOperation(x)
         {
             Summary = "Generate report",

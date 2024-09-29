@@ -14,7 +14,7 @@ public class SessionRepository : ISessionRepository
         _context = context;
     }
     
-    public async Task StartSessionAsync(User user)
+    public async Task<Session> StartSessionAsync(User user)
     {
         var session = new Session()
         {
@@ -24,17 +24,21 @@ public class SessionRepository : ISessionRepository
             EndTime = null
         };
         _context.Sessions.Add(session);
+
+        await CreateSessionUserTopics(session);
+        
         await _context.SaveChangesAsync();
+        return session;
     }
 
-    public async Task EndSessionAsync(User user)
+    public async Task EndSessionAsync(int id)
     {
-        var session = await _context.Sessions.FirstOrDefaultAsync(_ => _.User == user);
+        var session = await _context.Sessions.FindAsync(id);
         if (session is not null)
         {
             session.EndTime = DateTime.Now;
 
-            var userTopics = await _context.UserTopics.Where(_ => _.User == user && _.IsFinished == false).ToListAsync();
+            var userTopics = await _context.UserTopics.Where(_ => _.Session == session && _.IsFinished == false).ToListAsync();
             foreach (var userTopic in userTopics)
             {
                 userTopic.IsFinished = true;
@@ -43,8 +47,38 @@ public class SessionRepository : ISessionRepository
         }
     }
 
-    public async Task<Session?> GetSessionAsync(int userId)
+    public async Task<Session?> GetSessionAsync(int id)
     {
-        return await _context.Sessions.FirstOrDefaultAsync(_ => _.User.Id == userId);
+        return await _context.Sessions.FindAsync(id);
+    }
+
+    private async Task CreateSessionUserTopics(Session session)
+    {
+        var middleGrade = _context.Grades.Single(_ => _.Code == "Middle");
+        var weight = _context.Weights.Single(_ => _.Grade == middleGrade);
+        var topics = _context.Topics.Where(_ => _.Role == session.User.Role);
+        var settingQuestion = await _context.Counts.FirstOrDefaultAsync(_ => _.Code == "Question");
+
+        var questionCount = 10;
+        if (settingQuestion is not null)
+        {
+            questionCount = settingQuestion.Value;
+        }
+
+        foreach (var topic in topics)
+        {
+            var userTopic = new UserTopic()
+            {
+                Session = session,
+                Topic = topic,
+                Weight = weight.Min,
+                Grade = middleGrade,
+                IsFinished = false,
+                WasPrevious = false,
+                Actual = false,
+                Count = questionCount
+            };
+            _context.UserTopics.Add(userTopic);
+        }
     }
 }

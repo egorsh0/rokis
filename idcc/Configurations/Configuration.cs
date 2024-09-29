@@ -34,6 +34,7 @@ public static class Configuration
         builder.Services.AddScoped<IGradeCalculate, GradeCalculate>();
 
         builder.Services.AddScoped<IIdccApplication, IdccApplication>();
+        builder.Services.AddScoped<IIdccReport, IdccReport>();
 
         builder.Services.AddEndpointsApiExplorer();
         builder.Services.AddSwaggerGen(c =>
