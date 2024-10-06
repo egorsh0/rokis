@@ -127,7 +127,7 @@ public class IdccApplication : IIdccApplication
         
         var raiseCount = await _dataRepository.GetCountOrDefaultAsync("Raise", 3);
         var canRaise = false;
-        if (actualTopic.Weight >= (gradeWeights.Value.max - raiseValue))
+        if (newWeight >= (gradeWeights.Value.max - raiseValue))
         {
             canRaise =
                 await _userAnswerRepository.CanRaiseAsync(session, raiseCount);
@@ -150,6 +150,11 @@ public class IdccApplication : IIdccApplication
             await _userTopicRepository.UpdateTopicInfoAsync(actualTopic.Id, false, true, actualTopic.Grade, newWeight);
             
             await ReduceTopicQuestionCountAndCloseTopic(session, actualTopic.Id);
+            var count = await _userTopicRepository.CountQuestionAsync(actualTopic.Id, gradeWeights.Value.max);
+            if (count == 0)
+            {
+                await _userTopicRepository.CloseTopicAsync(actualTopic.Id);
+            }
             return null;
         }
 
@@ -167,7 +172,7 @@ public class IdccApplication : IIdccApplication
         await _userTopicRepository.UpdateTopicInfoAsync(actualTopic.Id, false, true, grade, gradeWeight);
         
         await ReduceTopicQuestionCountAndCloseTopic(session, actualTopic.Id);
-        
+
         return null;
     }
 

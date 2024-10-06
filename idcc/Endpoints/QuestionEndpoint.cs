@@ -43,7 +43,8 @@ public static class QuestionEndpoint
             var question = await questionRepository.GetQuestionAsync(userTopic);
             if (question is null)
             {
-                return Results.BadRequest(ErrorMessage.QUESTION_IS_NULL);
+                await userTopicRepository.CloseTopicAsync(userTopic.Id);
+                return Results.Accepted();
             }
                 
             await userTopicRepository.RefreshActualTopicInfoAsync(userTopic.Id, session);

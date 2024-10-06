@@ -14,6 +14,7 @@ public static class Configuration
 {
     public static void RegisterServices(this WebApplicationBuilder builder)
     {
+        builder.Services.AddOptions();
         var connectionString = builder.Configuration.GetConnectionString("IdccDb");
         builder.Services.AddDbContext<IdccContext>(options =>
         {

@@ -13,4 +13,5 @@ public interface IUserTopicRepository
     Task ReduceTopicQuestionCountAsync(int id);
     Task RefreshActualTopicInfoAsync(int id, Session session);
     Task CloseTopicAsync(int id);
+    Task<int?> CountQuestionAsync(int id, double max);
 }
