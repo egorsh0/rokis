@@ -103,4 +103,18 @@ public class UserTopicRepository : IUserTopicRepository
             await _context.SaveChangesAsync();
         }
     }
+
+    public async Task<int?> CountQuestionAsync(int id, double max)
+    {
+        var userTopic = await _context.UserTopics.Where(_ => _.Id == id).FirstOrDefaultAsync();
+        if (userTopic is null)
+        {
+            return null;
+        }
+
+        var actualWeight = userTopic.Weight;
+        var count = await _context.Questions.CountAsync(_ =>
+            _.Topic == userTopic.Topic && _.Weight > actualWeight && _.Weight < max);
+        return count;
+    }
 }
