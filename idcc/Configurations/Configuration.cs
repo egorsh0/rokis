@@ -1,4 +1,5 @@
-﻿using idcc.Application;
+﻿using System.Text.Json.Serialization;
+using idcc.Application;
 using idcc.Application.Interfaces;
 using idcc.Context;
 using idcc.Infrastructures;
@@ -15,6 +16,9 @@ public static class Configuration
     public static void RegisterServices(this WebApplicationBuilder builder)
     {
         builder.Services.AddOptions();
+        builder.Services.AddControllers()
+            .AddJsonOptions(options =>
+                options.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter()));
         var connectionString = builder.Configuration.GetConnectionString("IdccDb");
         builder.Services.AddDbContext<IdccContext>(options =>
         {

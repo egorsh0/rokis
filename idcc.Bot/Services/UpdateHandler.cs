@@ -179,6 +179,7 @@ public class UpdateHandler(ITelegramBotClient bot, IIdccService idccService, ILo
                     }
                     
                     logger.LogInformation("Ответ отправлен!");
+                    await bot.SendTextMessageAsync(chat!, "Ответ отправлен!");
                 }
                 break;
             }
@@ -201,8 +202,8 @@ public class UpdateHandler(ITelegramBotClient bot, IIdccService idccService, ILo
             return null;
         }
 
-        var questionId = Convert.ToInt32(match.Groups[0].Value);
-        var answerId = Convert.ToInt32(match.Groups[1].Value);
+        var questionId = Convert.ToInt32(match.Groups[1].Value);
+        var answerId = Convert.ToInt32(match.Groups[2].Value);
         return (questionId, answerId);
     }
 }

@@ -1,5 +1,6 @@
 ﻿using idcc.Context;
 using idcc.Models;
+using idcc.Models.AdminDto;
 using idcc.Models.Dto;
 using idcc.Repository.Interfaces;
 using Microsoft.EntityFrameworkCore;
@@ -57,5 +58,49 @@ public class QuestionRepository : IQuestionRepository
     {
         var answers = await _context.Answers.Where(_ => _.Question == question).ToListAsync();
         return answers;
+    }
+
+    public async Task<List<string>> CreateAsync(List<QuestionAdminDto> questions)
+    {
+        var notAdded = new List<string>();
+        foreach (var question in questions)
+        {
+            var topic = await _context.Topics.Where(_ => _.Name == question.Topic).SingleOrDefaultAsync();
+            if (topic is null)
+            {
+                notAdded.Add(question.Content);
+                break;
+            }
+
+            try
+            {
+                var q = await _context.Questions.AddAsync(new Question()
+                {
+                    Topic = topic,
+                    Content = question.Content,
+                    Weight = question.Weight,
+                    IsMultipleChoice = question.IsMultipleChoice
+                });
+
+
+                foreach (var answer in question.Answers)
+                {
+                    await _context.Answers.AddAsync(new Answer()
+                    {
+                        Question = q.Entity,
+                        Content = answer.Content,
+                        IsCorrect = answer.IsCorrect
+                    });
+                }
+
+                await _context.SaveChangesAsync();
+            }
+            catch (Exception ex)
+            {
+                notAdded.Add(question.Content);
+            }
+        }
+
+        return notAdded;
     }
 }

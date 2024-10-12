@@ -1,4 +1,6 @@
-﻿using idcc.Models;
+﻿using idcc.Infrastructures;
+using idcc.Models;
+using idcc.Models.AdminDto;
 
 namespace idcc.Repository.Interfaces;
 
@@ -13,4 +15,6 @@ public interface IDataRepository
     Task<int> GetCountOrDefaultAsync(string code, int value);
 
     Task<(Grade? prev, Grade? next)> GetRelationAsync(Grade current);
+
+    Task<List<ISetting>> GetSettingsAsync(SettingType type);
 }

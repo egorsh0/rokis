@@ -80,7 +80,7 @@ public class IdccService : IIdccService
             }
         };
 
-        var dateInterval = questionTime - DateTime.Now;
+        var dateInterval =  DateTime.Now - questionTime;
         using var response = await _httpClient.PostAsJsonAsync($"http://{_settings.IdccApi}/api/v1/question/sendAnswers?sessionId={sessionId}&dateInterval={dateInterval}", answer);
         if (response.StatusCode == HttpStatusCode.BadRequest)
         {
