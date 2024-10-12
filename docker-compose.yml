@@ -1,0 +1,48 @@
+services:
+
+  idcc:
+    container_name: 'idcc_api'
+    image: 'idcc'
+    build:
+      context: .
+      dockerfile: idcc/Dockerfile
+    ports:
+      - "5000:5000"
+    depends_on:
+     - db
+    networks:
+      - idcc-network
+
+  idcc_bot:
+    container_name: 'idcc_bot'
+    image: 'idcc_bot'
+    build:
+      context: .
+      dockerfile: idcc.Bot/Dockerfile
+    ports:
+      - "6000:6000"
+    depends_on:
+      - idcc
+    networks:
+      - idcc-network
+        
+  db:
+    container_name: db_postgresql
+    image: postgres:latest
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: 787898
+      POSTGRES_DB: idcc
+    networks:
+      - idcc-network
+    volumes:
+      - db_data:/var/lib/postgresql/data
+      - ./idcc/InitDb/migration.sql:/docker-entrypoint-initdb.d/init.sql
+volumes:
+  db_data:
+    
+networks:
+  idcc-network:
+    driver: bridge
