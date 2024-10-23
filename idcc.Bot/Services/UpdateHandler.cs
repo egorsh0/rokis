@@ -1,4 +1,6 @@
 ﻿using System.Text.RegularExpressions;
+using idcc.Bot.Helpers;
+using idcc.Bot.Models;
 using Telegram.Bot;
 using Telegram.Bot.Exceptions;
 using Telegram.Bot.Polling;
@@ -117,10 +119,10 @@ public class UpdateHandler(ITelegramBotClient bot, IIdccService idccService, ILo
             return await bot.SendTextMessageAsync(msg.Chat, message, parseMode: ParseMode.Html, replyMarkup: new ReplyKeyboardRemove());
         }
 
-        var answers = question?.Answers;
+        var answers = ListHelpers.ShuffleArray(question?.Answers.ToArray());
         var callbackAnswerData = new List<InlineKeyboardButton[]>();
 
-        foreach (var answer in answers!)
+        foreach (var answer in answers)
         {
             var answerData = new[]
             {
