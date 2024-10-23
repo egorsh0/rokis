@@ -1,6 +1,4 @@
-﻿namespace idcc.Models.Dto;
-
-/// <summary>
+﻿/// <summary>
 /// Итоговый отчет.
 /// </summary>
 public record ReportDto

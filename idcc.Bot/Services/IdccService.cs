@@ -45,6 +45,19 @@ public class IdccService : IIdccService
         var question = await response.Content.ReadFromJsonAsync<QuestionDto>();
         return (question, null);
     }
+    
+    public async Task<(ReportDto?, string?)> GetReportAsync(int sessionId)
+    {
+        using var response = await _httpClient.GetAsync($"http://{_settings.IdccApi}/api/v1/report/generate?sessionId={sessionId}");
+        if (response.StatusCode == HttpStatusCode.BadRequest)
+        {
+            var error = await response.Content.ReadAsStringAsync();
+            return (null, error);
+        }
+
+        var report = await response.Content.ReadFromJsonAsync<ReportDto>();
+        return (report, null);
+    }
 
     public async Task<(UserFullDto? userFull, string? message)> CreateUserAsync(string username, string role)
     {

@@ -1,5 +1,6 @@
 ﻿using idcc.Application.Interfaces;
 using idcc.Infrastructures;
+using idcc.Infrastructures.Interfaces;
 using idcc.Repository.Interfaces;
 using Microsoft.OpenApi.Models;
 
@@ -11,7 +12,7 @@ public static class ReportEndpont
     {
         var reports = routes.MapGroup("/api/v1/report");
       
-        reports.MapGet("generate", async (int sessionId, ISessionRepository sessionRepository, IIdccReport idccReport) =>
+        reports.MapGet("generate", async (int sessionId, ISessionRepository sessionRepository, IGraphGenerate graphGenerate,  IIdccReport idccReport) =>
         {
             // Проверка на открытую сессию
             var session = await sessionRepository.GetSessionAsync(sessionId);
@@ -26,7 +27,17 @@ public static class ReportEndpont
             }
             
             var report = await idccReport.GenerateAsync(session);
-            return report is null ? Results.BadRequest() : Results.Ok(report);
+            if (report is null)
+            {
+                return Results.BadRequest();
+            }
+
+            if (report.FinalTopicDatas is not null)
+            {
+                var img = graphGenerate.Generate(report.FinalTopicDatas);
+                report.TopicReport = img;
+            }
+            return Results.Ok(report);
         }).WithOpenApi(x => new OpenApiOperation(x)
         {
             Summary = "Generate report",

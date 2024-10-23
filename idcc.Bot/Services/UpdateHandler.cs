@@ -51,6 +51,7 @@ public class UpdateHandler(ITelegramBotClient bot, IIdccService idccService, ILo
             "/start" => Start(msg),
             "/testing" => StartSession(msg),
             "/question" => GetQuestion(msg),
+            "/report" => GetReport(msg),
             _ => throw new ArgumentOutOfRangeException()
         });
         logger.LogInformation("The message was sent with id: {SentMessageId}", sentMessage.MessageId);
@@ -134,6 +135,35 @@ public class UpdateHandler(ITelegramBotClient bot, IIdccService idccService, ILo
             msg.Chat.Id,
             question?.Content!,
             replyMarkup: inlineKeyboard);
+    }
+    
+    async Task<Message> GetReport(Message msg)
+    {
+        if (_sessionId is null)
+        {
+            return await bot.SendTextMessageAsync(
+                msg.Chat.Id,
+                "Сессия не запущена",
+                parseMode: ParseMode.Html, replyMarkup: new ReplyKeyboardRemove());
+        }
+
+        var (report, message) = await idccService.GetReportAsync(_sessionId.Value);
+
+        if (message is not null)
+        {
+            return await bot.SendTextMessageAsync(msg.Chat, message, parseMode: ParseMode.Html, replyMarkup: new ReplyKeyboardRemove());
+        }
+
+        if (report?.TopicReport is not null)
+        {
+            Stream stream = new MemoryStream(report.TopicReport);
+            return await bot.SendPhotoAsync(msg.Chat.Id, new InputFileStream(stream));
+        }
+        
+        return await bot.SendTextMessageAsync(
+            msg.Chat.Id,
+            "Отчет сформирован",
+            parseMode: ParseMode.Html, replyMarkup: new ReplyKeyboardRemove());
     }
     
     // Process Inline Keyboard callback data

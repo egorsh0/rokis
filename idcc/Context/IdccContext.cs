@@ -5,6 +5,7 @@ namespace idcc.Context;
 
 public class IdccContext : DbContext
 {
+    /// <inheritdoc />
     public IdccContext(DbContextOptions<IdccContext> options) :
         base(options)
     {

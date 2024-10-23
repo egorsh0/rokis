@@ -7,6 +7,8 @@ public interface IIdccService
     Task<(SessionDto? session, string? message)> StartSessionAsync(int userId);
     
     Task<(QuestionDto? question, string? message)> GetQuestionAsync(int sessionId);
+
+    Task<(ReportDto? report, string? message)> GetReportAsync(int sessionId);
     
     Task<(UserFullDto? userFull, string? message)> CreateUserAsync(string username, string role);
     

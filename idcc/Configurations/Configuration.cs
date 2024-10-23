@@ -19,7 +19,7 @@ public static class Configuration
         builder.Services.AddControllers()
             .AddJsonOptions(options =>
                 options.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter()));
-        var connectionString = builder.Configuration.GetConnectionString("IdccDb");
+        var connectionString = builder.Configuration.GetConnectionString("idccDb");
         builder.Services.AddDbContext<IdccContext>(options =>
         {
             options.UseLazyLoadingProxies();
@@ -37,6 +37,8 @@ public static class Configuration
         builder.Services.AddScoped<IWeightCalculate, WeightCalculate>();
         builder.Services.AddScoped<IScoreCalculate, ScoreCalculate>();
         builder.Services.AddScoped<IGradeCalculate, GradeCalculate>();
+        
+        builder.Services.AddScoped<IGraphGenerate, GraphGenerate>();
 
         builder.Services.AddScoped<IIdccApplication, IdccApplication>();
         builder.Services.AddScoped<IIdccReport, IdccReport>();
@@ -53,14 +55,11 @@ public static class Configuration
 
     public static void RegisterMiddlewares(this WebApplication app)
     {
-        if (app.Environment.IsDevelopment())
+        app.UseSwagger();
+        app.UseSwaggerUI(c =>
         {
-            app.UseSwagger();
-            app.UseSwaggerUI(c =>
-            {
-                c.SwaggerEndpoint("/swagger/v1/swagger.json", "IDCC API V1");
-            });
-        }
+            c.SwaggerEndpoint("/swagger/v1/swagger.json", "IDCC API V1");
+        });
 
         app.UseHttpsRedirection();
     }
