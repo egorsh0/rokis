@@ -32,6 +32,7 @@ public static class Configuration
         builder.Services.AddScoped<ISessionRepository, SessionRepository>();
         builder.Services.AddScoped<IUserAnswerRepository, UserAnswerRepository>();
         builder.Services.AddScoped<IDataRepository, DataRepository>();
+        builder.Services.AddScoped<ISettingsRepository, SettingsRepository>();
 
         builder.Services.AddScoped<ITimeCalculate, TimeCalculate>();
         builder.Services.AddScoped<IWeightCalculate, WeightCalculate>();
