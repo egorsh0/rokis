@@ -170,8 +170,6 @@ CREATE INDEX "IX_UserAnswers_QuestionId" ON "UserAnswers" ("QuestionId");
 
 CREATE INDEX "IX_UserAnswers_SessionId" ON "UserAnswers" ("SessionId");
 
-CREATE INDEX "IX_Users_RoleId" ON "Users" ("RoleId");
-
 CREATE INDEX "IX_UserTopics_GradeId" ON "UserTopics" ("GradeId");
 
 CREATE INDEX "IX_UserTopics_SessionId" ON "UserTopics" ("SessionId");

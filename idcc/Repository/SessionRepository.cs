@@ -90,6 +90,7 @@ public class SessionRepository : ISessionRepository
             questionCount = settingQuestion.Value;
         }
 
+        bool firstActual = true;
         foreach (var topic in topics)
         {
             var userTopic = new UserTopic()
@@ -100,9 +101,10 @@ public class SessionRepository : ISessionRepository
                 Grade = middleGrade,
                 IsFinished = false,
                 WasPrevious = false,
-                Actual = false,
+                Actual = firstActual,
                 Count = questionCount
             };
+            firstActual = false;
             _context.UserTopics.Add(userTopic);
         }
     }
