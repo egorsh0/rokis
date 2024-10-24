@@ -45,12 +45,11 @@ public class DataRepository : IDataRepository
     
     public async Task<(double, Grade)> GetGradeLevelAsync(double score)
     {
-        var gradeLevel = await _context.GradeLevels.Select(_ => _.Level).ToListAsync();
-        var value = gradeLevel.OrderBy(x => x)
-            .ThenBy(x => Math.Abs(x - score))
-            .ElementAt(0);
+        var gradeLevel = await _context.GradeLevels.Select(l => l.Level).ToListAsync();
+        var value = gradeLevel.MinBy(n => Math.Abs(n - score));
         
-        var grade = await _context.GradeLevels.Where(_ => _.Level.Equals(value)).FirstAsync();
+        var grade = await _context.GradeLevels.Where(_ => _.Level.Equals(value)).Include(gradeLevel => gradeLevel.Grade)
+            .FirstAsync();
         return (value, grade.Grade);
     }
 
