@@ -28,6 +28,18 @@ public class IdccService : IIdccService
         return (session, null);
     }
 
+    public async Task<ErrorMessage?> StopSessionAsync(string username)
+    {
+        using var response = await _httpClient.PostAsync($"http://{_settings.IdccApi}/api/v1/session/stop?username={username}", new StringContent(""));
+
+        if (!response.IsSuccessStatusCode)
+        {
+            var error = await response.Content.ReadFromJsonAsync<ErrorMessage>();
+            return error;
+        }
+        return null;
+    }
+
     public async Task<(QuestionDto?, ErrorMessage?, bool)> GetQuestionAsync(string username)
     {
         using var response = await _httpClient.GetAsync($"http://{_settings.IdccApi}/api/v1/question?username={username}");

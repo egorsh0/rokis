@@ -98,6 +98,7 @@ public class UpdateHandler(ITelegramBotClient bot, IIdccService idccService, ILo
 
         if (question is null && next == false)
         {
+            await idccService.StopSessionAsync(msg.From.Username);
             return await bot.SendTextMessageAsync(msg.Chat, "Тестирование завершено", parseMode: ParseMode.Html,
                 replyMarkup: new ReplyKeyboardRemove());
         }
@@ -166,6 +167,8 @@ public class UpdateHandler(ITelegramBotClient bot, IIdccService idccService, ILo
                 }
                 
                 logger.LogInformation("Пользователь создан!");
+                
+                await idccService.StopSessionAsync(user.Username!);
                 
                 var (_, error) = await idccService.StartSessionAsync(user.Username!, "QA");
                 if (error is not null)

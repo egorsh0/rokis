@@ -27,7 +27,7 @@ public static class ReportEndpont
             {
                 if (!string.IsNullOrWhiteSpace(username))
                 {
-                    session = await sessionRepository.GetSessionAsync(username);
+                    session = await sessionRepository.GetFinishSessionAsync(username);
                 }
             }
             if (session is null)

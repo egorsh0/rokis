@@ -39,6 +39,12 @@ public static class SessionEndpoint
                     Message = ErrorMessages.USER_IS_NULL
                 });
             }
+
+            var sessions = await sessionRepository.GetSessionsAsync(user);
+            foreach (var ses in sessions)
+            {
+                await sessionRepository.EndSessionAsync(ses.Id, true);
+            }
             
             var session = await sessionRepository.StartSessionAsync(user, role);
             return Results.Ok(session);
@@ -49,9 +55,9 @@ public static class SessionEndpoint
             Tags = new List<OpenApiTag> { new() { Name = "Session" } }
         });
 
-        sessions.MapPost("/stop", async (int sessioId, bool faster, ISessionRepository sessionRepository) =>
+        sessions.MapPost("/stop", async (int sessionId, bool faster, ISessionRepository sessionRepository) =>
         {
-            var session = await sessionRepository.GetSessionAsync(sessioId);
+            var session = await sessionRepository.GetSessionAsync(sessionId);
             if (session is null)
             {
                 return Results.BadRequest(new ErrorMessage()
@@ -67,7 +73,31 @@ public static class SessionEndpoint
                     Message = ErrorMessages.SESSION_IS_FINISHED
                 });
             }
-            var isFinished = await sessionRepository.EndSessionAsync(sessioId, faster);
+            var isFinished = await sessionRepository.EndSessionAsync(sessionId, faster);
+            return isFinished ? Results.Ok() : Results.BadRequest(new ErrorMessage()
+            {
+                Message = ErrorMessages.SESSION_IS_NOT_FINISHED
+            });
+        }).WithOpenApi(x => new OpenApiOperation(x)
+        {
+            Summary = "Stop test session",
+            Description = "Returns fact about stop session.",
+            Tags = new List<OpenApiTag> { new() { Name = "Session" } }
+        });
+        
+        sessions.MapPost("/stop", async (string username, ISessionRepository sessionRepository) =>
+        {
+            var session = await sessionRepository.GetActualSessionAsync(username);
+            if (session is null)
+            {
+                return Results.Ok();
+            }
+            
+            if (session.EndTime is not null)
+            {
+                return Results.Ok();
+            }
+            var isFinished = await sessionRepository.EndSessionAsync(session.Id, false);
             return isFinished ? Results.Ok() : Results.BadRequest(new ErrorMessage()
             {
                 Message = ErrorMessages.SESSION_IS_NOT_FINISHED

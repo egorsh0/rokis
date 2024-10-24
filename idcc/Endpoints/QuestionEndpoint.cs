@@ -25,7 +25,7 @@ public static class QuestionEndpoint
             {
                 if (!string.IsNullOrWhiteSpace(username))
                 {
-                    session = await sessionRepository.GetSessionAsync(username);
+                    session = await sessionRepository.GetActualSessionAsync(username);
                 }
             }
             if (session is null)
@@ -92,7 +92,7 @@ public static class QuestionEndpoint
             {
                 if (!string.IsNullOrWhiteSpace(username))
                 {
-                    session = await sessionRepository.GetSessionAsync(username);
+                    session = await sessionRepository.GetActualSessionAsync(username);
                 }
             }
             if (session is null)
