@@ -13,6 +13,16 @@ public static class UserEndpoint
       
         users.MapPost("", async (UserDto userDto, IUserRepository userRepository) =>
         {
+            var usr = await userRepository.GetUserByNameAsync(userDto.UserName);
+
+            if (usr is not null)
+            {
+                return Results.BadRequest(new ErrorMessage()
+                {
+                    Message = "Пользователь уже зарегистрирован"
+                });
+            }
+            
             var user = new User()
             {
                 UserName = userDto.UserName,
