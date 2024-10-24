@@ -1,5 +1,5 @@
 ﻿FROM mcr.microsoft.com/dotnet/aspnet:8.0 AS base
-RUN apt-get update && apt-get install -y apt-utils libgdiplus libc6-dev
+RUN apt-get update && apt-get install -y apt-utils libgdiplus libc6-dev libfontconfig1
 WORKDIR /app
 
 FROM mcr.microsoft.com/dotnet/sdk:8.0 AS build
