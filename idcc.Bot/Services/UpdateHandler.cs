@@ -150,7 +150,7 @@ public class UpdateHandler(ITelegramBotClient bot, IIdccService idccService, ILo
         
         return await bot.SendTextMessageAsync(
             msg.Chat.Id,
-            "Отчет сформирован",
+            $@"Отчет сформирован. Ваш балл: {report.FinalScoreDto.Score}. Ваш уровень: {report.FinalScoreDto.Grade}",
             parseMode: ParseMode.Html, replyMarkup: new ReplyKeyboardRemove());
     }
     

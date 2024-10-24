@@ -14,7 +14,7 @@ public static class ReportEndpont
     {
         var reports = routes.MapGroup("/api/v1/report");
       
-        reports.MapGet("generate", async (int? sessionId, string username, ISessionRepository sessionRepository, IGraphGenerate graphGenerate,  IIdccReport idccReport) =>
+        reports.MapGet("generate", async (int? sessionId, string? username, bool? full, ISessionRepository sessionRepository, IGraphGenerate graphGenerate,  IIdccReport idccReport) =>
         {
             // Проверка на открытую сессию
             Session? session= null;
@@ -38,7 +38,7 @@ public static class ReportEndpont
                 });
             }
             
-            if (session.EndTime is not null && session.Score > 0)
+            if (session.EndTime is not null && session.Score > 0 && !full.HasValue)
             {
                 return Results.BadRequest(new ErrorMessage()
                 {
