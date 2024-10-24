@@ -1,5 +1,6 @@
 ﻿using idcc.Application.Interfaces;
 using idcc.Infrastructures;
+using idcc.Models;
 using idcc.Models.Dto;
 using idcc.Repository.Interfaces;
 using Microsoft.OpenApi.Models;
@@ -12,18 +13,35 @@ public static class QuestionEndpoint
     {
         var questions = routes.MapGroup("/api/v1/question");
       
-        questions.MapGet("/{sessionId}", async (int sessionId, IUserTopicRepository userTopicRepository, IQuestionRepository questionRepository, ISessionRepository sessionRepository) =>
+        questions.MapGet("/{sessionId}", async (int? sessionId, string username, IUserTopicRepository userTopicRepository, IQuestionRepository questionRepository, ISessionRepository sessionRepository) =>
         {
             // Проверка на открытую сессию
-            var session = await sessionRepository.GetSessionAsync(sessionId);
+            Session? session= null;
+            if (sessionId.HasValue)
+            {
+                session = await sessionRepository.GetSessionAsync(sessionId.Value);
+            }
+            else
+            {
+                if (!string.IsNullOrWhiteSpace(username))
+                {
+                    session = await sessionRepository.GetSessionAsync(username);
+                }
+            }
             if (session is null)
             {
-                return Results.BadRequest(ErrorMessage.SESSION_IS_NOT_EXIST);
+                return Results.BadRequest(new ErrorMessage()
+                {
+                    Message = ErrorMessages.SESSION_IS_NOT_EXIST
+                });
             }
             
             if (session.EndTime is not null)
             {
-                return Results.BadRequest(ErrorMessage.SESSION_IS_FINISHED);
+                return Results.BadRequest(new ErrorMessage()
+                {
+                    Message = ErrorMessages.SESSION_IS_FINISHED
+                });
             }
             
             // Проверка на открытые темы
@@ -37,7 +55,10 @@ public static class QuestionEndpoint
             var userTopic = await userTopicRepository.GetRandomTopicAsync(session);
             if (userTopic is null)
             {
-                return Results.BadRequest(ErrorMessage.GET_RANDOM_TOPIC);
+                return Results.BadRequest(new ErrorMessage()
+                {
+                    Message = ErrorMessages.GET_RANDOM_TOPIC
+                });
             }
                 
             var question = await questionRepository.GetQuestionAsync(userTopic);
@@ -57,32 +78,54 @@ public static class QuestionEndpoint
             Tags = new List<OpenApiTag> { new() { Name = "Question" } }
         });
         
-        questions.MapPost("/sendAnswers", async (int sessionId, TimeSpan dateInterval, QuestionShortDto question,
-            IUserRepository userRepository,
+        questions.MapPost("/answers", async (int? sessionId, string username, TimeSpan dateInterval, QuestionShortDto question,
             ISessionRepository sessionRepository,
             IIdccApplication idccApplication
         ) =>
         {
-            var session = await sessionRepository.GetSessionAsync(sessionId);
+            Session? session= null;
+            if (sessionId.HasValue)
+            {
+                session = await sessionRepository.GetSessionAsync(sessionId.Value);
+            }
+            else
+            {
+                if (!string.IsNullOrWhiteSpace(username))
+                {
+                    session = await sessionRepository.GetSessionAsync(username);
+                }
+            }
             if (session is null)
             {
-                return Results.BadRequest(ErrorMessage.SESSION_IS_NOT_EXIST);
+                return Results.BadRequest(new ErrorMessage()
+                {
+                    Message = ErrorMessages.SESSION_IS_NOT_EXIST
+                });
             }
             
             if (session.EndTime is not null)
             {
-                return Results.BadRequest(ErrorMessage.SESSION_IS_FINISHED);
+                return Results.BadRequest(new ErrorMessage()
+                {
+                    Message = ErrorMessages.SESSION_IS_FINISHED
+                });
             }
             // Посчитать и сохранить Score за ответ
             var result = await idccApplication.CalculateScoreAsync(session, Convert.ToInt32(dateInterval.TotalSeconds), question.Id,
-                question.Answers.Select(_ => _.Id).ToList());
+                question.Answers.Select(d => d.Id).ToList());
             if (result is not null)
             {
-                return Results.BadRequest(result);
+                return Results.BadRequest(new ErrorMessage()
+                {
+                    Message = result
+                });
             }
             // Пересчитать вес текущего топика
             result = await idccApplication.CalculateTopicWeightAsync(session);
-            return result is not null ? Results.BadRequest(result) : Results.Ok();
+            return result is not null ? Results.BadRequest(new ErrorMessage()
+            {
+                Message = result
+            }) : Results.Ok();
         }).WithOpenApi(x => new OpenApiOperation(x)
         {
             Summary = "Send answers",

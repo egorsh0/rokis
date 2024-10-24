@@ -4,13 +4,14 @@ namespace idcc.Bot.Services;
 
 public interface IIdccService
 {
-    Task<(SessionDto? session, string? message)> StartSessionAsync(int userId);
+        
+    Task<(UserFullDto? userFull, ErrorMessage? message)> CreateUserAsync(string username);
     
-    Task<(QuestionDto? question, string? message)> GetQuestionAsync(int sessionId);
-
-    Task<(ReportDto? report, string? message)> GetReportAsync(int sessionId);
+    Task<(SessionDto? session, ErrorMessage? message)> StartSessionAsync(string username, string role);
     
-    Task<(UserFullDto? userFull, string? message)> CreateUserAsync(string username, string role);
+    Task<(QuestionDto? question, ErrorMessage? message, bool next)> GetQuestionAsync(string username);
     
-    Task<string?> SendAnswerAsync(int sessionId, int questionId, int answerId, DateTime questionTime);
+    Task<ErrorMessage?> SendAnswerAsync(string username, int questionId, int answerId, DateTime questionTime);
+    
+    Task<(ReportDto? report, ErrorMessage? message)> GetReportAsync(string username);
 }

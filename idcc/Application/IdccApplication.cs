@@ -49,7 +49,7 @@ public class IdccApplication : IIdccApplication
         var question = await _questionRepository.GetQuestionAsync(questionId);
         if (question is null)
         {
-            return ErrorMessage.QUESTION_IS_NULL;
+            return ErrorMessages.QUESTION_IS_NULL;
         }
         
         _weight = question.Weight;
@@ -67,7 +67,7 @@ public class IdccApplication : IIdccApplication
         
         if (!question.IsMultipleChoice && answerIds.Count > 1)
         {
-            return ErrorMessage.QUESTION_IS_NOT_MULTIPLY;
+            return ErrorMessages.QUESTION_IS_NOT_MULTIPLY;
         }
         
         // Посчитать коэффицент времени K
@@ -75,13 +75,13 @@ public class IdccApplication : IIdccApplication
         var actualTopic = await _userTopicRepository.GetActualTopicAsync(session);
         if (actualTopic is null)
         {
-            return ErrorMessage.ACTUAL_TOPIC_IS_NULL;
+            return ErrorMessages.ACTUAL_TOPIC_IS_NULL;
         }
 
         var times = await _dataRepository.GetGradeTimeInfoAsync(actualTopic.Grade.Id);
         if (times is null)
         {
-            return ErrorMessage.GRADE_TIMES_IS_NULL(actualTopic.Grade.Name);
+            return ErrorMessages.GRADE_TIMES_IS_NULL(actualTopic.Grade.Name);
         }
 
         var k = _timeCalculate.K(interval, times.Value.average, times.Value.min, times.Value.max);
@@ -89,9 +89,9 @@ public class IdccApplication : IIdccApplication
         // Посчитать и сохранить Score за ответ
 
         var answers = await _questionRepository.GetAnswersAsync(question);
-        var answeredCount = (from userAnswerId in answerIds let ans = answers where ans.Any(_ => _.Id == userAnswerId && _.IsCorrect) select userAnswerId).Count();
+        var answeredCount = (from userAnswerId in answerIds let ans = answers where ans.Any(a => a.Id == userAnswerId && a.IsCorrect) select userAnswerId).Count();
 
-        var totalCount = answers.Count(_ => _.IsCorrect);
+        var totalCount = answers.Count(a => a.IsCorrect);
         
         var score = _scoreCalculate.GetScore(_weight, k, answeredCount, totalCount);
         _isCorrectAnswer = score > 0;
@@ -108,13 +108,13 @@ public class IdccApplication : IIdccApplication
         var actualTopic = await _userTopicRepository.GetActualTopicAsync(session);
         if (actualTopic is null)
         {
-            return ErrorMessage.ACTUAL_TOPIC_IS_NULL;
+            return ErrorMessages.ACTUAL_TOPIC_IS_NULL;
         }
         
         var gradeWeights = await _dataRepository.GetGradeWeightInfoAsync(actualTopic.Grade.Id);
         if (gradeWeights is null)
         {
-            return ErrorMessage.GRADE_WEIGHT_IS_NULL(actualTopic.Grade.Name);
+            return ErrorMessages.GRADE_WEIGHT_IS_NULL(actualTopic.Grade.Name);
         }
 
         var gainWeightPersent = await _dataRepository.GetPercentOrDefaultAsync("GainWeight", 0.2);
@@ -161,7 +161,7 @@ public class IdccApplication : IIdccApplication
         var weight = await _dataRepository.GetGradeWeightInfoAsync(grade.Id);
         if (weight is null)
         {
-            return ErrorMessage.GRADE_WEIGHT_IS_NULL(grade.Name);
+            return ErrorMessages.GRADE_WEIGHT_IS_NULL(grade.Name);
         }
         var raiseLevel = await _dataRepository.GetPercentOrDefaultAsync("RaiseLevel", 0.3);
 

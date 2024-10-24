@@ -12,4 +12,5 @@ public class Session
     public DateTime StartTime { get; set; }
     public DateTime? EndTime { get; set; }
     public double Score { get; set; }
+    public virtual Role Role { get; set; }
 }

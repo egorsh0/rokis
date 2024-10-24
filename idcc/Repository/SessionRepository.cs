@@ -14,14 +14,15 @@ public class SessionRepository : ISessionRepository
         _context = context;
     }
     
-    public async Task<Session> StartSessionAsync(User user)
+    public async Task<Session> StartSessionAsync(User user, Role role)
     {
         var session = new Session()
         {
             User = user,
             Score = 0,
             StartTime = DateTime.Now,
-            EndTime = null
+            EndTime = null,
+            Role = role
         };
         _context.Sessions.Add(session);
 
@@ -31,7 +32,7 @@ public class SessionRepository : ISessionRepository
         return session;
     }
 
-    public async Task<bool> EndSessionAsync(int id)
+    public async Task<bool> EndSessionAsync(int id, bool faster)
     {
         var session = await _context.Sessions.FindAsync(id);
         if (session is null)
@@ -39,12 +40,19 @@ public class SessionRepository : ISessionRepository
             return false;
         }
         session.EndTime = DateTime.Now;
-
-        var userTopics = await _context.UserTopics.Where(_ => _.Session == session && _.IsFinished == false).ToListAsync();
-        foreach (var userTopic in userTopics)
+        if (faster)
         {
-            userTopic.IsFinished = true;
+            session.Score = -1;
         }
+        else
+        {
+            var userTopics = await _context.UserTopics.Where(t => t.Session == session && t.IsFinished == false).ToListAsync();
+            foreach (var userTopic in userTopics)
+            {
+                userTopic.IsFinished = true;
+            }
+        }
+        
         await _context.SaveChangesAsync();
         return true;
     }
@@ -54,12 +62,27 @@ public class SessionRepository : ISessionRepository
         return await _context.Sessions.FindAsync(id);
     }
 
+    public async Task<Session?> GetSessionAsync(string name)
+    {
+        return await _context.Sessions.SingleOrDefaultAsync(s => s.User.UserName == name);
+    }
+
+    public async Task SessionScoreAsync(int id, double score)
+    {
+        var session = await _context.Sessions.FindAsync(id);
+        if (session is not null)
+        {
+            session.Score = score;
+        }
+        await _context.SaveChangesAsync();
+    }
+
     private async Task CreateSessionUserTopics(Session session)
     {
-        var middleGrade = _context.Grades.Single(_ => _.Code == "Middle");
-        var weight = _context.Weights.Single(_ => _.Grade == middleGrade);
-        var topics = _context.Topics.Where(_ => _.Role == session.User.Role);
-        var settingQuestion = await _context.Counts.FirstOrDefaultAsync(_ => _.Code == "Question");
+        var middleGrade = _context.Grades.Single(g => g.Code == "Middle");
+        var weight = _context.Weights.Single(w => w.Grade == middleGrade);
+        var topics = _context.Topics.Where(t => t.Role == session.Role);
+        var settingQuestion = await _context.Counts.FirstOrDefaultAsync(c => c.Code == "Question");
 
         var questionCount = 10;
         if (settingQuestion is not null)

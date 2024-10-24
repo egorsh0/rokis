@@ -1,5 +1,6 @@
 ﻿using idcc.Infrastructures;
 using idcc.Models.AdminDto;
+using idcc.Models.Dto;
 using idcc.Repository.Interfaces;
 using Microsoft.OpenApi.Models;
 
@@ -16,7 +17,10 @@ public static class QuestionAdminEndpoint
         {
             if (!questions.Any())
             {
-                return Results.BadRequest(ErrorMessage.QUESTIONS_IS_EMPTY);
+                return Results.BadRequest(new ErrorMessage
+                {
+                    Message = ErrorMessages.QUESTIONS_IS_EMPTY
+                });
             }
             var notAddedQuestions = await questionRepository.CreateAsync(questions);
 

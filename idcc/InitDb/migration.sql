@@ -87,10 +87,8 @@ CREATE TABLE "Users" (
     "Id" serial NOT NULL,
     "UserName" text NOT NULL,
     "PasswordHash" text NOT NULL,
-    "RoleId" integer NOT NULL,
     "RegistrationDate" timestamp with time zone NOT NULL,
-    CONSTRAINT "PK_Users" PRIMARY KEY ("Id"),
-    CONSTRAINT "FK_Users_Roles_RoleId" FOREIGN KEY ("RoleId") REFERENCES "Roles" ("Id") ON DELETE CASCADE
+    CONSTRAINT "PK_Users" PRIMARY KEY ("Id")
 );
 
 CREATE TABLE "Questions" (
@@ -109,8 +107,10 @@ CREATE TABLE "Sessions" (
     "StartTime" timestamp with time zone NOT NULL,
     "EndTime" timestamp with time zone,
     "Score" double precision NOT NULL,
+    "RoleId" integer NOT NULL,
     CONSTRAINT "PK_Sessions" PRIMARY KEY ("Id"),
-    CONSTRAINT "FK_Sessions_Users_UserId" FOREIGN KEY ("UserId") REFERENCES "Users" ("Id") ON DELETE CASCADE
+    CONSTRAINT "FK_Sessions_Users_UserId" FOREIGN KEY ("UserId") REFERENCES "Users" ("Id") ON DELETE CASCADE,
+    CONSTRAINT "FK_Sessions_Roles_RoleId" FOREIGN KEY ("RoleId") REFERENCES "Roles" ("Id") ON DELETE CASCADE
 );
 
 CREATE TABLE "Answers" (

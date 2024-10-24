@@ -13,15 +13,8 @@ public static class UserEndpoint
       
         users.MapPost("", async (UserDto userDto, IUserRepository userRepository) =>
         {
-            var role = await userRepository.GetRoleAsync(userDto.Role.Code);
-            if (role is null)
-            {
-                return Results.BadRequest($"Role with code {userDto.Role.Code} not found");
-            }
-
             var user = new User()
             {
-                Role = role,
                 UserName = userDto.UserName,
                 PasswordHash = userDto.PasswordHash,
                 RegistrationDate = DateTime.Now

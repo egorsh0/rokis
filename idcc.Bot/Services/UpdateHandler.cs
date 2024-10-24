@@ -12,9 +12,6 @@ namespace idcc.Bot.Services;
 
 public class UpdateHandler(ITelegramBotClient bot, IIdccService idccService, ILogger<UpdateHandler> logger) : IUpdateHandler
 {
-    private int? _userId = null;
-    private int? _sessionId = null;
-
     private DateTime _questionTime = default!;
 
     private readonly string _pattern = @"question\((.+),answer:(.+)\)";
@@ -52,7 +49,6 @@ public class UpdateHandler(ITelegramBotClient bot, IIdccService idccService, ILo
         {
             "/start" => Start(msg),
             "/testing" => StartSession(msg),
-            "/question" => GetQuestion(msg),
             "/report" => GetReport(msg),
             _ => throw new ArgumentOutOfRangeException()
         });
@@ -62,8 +58,11 @@ public class UpdateHandler(ITelegramBotClient bot, IIdccService idccService, ILo
     async Task<Message> Start(Message msg)
     {
         logger.LogInformation("Create user");
-        await bot.SendTextMessageAsync(msg.Chat, "Добро пожаловать на тестирование своих навыков.", parseMode: ParseMode.Html, replyMarkup: new ReplyKeyboardRemove());
-        
+        return await bot.SendTextMessageAsync(msg.Chat, "Добро пожаловать на тестирование своих навыков.", parseMode: ParseMode.Html, replyMarkup: new ReplyKeyboardRemove());
+    }
+    
+    async Task<Message> StartSession(Message msg)
+    {
         var inlineKeyboard = new InlineKeyboardMarkup(
             new List<InlineKeyboardButton[]>
             {
@@ -79,46 +78,30 @@ public class UpdateHandler(ITelegramBotClient bot, IIdccService idccService, ILo
             replyMarkup: inlineKeyboard); // Все клавиатуры передаются в параметр replyMarkup
     }
     
-    async Task<Message> StartSession(Message msg)
-    {
-        if (_userId is null)
-        {
-            return await bot.SendTextMessageAsync(
-                msg.Chat.Id,
-                "Вы не зарегистрированы",
-                parseMode: ParseMode.Html, replyMarkup: new ReplyKeyboardRemove());
-        }
-        
-        var (session, error) = await idccService.StartSessionAsync(_userId.Value);
-        if (error is not null)
-        {
-            return await bot.SendTextMessageAsync(msg.Chat, error, parseMode: ParseMode.Html, replyMarkup: new ReplyKeyboardRemove());
-        }
-        
-        _sessionId = session!.Id;
-        return await bot.SendTextMessageAsync(
-            msg.Chat.Id,
-            "Сессия запущена",
-            parseMode: ParseMode.Html, replyMarkup: new ReplyKeyboardRemove());
-    }
-    
     async Task<Message> GetQuestion(Message msg)
     {
-        if (_sessionId is null)
+        bool next;
+        QuestionDto question;
+        do
         {
-            return await bot.SendTextMessageAsync(
-                msg.Chat.Id,
-                "Сессия не запущена",
-                parseMode: ParseMode.Html, replyMarkup: new ReplyKeyboardRemove());
-        }
+            (question, var message, next) = await idccService.GetQuestionAsync(msg.From?.Username!);
 
-        var (question, message) = await idccService.GetQuestionAsync(_sessionId.Value);
+            if (message is not null)
+            {
+                var mes = await bot.SendTextMessageAsync(msg.Chat, message.Message, parseMode: ParseMode.Html,
+                    replyMarkup: new ReplyKeyboardRemove());
+                Thread.Sleep(5000);
+                await bot.DeleteMessageAsync(chatId: msg.Chat!, messageId: mes.MessageId);
+                next = true;
+            }
+        } while (!next);
 
-        if (message is not null)
+        if (question is null && next == false)
         {
-            return await bot.SendTextMessageAsync(msg.Chat, message, parseMode: ParseMode.Html, replyMarkup: new ReplyKeyboardRemove());
+            return await bot.SendTextMessageAsync(msg.Chat, "Тестирование завершено", parseMode: ParseMode.Html,
+                replyMarkup: new ReplyKeyboardRemove());
         }
-
+        
         var answers = ListHelpers.ShuffleArray(question?.Answers.ToArray());
         var callbackAnswerData = new List<InlineKeyboardButton[]>();
 
@@ -141,19 +124,11 @@ public class UpdateHandler(ITelegramBotClient bot, IIdccService idccService, ILo
     
     async Task<Message> GetReport(Message msg)
     {
-        if (_sessionId is null)
-        {
-            return await bot.SendTextMessageAsync(
-                msg.Chat.Id,
-                "Сессия не запущена",
-                parseMode: ParseMode.Html, replyMarkup: new ReplyKeyboardRemove());
-        }
-
-        var (report, message) = await idccService.GetReportAsync(_sessionId.Value);
+        var (report, message) = await idccService.GetReportAsync(msg.From?.Username!);
 
         if (message is not null)
         {
-            return await bot.SendTextMessageAsync(msg.Chat, message, parseMode: ParseMode.Html, replyMarkup: new ReplyKeyboardRemove());
+            return await bot.SendTextMessageAsync(msg.Chat, message.Message, parseMode: ParseMode.Html, replyMarkup: new ReplyKeyboardRemove());
         }
 
         if (report?.TopicReport is not null)
@@ -169,7 +144,7 @@ public class UpdateHandler(ITelegramBotClient bot, IIdccService idccService, ILo
     }
     
     // Process Inline Keyboard callback data
-    private async Task OnCallbackQuery(CallbackQuery callbackQuery)
+    private async Task<Message> OnCallbackQuery(CallbackQuery callbackQuery)
     {
         logger.LogInformation("Received inline keyboard callback from: {CallbackQueryId}", callbackQuery.Id);
         var user = callbackQuery.From;
@@ -178,44 +153,55 @@ public class UpdateHandler(ITelegramBotClient bot, IIdccService idccService, ILo
 
         var data = callbackQuery.Data?.ToLower();
         var parseData = ParseCallbackData(callbackQuery.Data?.ToLower()!);
-        
+
         switch (data)
         {
             case "qa":
             {
-                var (userFullDto, message) = await idccService.CreateUserAsync(user.Username!, "QA");
+                var (_, message) = await idccService.CreateUserAsync(user.Username!);
                 if (message is not null)
                 {
-                    logger.LogInformation(message);
-                    await bot.SendTextMessageAsync(chat!, $"Ошибка при создании пользователя {message}");
+                    logger.LogInformation(message.Message);
+                    return await bot.SendTextMessageAsync(chat!, $"Ошибка при создании пользователя {message}");
                 }
-
-                _userId = userFullDto!.Id;
+                
                 logger.LogInformation("Пользователь создан!");
                 
-                await bot.SendTextMessageAsync(chat!, $"Пользователь зарегистрирован в системе от {userFullDto.RegistrationDate}");
-                return;
+                var (_, error) = await idccService.StartSessionAsync(user.Username!, "QA");
+                if (error is not null)
+                {
+                    return await bot.SendTextMessageAsync(chat!, error.Message, parseMode: ParseMode.Html, replyMarkup: new ReplyKeyboardRemove());
+                }
+                
+                await bot.SendTextMessageAsync(chat!, "Сессия запущена", parseMode: ParseMode.Html, replyMarkup: new ReplyKeyboardRemove());
+                return await GetQuestion(callbackQuery.Message);
             }
             default:
             {
                 if (parseData is not null)
                 {
-                    var sessionId = _sessionId!.Value;
-                    var message = await idccService.SendAnswerAsync(sessionId, parseData.Value.Item1, parseData.Value.Item2,
+                    var message = await idccService.SendAnswerAsync(user.Username!, parseData.Value.Item1, parseData.Value.Item2,
                         _questionTime);
 
                     if (message is not null)
                     {
-                        await bot.SendTextMessageAsync(chat!, message, parseMode: ParseMode.Html, replyMarkup: new ReplyKeyboardRemove());
-                        return;
+                        return await bot.SendTextMessageAsync(chat!, message.Message, parseMode: ParseMode.Html, replyMarkup: new ReplyKeyboardRemove());
                     }
                     
+                    Thread.Sleep(500);
+                    await bot.DeleteMessageAsync( chatId: chat!, messageId: callbackQuery.Message!.MessageId - 1);
+                    
                     logger.LogInformation("Ответ отправлен!");
-                    await bot.SendTextMessageAsync(chat!, "Ответ отправлен!");
+                    var tMessage = await bot.SendTextMessageAsync(chat!, "Ответ отправлен!");
+                    Thread.Sleep(1000);
+                    await bot.DeleteMessageAsync( chatId: chat!, messageId: tMessage.MessageId);
+                    
+                    return await GetQuestion(callbackQuery.Message);
                 }
                 break;
             }
         }
+        return await bot.SendTextMessageAsync(chat!, "Спасибо");
     }
     
     

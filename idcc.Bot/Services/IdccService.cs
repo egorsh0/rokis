@@ -14,13 +14,13 @@ public class IdccService : IIdccService
         _settings = settings;
         _httpClient = httpClient;
     }
-    public async Task<(SessionDto?, string?)> StartSessionAsync(int userId)
+    public async Task<(SessionDto?, ErrorMessage?)> StartSessionAsync(string username, string role)
     {
-        using var response = await _httpClient.PostAsync($"http://{_settings.IdccApi}/api/v1/session/start?userId={userId}", new StringContent(""));
+        using var response = await _httpClient.PostAsync($"http://{_settings.IdccApi}/api/v1/session/start?username={username}&roleCode={role}", new StringContent(""));
 
-        if (response.StatusCode == HttpStatusCode.NotFound)
+        if (!response.IsSuccessStatusCode)
         {
-            var error = await response.Content.ReadAsStringAsync();
+            var error = await response.Content.ReadFromJsonAsync<ErrorMessage>();
             return (null, error);
         }
 
@@ -28,30 +28,35 @@ public class IdccService : IIdccService
         return (session, null);
     }
 
-    public async Task<(QuestionDto?, string?)> GetQuestionAsync(int sessionId)
+    public async Task<(QuestionDto?, ErrorMessage?, bool)> GetQuestionAsync(string username)
     {
-        using var response = await _httpClient.GetAsync($"http://{_settings.IdccApi}/api/v1/question/{sessionId}");
-        if (response.StatusCode == HttpStatusCode.BadRequest)
+        using var response = await _httpClient.GetAsync($"http://{_settings.IdccApi}/api/v1/question?username={username}");
+        if (!response.IsSuccessStatusCode)
         {
-            var error = await response.Content.ReadAsStringAsync();
-            return (null, error);
+            var error = await response.Content.ReadFromJsonAsync<ErrorMessage>();
+            return (null, error, false);
         }
         
         if (response.StatusCode == HttpStatusCode.NoContent)
         {
-            return (null, "Тестирование завершено!");
+            return (null, null, false);
+        }
+        
+        if (response.StatusCode == HttpStatusCode.Accepted)
+        {
+            return (null, null, true);
         }
 
         var question = await response.Content.ReadFromJsonAsync<QuestionDto>();
-        return (question, null);
+        return (question, null, false);
     }
     
-    public async Task<(ReportDto?, string?)> GetReportAsync(int sessionId)
+    public async Task<(ReportDto?, ErrorMessage?)> GetReportAsync(string username)
     {
-        using var response = await _httpClient.GetAsync($"http://{_settings.IdccApi}/api/v1/report/generate?sessionId={sessionId}");
+        using var response = await _httpClient.GetAsync($"http://{_settings.IdccApi}/api/v1/report/generate?username={username}");
         if (response.StatusCode == HttpStatusCode.BadRequest)
         {
-            var error = await response.Content.ReadAsStringAsync();
+            var error = await response.Content.ReadFromJsonAsync<ErrorMessage>();
             return (null, error);
         }
 
@@ -59,19 +64,16 @@ public class IdccService : IIdccService
         return (report, null);
     }
 
-    public async Task<(UserFullDto? userFull, string? message)> CreateUserAsync(string username, string role)
+    public async Task<(UserFullDto? userFull, ErrorMessage? message)> CreateUserAsync(string username)
     {
         var newUser = new UserDto
         {
-            UserName = username, PasswordHash = $"PasswordHash{username}", Role = new RoleDto()
-            {
-                Code = role
-            }
+            UserName = username, PasswordHash = $"PasswordHash{username}"
         };
         using var response = await _httpClient.PostAsJsonAsync($"http://{_settings.IdccApi}/api/v1/user", newUser);
         if (response.StatusCode != HttpStatusCode.OK)
         {
-            var error = await response.Content.ReadAsStringAsync();
+            var error = await response.Content.ReadFromJsonAsync<ErrorMessage>();
             return (null, error);
         }
 
@@ -79,25 +81,25 @@ public class IdccService : IIdccService
         return (userFullDto, null);
     }
 
-    public async Task<string?> SendAnswerAsync(int sessionId, int questionId, int answerId, DateTime questionTime)
+    public async Task<ErrorMessage?> SendAnswerAsync(string username, int questionId, int answerId, DateTime questionTime)
     {
         var answer = new QuestionShortDto
         {
             Id = questionId,
-            Answers = new List<AnswerShortDto>()
-            {
+            Answers =
+            [
                 new()
                 {
                     Id = answerId
                 }
-            }
+            ]
         };
 
         var dateInterval =  DateTime.Now - questionTime;
-        using var response = await _httpClient.PostAsJsonAsync($"http://{_settings.IdccApi}/api/v1/question/sendAnswers?sessionId={sessionId}&dateInterval={dateInterval}", answer);
-        if (response.StatusCode == HttpStatusCode.BadRequest)
+        using var response = await _httpClient.PostAsJsonAsync($"http://{_settings.IdccApi}/api/v1/question/sendAnswers?username={username}&dateInterval={dateInterval}", answer);
+        if (!response.IsSuccessStatusCode)
         {
-            var error = await response.Content.ReadAsStringAsync();
+            var error = await response.Content.ReadFromJsonAsync<ErrorMessage>();
             
             return error;
         }
