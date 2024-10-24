@@ -14,7 +14,7 @@ public static class ReportEndpont
     {
         var reports = routes.MapGroup("/api/v1/report");
       
-        reports.MapGet("generate", async (int? sessionId, string? username, bool? full, ISessionRepository sessionRepository, IGraphGenerate graphGenerate,  IIdccReport idccReport) =>
+        reports.MapGet("generate", async (int? sessionId, string? username, bool? full, ISessionRepository sessionRepository, IDataRepository dataRepository, IGraphGenerate graphGenerate,  IIdccReport idccReport) =>
         {
             // Проверка на открытую сессию
             Session? session= null;
@@ -59,7 +59,8 @@ public static class ReportEndpont
 
             if (report.FinalTopicDatas is not null)
             {
-                var img = graphGenerate.Generate(report.FinalTopicDatas);
+                var resize = await dataRepository.GetPercentOrDefaultAsync("GraphSize", 25);
+                var img = graphGenerate.Generate(report.FinalTopicDatas, (float)resize);
                 report.TopicReport = img;
             }
             return Results.Ok(report);

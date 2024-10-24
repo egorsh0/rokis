@@ -11,7 +11,7 @@ public class GraphGenerate : IGraphGenerate
 
     private const float _fullCircle = 360f;
 
-    public byte[] Generate(List<FinalTopicData> topicDatas)
+    public byte[] Generate(List<FinalTopicData> topicDatas, float resize)
     {
         var N = topicDatas.Count;
         var centerX = _width / 2f;
@@ -44,7 +44,7 @@ public class GraphGenerate : IGraphGenerate
         {
             var startAngle = i * _fullCircle / N;
             var sweepAngle = _fullCircle / N;
-            var radius = maxRadius * (float)topicDatas[i].Score * 25;
+            var radius = maxRadius * (float)topicDatas[i].Score * resize;
 
             // Генерация случайного оттенка серого
             var color = new SKColor(128, (byte)random.Next(100, 256), (byte)random.Next(100, 256),

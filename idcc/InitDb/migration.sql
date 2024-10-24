@@ -204,6 +204,7 @@ INSERT INTO "Persents" ("Id", "Code", "Description", "Value") VALUES (1, 'GainWe
 INSERT INTO "Persents" ("Id", "Code", "Description", "Value") VALUES (2, 'LessWeight', 'Нижняя граница веса', 0.1);
 INSERT INTO "Persents" ("Id", "Code", "Description", "Value") VALUES (3, 'RaiseData', 'Процент повышения уровня', 0.2);
 INSERT INTO "Persents" ("Id", "Code", "Description", "Value") VALUES (4, 'RaiseLevel', 'Процент веса при повышении уровня', 0.3);
+INSERT INTO "Persents" ("Id", "Code", "Description", "Value") VALUES (5, 'GraphSize', 'Масштаб графиков', 25);
 
 /*  
 Конфигурация Roles 
