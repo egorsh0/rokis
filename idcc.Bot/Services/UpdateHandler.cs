@@ -59,7 +59,22 @@ public class UpdateHandler(ITelegramBotClient bot, IIdccService idccService, ILo
     async Task<Message> Start(Message msg)
     {
         logger.LogInformation("Create user");
-        return await bot.SendTextMessageAsync(msg.Chat, "Добро пожаловать на тестирование своих навыков.", parseMode: ParseMode.Html, replyMarkup: new ReplyKeyboardRemove());
+
+        var callbackAnswerData = new List<InlineKeyboardButton[]>()
+        {
+            new[]
+            {
+                InlineKeyboardButton.WithCallbackData("Начать тестирование", $"start_testing")
+            }
+        };
+            
+        var inlineKeyboard = new InlineKeyboardMarkup(callbackAnswerData);
+                  
+        _questionTime = DateTime.Now;
+        return await bot.SendTextMessageAsync(
+            msg.Chat.Id,
+            "Добро пожаловать на тестирование своих навыков.",
+            replyMarkup: inlineKeyboard);
     }
     
     async Task<Message> StartSession(Message msg)
@@ -109,8 +124,24 @@ public class UpdateHandler(ITelegramBotClient bot, IIdccService idccService, ILo
         if (question is null && next == false)
         {
             await idccService.StopSessionAsync(msg.Chat.Username);
-            return await bot.SendTextMessageAsync(msg.Chat, "Тестирование завершено", parseMode: ParseMode.Html,
+            await bot.SendTextMessageAsync(msg.Chat, "Тестирование завершено", parseMode: ParseMode.Html,
                 replyMarkup: new ReplyKeyboardRemove());
+            
+            var listButtor = new List<InlineKeyboardButton[]>()
+            {
+                new[]
+                {
+                    InlineKeyboardButton.WithCallbackData("Получить отчет", $"generate_report")
+                }
+            };
+            
+            var keyboard = new InlineKeyboardMarkup(listButtor);
+                  
+            _questionTime = DateTime.Now;
+            return await bot.SendTextMessageAsync(
+                msg.Chat.Id,
+                "Тестирование завершено.",
+                replyMarkup: keyboard);
         }
         
         var answers = ListHelpers.ShuffleArray(question?.Answers.ToArray());
@@ -194,6 +225,14 @@ public class UpdateHandler(ITelegramBotClient bot, IIdccService idccService, ILo
                 
                 await bot.SendTextMessageAsync(chat!, "Сессия запущена", parseMode: ParseMode.Html, replyMarkup: new ReplyKeyboardRemove());
                 return await GetQuestion(callbackQuery.Message);
+            }
+            case "start_testing":
+            {
+                return await StartSession(callbackQuery.Message);
+            }
+            case "generate_report":
+            {
+                return await GetReport(callbackQuery.Message);
             }
             default:
             {

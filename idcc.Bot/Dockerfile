@@ -1,4 +1,5 @@
 ﻿FROM mcr.microsoft.com/dotnet/aspnet:8.0 AS base
+RUN apt-get update && apt-get install -y apt-utils libgdiplus libc6-dev
 WORKDIR /app
 
 
