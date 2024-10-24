@@ -21,6 +21,7 @@
         </PackageReference>
         <PackageReference Include="Npgsql" Version="8.0.4" />
         <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="8.0.4" />
+        <PackageReference Include="SkiaSharp" Version="2.88.8" />
         <PackageReference Include="Swashbuckle.AspNetCore" Version="6.8.1" />
         <PackageReference Include="Swashbuckle.AspNetCore.Swagger" Version="6.8.1" />
         <PackageReference Include="Swashbuckle.AspNetCore.SwaggerGen" Version="6.8.1" />
