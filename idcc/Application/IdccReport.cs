@@ -14,20 +14,25 @@ public class IdccReport : IIdccReport
     private IUserAnswerRepository _userAnswerRepository;
     private IScoreCalculate _scoreCalculate;
 
+    private ILogger<IdccReport> _logger;
+
     public IdccReport(
         IDataRepository dataRepository,
         IUserTopicRepository userTopicRepository,
         IUserAnswerRepository userAnswerRepository,
-        IScoreCalculate scoreCalculate)
+        IScoreCalculate scoreCalculate,
+        ILogger<IdccReport> logger)
     {
         _dataRepository = dataRepository;
         _userTopicRepository = userTopicRepository;
         _userAnswerRepository = userAnswerRepository;
         _scoreCalculate = scoreCalculate;
+        _logger = logger;
     }
     
     public async Task<ReportDto?> GenerateAsync(Session session)
     {
+        _logger.LogInformation("Создание обьекта отчета");
         var report = new ReportDto
         {
             Name = session.User.UserName,
@@ -36,12 +41,17 @@ public class IdccReport : IIdccReport
             TestingTime = (session.StartTime - session.EndTime.Value)
         };
 
+        _logger.LogInformation("Генерация финального Score");
         var finalScoreDto = await CalculateFinalScoreAsync(session);
 
+        _logger.LogInformation($"Финальный score: {finalScoreDto}");
+        
         report.FinalScoreDto = finalScoreDto;
         
+        _logger.LogInformation("Генерация score для тем");
         var finalTopicDatas = await CalculateFinalTopicDataAsync(session);
 
+        _logger.LogInformation($"Финальный score для тем сгенерирован");
         report.FinalTopicDatas = finalTopicDatas;
         
         return report;
