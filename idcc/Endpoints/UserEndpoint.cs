@@ -38,5 +38,25 @@ public static class UserEndpoint
             Description = "Returns information about created user.",
             Tags = new List<OpenApiTag> { new() { Name = "User" } }
         });
+        
+        users.MapGet("", async (string username, IUserRepository userRepository) =>
+        {
+            var usr = await userRepository.GetUserByNameAsync(username);
+
+            if (usr is null)
+            {
+                return Results.BadRequest(new ErrorMessage()
+                {
+                    Message = "Пользователь не зарегистрирован"
+                });
+            }
+            
+            return Results.Ok();
+        }).WithOpenApi(x => new OpenApiOperation(x)
+        {
+            Summary = "Сreate a user account",
+            Description = "Returns information about created user.",
+            Tags = new List<OpenApiTag> { new() { Name = "User" } }
+        });
     }
 }

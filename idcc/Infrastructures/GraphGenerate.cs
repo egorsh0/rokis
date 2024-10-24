@@ -42,7 +42,7 @@ public class GraphGenerate : IGraphGenerate
             {
                 float startAngle = i * _fullCircle / N;
                 float sweepAngle = _fullCircle / N;
-                float radius = maxRadius * (float)topicDatas[i].Score * 100;
+                float radius = maxRadius * (float)topicDatas[i].Score * 15;
 
                 // Генерация случайного мягкого цвета
                 Color color = Color.FromArgb(128, random.Next(100, 256), random.Next(100, 256), random.Next(100, 256));

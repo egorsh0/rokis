@@ -4,7 +4,7 @@ namespace idcc.Bot.Services;
 
 public interface IIdccService
 {
-        
+    Task<ErrorMessage?> GetUserAsync(string username);
     Task<(UserFullDto? userFull, ErrorMessage? message)> CreateUserAsync(string username);
     
     Task<(SessionDto? session, ErrorMessage? message)> StartSessionAsync(string username, string role);

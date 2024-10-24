@@ -104,7 +104,7 @@ public class UpdateHandler(ITelegramBotClient bot, IIdccService idccService, ILo
                 await bot.DeleteMessageAsync(chatId: msg.Chat!, messageId: mes.MessageId);
                 next = true;
             }
-        } while (!next);
+        } while (next);
 
         if (question is null && next == false)
         {
@@ -169,15 +169,21 @@ public class UpdateHandler(ITelegramBotClient bot, IIdccService idccService, ILo
         {
             case "qa":
             {
-                var (_, message) = await idccService.CreateUserAsync(user.Username!);
-                if (message is not null)
+                var userError = await idccService.GetUserAsync(user.Username!);
+
+                if (userError is not null)
                 {
-                    logger.LogInformation(message.Message);
-                    return await bot.SendTextMessageAsync(chat!, $"Ошибка при создании пользователя {message}");
+                    var (_, message) = await idccService.CreateUserAsync(user.Username!);
+                    if (message is not null)
+                    {
+                        logger.LogInformation(message.Message);
+                        return await bot.SendTextMessageAsync(chat!,
+                            $"Ошибка при создании пользователя {message.Message}");
+                    }
+
+                    logger.LogInformation("Пользователь создан!");
                 }
-                
-                logger.LogInformation("Пользователь создан!");
-                
+
                 await idccService.StopSessionAsync(user.Username!);
                 
                 var (_, error) = await idccService.StartSessionAsync(user.Username!, "QA");

@@ -76,6 +76,17 @@ public class IdccService : IIdccService
         return (report, null);
     }
 
+    public async Task<ErrorMessage?> GetUserAsync(string username)
+    {
+        using var response = await _httpClient.GetAsync($"http://{_settings.IdccApi}/api/v1/user?username={username}");
+        if (!response.IsSuccessStatusCode)
+        {
+            var error = await response.Content.ReadFromJsonAsync<ErrorMessage>();
+            return error;
+        }
+        return null;
+    }
+
     public async Task<(UserFullDto? userFull, ErrorMessage? message)> CreateUserAsync(string username)
     {
         var newUser = new UserDto
