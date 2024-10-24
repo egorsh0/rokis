@@ -69,12 +69,13 @@ public class SessionRepository : ISessionRepository
 
     public async Task<Session?> GetActualSessionAsync(string name)
     {
+        var where = _context.Sessions.Where(s => s.User.UserName == name && s.EndTime == null);
         return await _context.Sessions.SingleOrDefaultAsync(s => s.User.UserName == name && s.EndTime == null);
     }
 
     public async Task<Session?> GetFinishSessionAsync(string name)
     {
-        return await _context.Sessions.Where(s => s.User.UserName == name && s.Score > 0).OrderByDescending(s => s.EndTime).FirstOrDefaultAsync();
+        return await _context.Sessions.Where(s => s.User.UserName == name && s.Score >= 0).OrderByDescending(s => s.EndTime).FirstOrDefaultAsync();
     }
 
     public async Task SessionScoreAsync(int id, double score)

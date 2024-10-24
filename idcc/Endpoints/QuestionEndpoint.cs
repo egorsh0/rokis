@@ -13,7 +13,7 @@ public static class QuestionEndpoint
     {
         var questions = routes.MapGroup("/api/v1/question");
       
-        questions.MapGet("/{sessionId}", async (int? sessionId, string username, IUserTopicRepository userTopicRepository, IQuestionRepository questionRepository, ISessionRepository sessionRepository) =>
+        questions.MapGet("/", async (int? sessionId, string username, IUserTopicRepository userTopicRepository, IQuestionRepository questionRepository, ISessionRepository sessionRepository) =>
         {
             // Проверка на открытую сессию
             Session? session= null;

@@ -30,7 +30,7 @@ public class IdccService : IIdccService
 
     public async Task<ErrorMessage?> StopSessionAsync(string username)
     {
-        using var response = await _httpClient.PostAsync($"http://{_settings.IdccApi}/api/v1/session/stop?username={username}", new StringContent(""));
+        using var response = await _httpClient.PostAsync($"http://{_settings.IdccApi}/api/v1/session/actualStop?username={username}", new StringContent(""));
 
         if (!response.IsSuccessStatusCode)
         {
@@ -108,7 +108,7 @@ public class IdccService : IIdccService
         };
 
         var dateInterval =  DateTime.Now - questionTime;
-        using var response = await _httpClient.PostAsJsonAsync($"http://{_settings.IdccApi}/api/v1/question/sendAnswers?username={username}&dateInterval={dateInterval}", answer);
+        using var response = await _httpClient.PostAsJsonAsync($"http://{_settings.IdccApi}/api/v1/question/answers?username={username}&dateInterval={dateInterval}", answer);
         if (!response.IsSuccessStatusCode)
         {
             var error = await response.Content.ReadFromJsonAsync<ErrorMessage>();

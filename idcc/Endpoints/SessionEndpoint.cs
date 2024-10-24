@@ -85,7 +85,7 @@ public static class SessionEndpoint
             Tags = new List<OpenApiTag> { new() { Name = "Session" } }
         });
         
-        sessions.MapPost("/stop", async (string username, ISessionRepository sessionRepository) =>
+        sessions.MapPost("/actualStop", async (string username, ISessionRepository sessionRepository) =>
         {
             var session = await sessionRepository.GetActualSessionAsync(username);
             if (session is null)

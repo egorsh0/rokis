@@ -55,7 +55,7 @@ public static class ReportEndpont
                 });
             }
 
-            await sessionRepository.SessionScoreAsync(sessionId!.Value, report.FinalScoreDto!.Score);
+            await sessionRepository.SessionScoreAsync(session.Id, report.FinalScoreDto!.Score);
 
             if (report.FinalTopicDatas is not null)
             {

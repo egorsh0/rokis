@@ -1,4 +1,5 @@
 ﻿using idcc.Application.Interfaces;
+using idcc.Infrastructures;
 using idcc.Infrastructures.Interfaces;
 using idcc.Models;
 using idcc.Models.Dto;
@@ -87,16 +88,17 @@ public class IdccReport : IIdccReport
         var finalTopicDatas = new List<FinalTopicData>();
         foreach (var userTopic in userTopics)
         {
-            var scores = userAnswers.Where(_ => _.Question.Topic == userTopic.Topic).Select(_ => _.Score).ToList();
+            var questionAnswers = userAnswers.Where(a => a.Question.Topic == userTopic.Topic).ToList();
+            var scores = questionAnswers.Select(a => a.Score).ToList();
             var weight = userTopic.Weight;
             var topicScore = _scoreCalculate.GetTopicScore(scores, weight);
-            var positive = userAnswers.Count(_ => _.Score > 0);
-            var negative = userAnswers.Count(_ => _.Score == 0);
+            var positive = questionAnswers.Count(_ => _.Score > 0);
+            var negative = questionAnswers.Count(_ => _.Score == 0);
 
             var finalTopicData = new FinalTopicData()
             {
                 Topic = userTopic.Topic.Name,
-                Score = topicScore,
+                Score = topicScore == 0 ? ValueConst.MinValue : topicScore,
                 Positive = positive,
                 Negative = negative
             };

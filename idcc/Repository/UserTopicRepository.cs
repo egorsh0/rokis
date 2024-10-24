@@ -21,8 +21,18 @@ public class UserTopicRepository : IUserTopicRepository
 
     public async Task<UserTopic?> GetRandomTopicAsync(Session session)
     {
-        var userTopic = await _context.UserTopics.Where(_ => _.IsFinished == false && _.WasPrevious == false && _.Session == session).OrderBy(o => Guid.NewGuid()).FirstOrDefaultAsync();
-        return userTopic;
+        var userTopics = await _context.UserTopics.Where(t => t.IsFinished == false && t.Session == session).ToListAsync();
+        if (userTopics.Any())
+        {
+            if (userTopics.Count == 1)
+            {
+                return userTopics.First();
+            }
+            var userTopic = userTopics.Where(t => t.WasPrevious == false).MinBy(o => Guid.NewGuid());
+            return userTopic;
+        }
+
+        return null;
     }
     
     public async Task<UserTopic?> GetActualTopicAsync(Session session)

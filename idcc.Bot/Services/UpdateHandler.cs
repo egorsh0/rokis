@@ -84,8 +84,17 @@ public class UpdateHandler(ITelegramBotClient bot, IIdccService idccService, ILo
         QuestionDto question;
         do
         {
-            (question, var message, next) = await idccService.GetQuestionAsync(msg.From?.Username!);
+            (question, var message, next) = await idccService.GetQuestionAsync(msg.Chat?.Username!);
 
+            if (question is not null)
+            {
+                break;
+            }
+
+            if (question is null && next == false)
+            {
+                break;
+            }
             if (message is not null)
             {
                 var mes = await bot.SendTextMessageAsync(msg.Chat, message.Message, parseMode: ParseMode.Html,
@@ -98,7 +107,7 @@ public class UpdateHandler(ITelegramBotClient bot, IIdccService idccService, ILo
 
         if (question is null && next == false)
         {
-            await idccService.StopSessionAsync(msg.From.Username);
+            await idccService.StopSessionAsync(msg.Chat.Username);
             return await bot.SendTextMessageAsync(msg.Chat, "Тестирование завершено", parseMode: ParseMode.Html,
                 replyMarkup: new ReplyKeyboardRemove());
         }
@@ -134,8 +143,8 @@ public class UpdateHandler(ITelegramBotClient bot, IIdccService idccService, ILo
 
         if (report?.TopicReport is not null)
         {
-            Stream stream = new MemoryStream(report.TopicReport);
-            return await bot.SendPhotoAsync(msg.Chat.Id, new InputFileStream(stream));
+            var ms = new MemoryStream(report.TopicReport);
+            return await bot.SendPhotoAsync(msg.Chat.Id, new InputFileStream(ms));
         }
         
         return await bot.SendTextMessageAsync(
@@ -192,7 +201,7 @@ public class UpdateHandler(ITelegramBotClient bot, IIdccService idccService, ILo
                     }
                     
                     Thread.Sleep(500);
-                    await bot.DeleteMessageAsync( chatId: chat!, messageId: callbackQuery.Message!.MessageId - 1);
+                    await bot.DeleteMessageAsync( chatId: chat!, messageId: callbackQuery.Message!.MessageId);
                     
                     logger.LogInformation("Ответ отправлен!");
                     var tMessage = await bot.SendTextMessageAsync(chat!, "Ответ отправлен!");
