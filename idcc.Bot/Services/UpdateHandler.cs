@@ -49,6 +49,7 @@ public class UpdateHandler(ITelegramBotClient bot, IIdccService idccService, ILo
         {
             "/start" => Start(msg),
             "/testing" => StartSession(msg),
+            "/question" => GetQuestion(msg),
             "/report" => GetReport(msg),
             _ => throw new ArgumentOutOfRangeException()
         });
@@ -205,7 +206,7 @@ public class UpdateHandler(ITelegramBotClient bot, IIdccService idccService, ILo
                     
                     logger.LogInformation("Ответ отправлен!");
                     var tMessage = await bot.SendTextMessageAsync(chat!, "Ответ отправлен!");
-                    Thread.Sleep(1000);
+                    Thread.Sleep(2000);
                     await bot.DeleteMessageAsync( chatId: chat!, messageId: tMessage.MessageId);
                     
                     return await GetQuestion(callbackQuery.Message);
