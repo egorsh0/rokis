@@ -50,7 +50,7 @@ public class UpdateHandler(ITelegramBotClient bot, IIdccService idccService, ILo
             "/start" => Start(msg),
             "/testing" => StartSession(msg),
             "/question" => GetQuestion(msg),
-            "/report" => GetReport(msg),
+            "/report" => GetReport(msg, msg.From.Username),
             _ => throw new ArgumentOutOfRangeException()
         });
         logger.LogInformation("The message was sent with id: {SentMessageId}", sentMessage.MessageId);
@@ -164,9 +164,9 @@ public class UpdateHandler(ITelegramBotClient bot, IIdccService idccService, ILo
             replyMarkup: inlineKeyboard);
     }
     
-    async Task<Message> GetReport(Message msg)
+    async Task<Message> GetReport(Message msg, string username)
     {
-        var (report, message) = await idccService.GetReportAsync(msg.From?.Username!);
+        var (report, message) = await idccService.GetReportAsync(username);
 
         if (message is not null)
         {
@@ -232,7 +232,7 @@ public class UpdateHandler(ITelegramBotClient bot, IIdccService idccService, ILo
             }
             case "generate_report":
             {
-                return await GetReport(callbackQuery.Message);
+                return await GetReport(callbackQuery.Message, callbackQuery.Message.Chat.Username);
             }
             default:
             {
