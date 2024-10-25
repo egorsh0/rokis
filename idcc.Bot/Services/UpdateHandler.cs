@@ -50,7 +50,7 @@ public class UpdateHandler(ITelegramBotClient bot, IIdccService idccService, ILo
             "/start" => Start(msg),
             "/testing" => StartSession(msg),
             "/question" => GetQuestion(msg),
-            "/report" => GetReport(msg, msg.From.Username),
+            "/report" => GetReport(msg, msg.From.Id.ToString()),
             _ => throw new ArgumentOutOfRangeException()
         });
         logger.LogInformation("The message was sent with id: {SentMessageId}", sentMessage.MessageId);
@@ -100,7 +100,7 @@ public class UpdateHandler(ITelegramBotClient bot, IIdccService idccService, ILo
         QuestionDto question;
         do
         {
-            (question, var message, next) = await idccService.GetQuestionAsync(msg.Chat?.Username!);
+            (question, var message, next) = await idccService.GetQuestionAsync(msg.Chat?.Id.ToString());
 
             if (question is not null)
             {
@@ -116,14 +116,14 @@ public class UpdateHandler(ITelegramBotClient bot, IIdccService idccService, ILo
                 var mes = await bot.SendTextMessageAsync(msg.Chat, message.Message, parseMode: ParseMode.Html,
                     replyMarkup: new ReplyKeyboardRemove());
                 Thread.Sleep(5000);
-                await bot.DeleteMessageAsync(chatId: msg.Chat!, messageId: mes.MessageId);
+                await bot.DeleteMessageAsync(chatId: msg.Chat, messageId: mes.MessageId);
                 next = true;
             }
         } while (next);
 
         if (question is null && next == false)
         {
-            await idccService.StopSessionAsync(msg.Chat.Username);
+            await idccService.StopSessionAsync(msg.Chat.Id.ToString());
             await bot.SendTextMessageAsync(msg.Chat, "Тестирование завершено", parseMode: ParseMode.Html,
                 replyMarkup: new ReplyKeyboardRemove());
             
@@ -164,9 +164,9 @@ public class UpdateHandler(ITelegramBotClient bot, IIdccService idccService, ILo
             replyMarkup: inlineKeyboard);
     }
     
-    async Task<Message> GetReport(Message msg, string username)
+    async Task<Message> GetReport(Message msg, string id)
     {
-        var (report, message) = await idccService.GetReportAsync(username);
+        var (report, message) = await idccService.GetReportAsync(id);
 
         if (message is not null)
         {
@@ -200,11 +200,12 @@ public class UpdateHandler(ITelegramBotClient bot, IIdccService idccService, ILo
         {
             case "qa":
             {
-                var userError = await idccService.GetUserAsync(user.Username!);
+                var userError = await idccService.GetUserAsync(user.Id.ToString());
 
                 if (userError is not null)
                 {
-                    var (_, message) = await idccService.CreateUserAsync(user.Username!);
+                    var username = user.Username ?? user.FirstName;
+                    var (_, message) = await idccService.CreateUserAsync(user.Id.ToString(),username);
                     if (message is not null)
                     {
                         logger.LogInformation(message.Message);
@@ -215,9 +216,9 @@ public class UpdateHandler(ITelegramBotClient bot, IIdccService idccService, ILo
                     logger.LogInformation("Пользователь создан!");
                 }
 
-                await idccService.StopSessionAsync(user.Username!);
+                await idccService.StopSessionAsync(user.Id.ToString());
                 
-                var (_, error) = await idccService.StartSessionAsync(user.Username!, "QA");
+                var (_, error) = await idccService.StartSessionAsync(user.Id.ToString(), "QA");
                 if (error is not null)
                 {
                     return await bot.SendTextMessageAsync(chat!, error.Message, parseMode: ParseMode.Html, replyMarkup: new ReplyKeyboardRemove());
@@ -232,13 +233,13 @@ public class UpdateHandler(ITelegramBotClient bot, IIdccService idccService, ILo
             }
             case "generate_report":
             {
-                return await GetReport(callbackQuery.Message, callbackQuery.Message.Chat.Username);
+                return await GetReport(callbackQuery.Message, callbackQuery.Message.Chat.Id.ToString());
             }
             default:
             {
                 if (parseData is not null)
                 {
-                    var message = await idccService.SendAnswerAsync(user.Username!, parseData.Value.Item1, parseData.Value.Item2,
+                    var message = await idccService.SendAnswerAsync(user.Id.ToString(), parseData.Value.Item1, parseData.Value.Item2,
                         _questionTime);
 
                     if (message is not null)
