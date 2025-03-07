@@ -85,6 +85,7 @@ public class UpdateHandler(ITelegramBotClient bot, IIdccService idccService, ILo
                 new[]
                 {
                     InlineKeyboardButton.WithCallbackData("QA", "qa"), 
+                    InlineKeyboardButton.WithCallbackData("SA", "sa"),
                 }
             });
                                 
@@ -198,7 +199,7 @@ public class UpdateHandler(ITelegramBotClient bot, IIdccService idccService, ILo
 
         switch (data)
         {
-            case "qa":
+            case "qa": case "sa":
             {
                 var userError = await idccService.GetUserAsync(user.Id.ToString());
 
@@ -218,7 +219,9 @@ public class UpdateHandler(ITelegramBotClient bot, IIdccService idccService, ILo
 
                 await idccService.StopSessionAsync(user.Id.ToString());
                 
-                var (_, error) = await idccService.StartSessionAsync(user.Id.ToString(), "QA");
+                var role = data == "qa" ? "QA" : "SA";
+                
+                var (_, error) = await idccService.StartSessionAsync(user.Id.ToString(), role);
                 if (error is not null)
                 {
                     return await bot.SendTextMessageAsync(chat!, error.Message, parseMode: ParseMode.Html, replyMarkup: new ReplyKeyboardRemove());
