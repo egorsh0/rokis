@@ -84,8 +84,11 @@ public class UpdateHandler(ITelegramBotClient bot, IIdccService idccService, ILo
             {
                 new[]
                 {
-                    InlineKeyboardButton.WithCallbackData("QA", "qa"), 
-                    InlineKeyboardButton.WithCallbackData("SA", "sa"),
+                    InlineKeyboardButton.WithCallbackData("QA", "qa")
+                },
+                new[]
+                {
+                    InlineKeyboardButton.WithCallbackData("SA", "sa")
                 }
             });
                                 
