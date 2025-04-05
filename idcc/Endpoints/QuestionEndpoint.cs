@@ -16,7 +16,7 @@ public static class QuestionEndpoint
         questions.MapGet("/", async (int? sessionId, string username, IUserTopicRepository userTopicRepository, IQuestionRepository questionRepository, ISessionRepository sessionRepository) =>
         {
             // Проверка на открытую сессию
-            Session? session= null;
+            Session? session = null;
             if (sessionId.HasValue)
             {
                 session = await sessionRepository.GetSessionAsync(sessionId.Value);

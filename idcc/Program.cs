@@ -12,7 +12,10 @@ AppContext.SetSwitch("Npgsql.EnableLegacyTimestampBehavior", true);
 app.RegisterMiddlewares();
 
 app.RegisterPingEndpoints();
-app.RegisterUserEndpoints();
+app.RegisterTokenEndpoint();
+
+app.RegisterCompanyEndpoints();
+app.RegisterEmployeeEndpoints();
 app.RegisterSessionEndpoints();
 app.RegisterQuestionEndpoints();
 app.RegisterReportEndpoints();

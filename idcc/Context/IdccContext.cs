@@ -17,9 +17,19 @@ public class IdccContext : DbContext
     }
     
     /// <summary>
+    /// Контекст для таблицы "Токены"
+    /// </summary>
+    public DbSet<Token?> Tokens { get; set; }
+    
+    /// <summary>
     /// Контекст для таблицы "Пользователи"
     /// </summary>
-    public DbSet<User> Users { get; set; }
+    public DbSet<Employee> Employees { get; set; }
+    
+    /// <summary>
+    /// Контекст для таблицы "Компании"
+    /// </summary>
+    public DbSet<Company> Companies { get; set; }
     
     /// <summary>
     /// Контекст для справочника "Роли"

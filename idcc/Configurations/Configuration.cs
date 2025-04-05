@@ -26,7 +26,10 @@ public static class Configuration
             options.UseNpgsql(connectionString);
         });
 
-        builder.Services.AddScoped<IUserRepository, UserRepository>();
+        builder.Services.AddScoped<ITokenRepository, TokenRepository>();
+
+        builder.Services.AddScoped<ICompanyRepository, CompanyRepository>();
+        builder.Services.AddScoped<IEmployeeRepository, EmployeeRepository>();
         builder.Services.AddScoped<IQuestionRepository, QuestionRepository>();
         builder.Services.AddScoped<IUserTopicRepository, UserTopicRepository>();
         builder.Services.AddScoped<ISessionRepository, SessionRepository>();
@@ -48,8 +51,8 @@ public static class Configuration
         builder.Services.AddSwaggerGen(c =>
         {
             c.SwaggerDoc("v1", new OpenApiInfo {
-                Title = "IDCC API",
-                Description = "IDCC",
+                Title = "MVP Аттестация API",
+                Description = "MVP API",
                 Version = "v1" });
         });
     }
@@ -59,9 +62,10 @@ public static class Configuration
         app.UseSwagger();
         app.UseSwaggerUI(c =>
         {
-            c.SwaggerEndpoint("/swagger/v1/swagger.json", "IDCC API V1");
+            c.SwaggerEndpoint("/swagger/v1/swagger.json", "MVP Аттестация API");
         });
 
         app.UseHttpsRedirection();
+        app.UseAuthorization();
     }
 }

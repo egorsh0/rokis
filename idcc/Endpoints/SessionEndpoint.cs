@@ -10,9 +10,9 @@ public static class SessionEndpoint
 {
     public static void RegisterSessionEndpoints(this IEndpointRouteBuilder routes)
     {
-        var sessions = routes.MapGroup("/api/v1/session");
+        var sessionsRoute = routes.MapGroup("/api/v1/session");
       
-        sessions.MapPost("/start", async (int? userId, string username, string roleCode, ISessionRepository sessionRepository, IUserRepository userRepository) =>
+        sessionsRoute.MapPost("/start", async (int? userId, string username, string roleCode, ISessionRepository sessionRepository, IEmployeeRepository userRepository) =>
         {
             var role = await userRepository.GetRoleAsync(roleCode);
             if (role is null)
@@ -20,7 +20,7 @@ public static class SessionEndpoint
                 return Results.BadRequest($"Role with code {roleCode} not found");
             }
 
-            User? user = null;
+            Employee? user = null;
             if (userId.HasValue)
             {
                 user = await userRepository.GetUserAsync(userId.Value);
@@ -29,7 +29,7 @@ public static class SessionEndpoint
             {
                 if (!string.IsNullOrWhiteSpace(username))
                 {
-                    user = await userRepository.GetUserByNameAsync(username);
+                    user = await userRepository.GetEmployeeByNameAsync(username);
                 }
             }
             if (user is null)
@@ -55,7 +55,7 @@ public static class SessionEndpoint
             Tags = new List<OpenApiTag> { new() { Name = "Session" } }
         });
 
-        sessions.MapPost("/stop", async (int sessionId, bool faster, ISessionRepository sessionRepository) =>
+        sessionsRoute.MapPost("/stop", async (int sessionId, bool faster, ISessionRepository sessionRepository) =>
         {
             var session = await sessionRepository.GetSessionAsync(sessionId);
             if (session is null)
@@ -85,7 +85,7 @@ public static class SessionEndpoint
             Tags = new List<OpenApiTag> { new() { Name = "Session" } }
         });
         
-        sessions.MapPost("/actualStop", async (string username, ISessionRepository sessionRepository) =>
+        sessionsRoute.MapPost("/actualStop", async (string username, ISessionRepository sessionRepository) =>
         {
             var session = await sessionRepository.GetActualSessionAsync(username);
             if (session is null)

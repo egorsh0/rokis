@@ -35,7 +35,7 @@ public class IdccReport : IIdccReport
         _logger.LogInformation("Создание обьекта отчета");
         var report = new ReportDto
         {
-            Name = session.User.UserName,
+            Name = session.Employee.Name,
             StartSession = session.StartTime,
             EndSession = session.EndTime!.Value,
             TestingTime = (session.StartTime - session.EndTime.Value)
