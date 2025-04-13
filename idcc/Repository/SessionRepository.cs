@@ -1,5 +1,6 @@
 ﻿using idcc.Context;
 using idcc.Models;
+using idcc.Models.Profile;
 using idcc.Repository.Interfaces;
 using Microsoft.EntityFrameworkCore;
 
@@ -14,11 +15,11 @@ public class SessionRepository : ISessionRepository
         _context = context;
     }
     
-    public async Task<Session> StartSessionAsync(Employee employee, Role role)
+    public async Task<Session> StartSessionAsync(UserProfile userProfile, Role role)
     {
         var session = new Session()
         {
-            Employee = employee,
+            UserProfile = userProfile,
             Score = 0,
             StartTime = DateTime.Now,
             EndTime = null,
@@ -62,20 +63,20 @@ public class SessionRepository : ISessionRepository
         return await _context.Sessions.FindAsync(id);
     }
 
-    public async Task<List<Session>> GetSessionsAsync(Employee employee)
+    public async Task<List<Session>> GetSessionsAsync(UserProfile userProfile)
     {
-        return await _context.Sessions.Where(s => s.Employee == employee).ToListAsync();
+        return await _context.Sessions.Where(s => s.UserProfile == userProfile).ToListAsync();
     }
 
     public async Task<Session?> GetActualSessionAsync(string name)
     {
-        var where = _context.Sessions.Where(s => s.Employee.Name == name && s.EndTime == null);
-        return await _context.Sessions.SingleOrDefaultAsync(s => s.Employee.Name == name && s.EndTime == null);
+        var where = _context.Sessions.Where(s => s.UserProfile.Name == name && s.EndTime == null);
+        return await _context.Sessions.SingleOrDefaultAsync(s => s.UserProfile.Name == name && s.EndTime == null);
     }
 
     public async Task<Session?> GetFinishSessionAsync(string name)
     {
-        return await _context.Sessions.Where(s => s.Employee.Name == name && s.Score >= 0).OrderByDescending(s => s.EndTime).FirstOrDefaultAsync();
+        return await _context.Sessions.Where(s => s.UserProfile.Name == name && s.Score >= 0).OrderByDescending(s => s.EndTime).FirstOrDefaultAsync();
     }
 
     public async Task SessionScoreAsync(int id, double score)

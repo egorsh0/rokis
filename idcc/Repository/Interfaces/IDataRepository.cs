@@ -1,6 +1,4 @@
-﻿using idcc.Infrastructures;
-using idcc.Models;
-using idcc.Models.AdminDto;
+﻿using idcc.Models;
 
 namespace idcc.Repository.Interfaces;
 

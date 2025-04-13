@@ -1,4 +1,4 @@
-﻿using idcc.Models.AdminDto;
+﻿using idcc.Dtos.AdminDto;
 
 namespace idcc.Repository.Interfaces;
 

@@ -1,6 +1,6 @@
 ﻿using System.ComponentModel.DataAnnotations;
 
-namespace idcc.Models.AdminDto;
+namespace idcc.Dtos.AdminDto;
 
 public record QuestionAdminDto
 {

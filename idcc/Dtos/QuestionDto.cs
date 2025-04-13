@@ -1,4 +1,6 @@
-﻿namespace idcc.Models.Dto;
+﻿using idcc.Models;
+
+namespace idcc.Dtos;
 
 public record QuestionShortDto
 {

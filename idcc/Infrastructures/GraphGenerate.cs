@@ -1,5 +1,5 @@
-﻿using idcc.Infrastructures.Interfaces;
-using idcc.Models.Dto;
+﻿using idcc.Dtos;
+using idcc.Infrastructures.Interfaces;
 using SkiaSharp;
 
 namespace idcc.Infrastructures;

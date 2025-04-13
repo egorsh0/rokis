@@ -1,7 +1,7 @@
 ﻿using idcc.Application.Interfaces;
+using idcc.Dtos;
 using idcc.Infrastructures;
 using idcc.Models;
-using idcc.Models.Dto;
 using idcc.Repository.Interfaces;
 using Microsoft.OpenApi.Models;
 
@@ -30,18 +30,12 @@ public static class QuestionEndpoint
             }
             if (session is null)
             {
-                return Results.BadRequest(new ErrorMessage()
-                {
-                    Message = ErrorMessages.SESSION_IS_NOT_EXIST
-                });
+                return Results.BadRequest(ErrorMessages.SESSION_IS_NOT_EXIST);
             }
             
             if (session.EndTime is not null)
             {
-                return Results.BadRequest(new ErrorMessage()
-                {
-                    Message = ErrorMessages.SESSION_IS_FINISHED
-                });
+                return Results.BadRequest(ErrorMessages.SESSION_IS_FINISHED);
             }
             
             // Проверка на открытые темы
@@ -55,10 +49,7 @@ public static class QuestionEndpoint
             var userTopic = await userTopicRepository.GetRandomTopicAsync(session);
             if (userTopic is null)
             {
-                return Results.BadRequest(new ErrorMessage()
-                {
-                    Message = ErrorMessages.GET_RANDOM_TOPIC
-                });
+                return Results.BadRequest(ErrorMessages.GET_RANDOM_TOPIC);
             }
                 
             var question = await questionRepository.GetQuestionAsync(userTopic);
@@ -97,35 +88,23 @@ public static class QuestionEndpoint
             }
             if (session is null)
             {
-                return Results.BadRequest(new ErrorMessage()
-                {
-                    Message = ErrorMessages.SESSION_IS_NOT_EXIST
-                });
+                return Results.BadRequest(ErrorMessages.SESSION_IS_NOT_EXIST);
             }
             
             if (session.EndTime is not null)
             {
-                return Results.BadRequest(new ErrorMessage()
-                {
-                    Message = ErrorMessages.SESSION_IS_FINISHED
-                });
+                return Results.BadRequest(ErrorMessages.SESSION_IS_FINISHED);
             }
             // Посчитать и сохранить Score за ответ
             var result = await idccApplication.CalculateScoreAsync(session, Convert.ToInt32(dateInterval.TotalSeconds), question.Id,
                 question.Answers.Select(d => d.Id).ToList());
             if (result is not null)
             {
-                return Results.BadRequest(new ErrorMessage()
-                {
-                    Message = result
-                });
+                return Results.BadRequest(result);
             }
             // Пересчитать вес текущего топика
             result = await idccApplication.CalculateTopicWeightAsync(session);
-            return result is not null ? Results.BadRequest(new ErrorMessage()
-            {
-                Message = result
-            }) : Results.Ok();
+            return result is not null ? Results.BadRequest(result) : Results.Ok();
         }).WithOpenApi(x => new OpenApiOperation(x)
         {
             Summary = "Send answers",

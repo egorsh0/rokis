@@ -1,4 +1,4 @@
-﻿using idcc.Models.Dto;
+﻿using idcc.Dtos;
 
 namespace idcc.Infrastructures.Interfaces;
 

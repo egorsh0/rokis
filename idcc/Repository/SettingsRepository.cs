@@ -1,5 +1,5 @@
 ﻿using idcc.Context;
-using idcc.Models.AdminDto;
+using idcc.Dtos.AdminDto;
 using idcc.Repository.Interfaces;
 using Microsoft.EntityFrameworkCore;
 

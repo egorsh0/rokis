@@ -1,5 +1,5 @@
-﻿using idcc.Models;
-using idcc.Models.Dto;
+﻿using idcc.Dtos;
+using idcc.Models;
 
 namespace idcc.Application.Interfaces;
 

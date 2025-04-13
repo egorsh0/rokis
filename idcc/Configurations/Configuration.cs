@@ -1,13 +1,19 @@
-﻿using System.Text.Json.Serialization;
+﻿using System.Text;
+using System.Text.Json.Serialization;
 using idcc.Application;
 using idcc.Application.Interfaces;
 using idcc.Context;
+using idcc.Filters;
 using idcc.Infrastructures;
 using idcc.Infrastructures.Interfaces;
+using idcc.Models;
 using idcc.Repository;
 using idcc.Repository.Interfaces;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Caching.Hybrid;
+using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 
 namespace idcc.Configurations;
@@ -30,22 +36,68 @@ public static class Configuration
                 Expiration = TimeSpan.FromMinutes(5)
             };
         });
+        
         builder.Services.AddStackExchangeRedisCache(options =>
         {
             options.Configuration = 
                 builder.Configuration.GetConnectionString("RadisConnection");
         });
         
+        // 1. Подключаем EF Core (PostgreSQL)
         builder.Services.AddDbContext<IdccContext>(options =>
         {
             options.UseLazyLoadingProxies();
             options.UseNpgsql(connectionString);
         });
+        
+        // 2. Настраиваем Identity (с параметрами безопасности паролей)
+        builder.Services.AddIdentity<ApplicationUser, IdentityRole>(options =>
+            {
+                // Настройки защиты паролей
+                options.Password.RequireDigit = true;
+                options.Password.RequireLowercase = true;
+                options.Password.RequireUppercase = true;
+                options.Password.RequiredLength = 8; // минимальная длина 8 символов
+                options.Password.RequireNonAlphanumeric = false;
 
+                // Политика блокировки при многократных неверных попытках входа
+                options.Lockout.DefaultLockoutTimeSpan = TimeSpan.FromMinutes(15); 
+                options.Lockout.MaxFailedAccessAttempts = 5; 
+                options.Lockout.AllowedForNewUsers = true;
+
+                // Настройка уникальности и формат email
+                options.User.RequireUniqueEmail = true; 
+            })
+            .AddEntityFrameworkStores<IdccContext>()
+            .AddDefaultTokenProviders();
+
+        // 3. Подключаем аутентификацию через JWT
+        var jwtSecret = builder.Configuration["Jwt:Secret"];
+        var key = Encoding.UTF8.GetBytes(jwtSecret ?? throw new InvalidOperationException("JWT secret not configured"));
+
+        builder.Services
+            .AddAuthentication(options =>
+            {
+                options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme; 
+                options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme; 
+            })
+            .AddJwtBearer(options =>
+            {
+                options.TokenValidationParameters = new TokenValidationParameters
+                {
+                    ValidateIssuerSigningKey = true,
+                    IssuerSigningKey = new SymmetricSecurityKey(key),
+                    ValidateIssuer = false,
+                    ValidateAudience = false,
+                    // При желании можно включить ValidateLifetime = true
+                    // и настроить ClockSkew = TimeSpan.Zero, чтобы не было доп. времени
+                };
+            });
+        
+        
         builder.Services.AddScoped<ITokenRepository, TokenRepository>();
-
-        builder.Services.AddScoped<ICompanyRepository, CompanyRepository>();
-        builder.Services.AddScoped<IEmployeeRepository, EmployeeRepository>();
+        
+        builder.Services.AddScoped<IUserRepository, UserRepository>();
         builder.Services.AddScoped<IQuestionRepository, QuestionRepository>();
         builder.Services.AddScoped<IUserTopicRepository, UserTopicRepository>();
         builder.Services.AddScoped<ISessionRepository, SessionRepository>();
@@ -63,6 +115,8 @@ public static class Configuration
         builder.Services.AddScoped<IIdccApplication, IdccApplication>();
         builder.Services.AddScoped<IIdccReport, IdccReport>();
 
+        // 4. Подключаем контроллеры + Swagger
+        builder.Services.AddControllers();
         builder.Services.AddEndpointsApiExplorer();
         builder.Services.AddSwaggerGen(c =>
         {
@@ -70,6 +124,19 @@ public static class Configuration
                 Title = "MVP Аттестация API",
                 Description = "MVP API",
                 Version = "v1" });
+            
+            // Добавим описание схемы Bearer
+            c.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
+            {
+                Description = "JWT Authorization header using the Bearer scheme. Example: \"Authorization: Bearer {token}\"",
+                Name = "Authorization",
+                In = ParameterLocation.Header,
+                Type = SecuritySchemeType.ApiKey,
+                Scheme = "Bearer"
+            });
+            
+            // Подключаем наш OperationFilter (см. далее)
+            c.OperationFilter<AuthorizeCheckOperationFilter>();
         });
     }
 
@@ -82,6 +149,11 @@ public static class Configuration
         });
 
         app.UseHttpsRedirection();
+        
+        // Включаем аутентификацию/авторизацию
+        app.UseAuthentication();
         app.UseAuthorization();
+        
+        app.MapControllers();
     }
 }

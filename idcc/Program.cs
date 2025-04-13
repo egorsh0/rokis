@@ -14,8 +14,6 @@ app.RegisterMiddlewares();
 app.RegisterPingEndpoints();
 app.RegisterTokenEndpoint();
 
-app.RegisterCompanyEndpoints();
-app.RegisterEmployeeEndpoints();
 app.RegisterSessionEndpoints();
 app.RegisterQuestionEndpoints();
 app.RegisterReportEndpoints();

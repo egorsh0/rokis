@@ -2,7 +2,6 @@
 using idcc.Infrastructures;
 using idcc.Infrastructures.Interfaces;
 using idcc.Models;
-using idcc.Models.Dto;
 using idcc.Repository.Interfaces;
 using Microsoft.OpenApi.Models;
 
@@ -32,27 +31,18 @@ public static class ReportEndpont
             }
             if (session is null)
             {
-                return Results.BadRequest(new ErrorMessage()
-                {
-                    Message = ErrorMessages.SESSION_IS_NOT_EXIST
-                });
+                return Results.BadRequest(ErrorMessages.SESSION_IS_NOT_EXIST);
             }
             
             if (session.EndTime is not null && session.Score > 0 && !full.HasValue)
             {
-                return Results.BadRequest(new ErrorMessage()
-                {
-                    Message = ErrorMessages.SESSION_IS_FINISHED
-                });
+                return Results.BadRequest(ErrorMessages.SESSION_IS_FINISHED);
             }
             
             var report = await idccReport.GenerateAsync(session);
             if (report is null)
             {
-                return Results.BadRequest(new ErrorMessage()
-                {
-                    Message = ErrorMessages.REPORT_IS_FAILED
-                });
+                return Results.BadRequest(ErrorMessages.REPORT_IS_FAILED);
             }
 
             await sessionRepository.SessionScoreAsync(session.Id, report.FinalScoreDto!.Score);

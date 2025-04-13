@@ -1,9 +1,11 @@
 ﻿using idcc.Models;
+using idcc.Models.Profile;
+using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 
 namespace idcc.Context;
 
-public class IdccContext : DbContext
+public class IdccContext : IdentityDbContext<ApplicationUser>
 {
     /// <inheritdoc />
     public IdccContext(DbContextOptions<IdccContext> options) :
@@ -11,25 +13,53 @@ public class IdccContext : DbContext
     {
     }
     
-    protected override void OnModelCreating(ModelBuilder modelBuilder)
+    protected override void OnModelCreating(ModelBuilder builder)
     {
-        modelBuilder.UseSerialColumns();
+        base.OnModelCreating(builder);
+        
+        builder.UseSerialColumns();
+        
+        // Настраиваем связи 1:1 с ApplicationUser:
+        // CompanyProfile -> ApplicationUser
+        builder.Entity<CompanyProfile>()
+            .HasOne(cp => cp.User)
+            .WithOne()
+            .HasForeignKey<CompanyProfile>(cp => cp.UserId)
+            .OnDelete(DeleteBehavior.Cascade);
+        
+        builder.Entity<UserProfile>()
+            .HasOne(up => up.User)
+            .WithOne()  // или WithOne(u => u.UserProfile), если хотим обратную ссылку
+            .HasForeignKey<UserProfile>(up => up.UserId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        // При желании настраиваем связь на CompanyUser:
+        builder.Entity<UserProfile>()
+            .HasOne(up => up.CompanyUser)
+            .WithMany()  // или WithMany(c => c.Employees), если хотим список сотрудников
+            .HasForeignKey(up => up.CompanyUserId)
+            .OnDelete(DeleteBehavior.Restrict);
     }
+    
+    /// <summary>
+    /// Контекст для таблицы "Компания"
+    /// </summary>
+    public DbSet<CompanyProfile> CompanyProfiles { get; set; } = null!;
+    
+    /// <summary>
+    /// Контекст для таблицы "Пользователь"
+    /// </summary>
+    public DbSet<UserProfile> UserProfiles { get; set; } = null!;
     
     /// <summary>
     /// Контекст для таблицы "Токены"
     /// </summary>
-    public DbSet<Token?> Tokens { get; set; }
+    public DbSet<Token> Tokens { get; set; }
     
     /// <summary>
-    /// Контекст для таблицы "Пользователи"
+    /// Контекст для таблицы "Заказы"
     /// </summary>
-    public DbSet<Employee> Employees { get; set; }
-    
-    /// <summary>
-    /// Контекст для таблицы "Компании"
-    /// </summary>
-    public DbSet<Company> Companies { get; set; }
+    public DbSet<Order> Orders { get; set; } = null!;
     
     /// <summary>
     /// Контекст для справочника "Роли"

@@ -1,4 +1,5 @@
 ﻿using System.ComponentModel.DataAnnotations;
+using idcc.Models.Profile;
 
 namespace idcc.Models;
 
@@ -11,5 +12,5 @@ public class Token
     public string Status { get; set; }
     public string ResultPdfUrl { get; set; }
     
-    public virtual Employee Employee { get; set; }
+    public virtual UserProfile UserProfile { get; set; }
 }

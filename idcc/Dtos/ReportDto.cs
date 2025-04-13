@@ -1,4 +1,4 @@
-﻿namespace idcc.Models.Dto;
+﻿namespace idcc.Dtos;
 
 /// <summary>
 /// Итоговый отчет.

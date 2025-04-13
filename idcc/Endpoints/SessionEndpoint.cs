@@ -1,8 +1,7 @@
 ﻿using idcc.Infrastructures;
-using idcc.Models;
+using idcc.Models.Profile;
 using idcc.Repository.Interfaces;
 using Microsoft.OpenApi.Models;
-using ErrorMessage = idcc.Models.Dto.ErrorMessage;
 
 namespace idcc.Endpoints;
 
@@ -12,7 +11,7 @@ public static class SessionEndpoint
     {
         var sessionsRoute = routes.MapGroup("/api/v1/session");
       
-        sessionsRoute.MapPost("/start", async (int? userId, string username, string roleCode, ISessionRepository sessionRepository, IEmployeeRepository userRepository) =>
+        sessionsRoute.MapPost("/start", async (int? userId, string username, string roleCode, ISessionRepository sessionRepository, IUserRepository userRepository) =>
         {
             var role = await userRepository.GetRoleAsync(roleCode);
             if (role is null)
@@ -20,7 +19,7 @@ public static class SessionEndpoint
                 return Results.BadRequest($"Role with code {roleCode} not found");
             }
 
-            Employee? user = null;
+            UserProfile? user = null;
             if (userId.HasValue)
             {
                 user = await userRepository.GetUserAsync(userId.Value);
@@ -29,15 +28,12 @@ public static class SessionEndpoint
             {
                 if (!string.IsNullOrWhiteSpace(username))
                 {
-                    user = await userRepository.GetEmployeeByNameAsync(username);
+                    user = await userRepository.GetUserByNameAsync(username);
                 }
             }
             if (user is null)
             {
-                return Results.NotFound(new ErrorMessage()
-                {
-                    Message = ErrorMessages.USER_IS_NULL
-                });
+                return Results.NotFound(ErrorMessages.USER_IS_NULL);
             }
 
             var sessions = await sessionRepository.GetSessionsAsync(user);
@@ -60,24 +56,15 @@ public static class SessionEndpoint
             var session = await sessionRepository.GetSessionAsync(sessionId);
             if (session is null)
             {
-                return Results.BadRequest(new ErrorMessage()
-                {
-                    Message = ErrorMessages.SESSION_IS_NOT_EXIST
-                });
+                return Results.BadRequest(ErrorMessages.SESSION_IS_NOT_EXIST);
             }
             
             if (session.EndTime is not null)
             {
-                return Results.BadRequest(new ErrorMessage()
-                {
-                    Message = ErrorMessages.SESSION_IS_FINISHED
-                });
+                return Results.BadRequest(ErrorMessages.SESSION_IS_FINISHED);
             }
             var isFinished = await sessionRepository.EndSessionAsync(sessionId, faster);
-            return isFinished ? Results.Ok() : Results.BadRequest(new ErrorMessage()
-            {
-                Message = ErrorMessages.SESSION_IS_NOT_FINISHED
-            });
+            return isFinished ? Results.Ok() : Results.BadRequest(ErrorMessages.SESSION_IS_NOT_FINISHED);
         }).WithOpenApi(x => new OpenApiOperation(x)
         {
             Summary = "Stop test session",
@@ -98,10 +85,7 @@ public static class SessionEndpoint
                 return Results.Ok();
             }
             var isFinished = await sessionRepository.EndSessionAsync(session.Id, false);
-            return isFinished ? Results.Ok() : Results.BadRequest(new ErrorMessage()
-            {
-                Message = ErrorMessages.SESSION_IS_NOT_FINISHED
-            });
+            return isFinished ? Results.Ok() : Results.BadRequest(ErrorMessages.SESSION_IS_NOT_FINISHED);
         }).WithOpenApi(x => new OpenApiOperation(x)
         {
             Summary = "Stop test session",

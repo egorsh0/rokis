@@ -1,14 +1,7 @@
 ﻿using idcc.Context;
-using idcc.Infrastructures;
 using idcc.Models;
-using idcc.Models.AdminDto;
 using idcc.Repository.Interfaces;
 using Microsoft.EntityFrameworkCore;
-using AnswerTime = idcc.Models.AdminDto.AnswerTime;
-using Count = idcc.Models.AdminDto.Count;
-using GradeLevel = idcc.Models.AdminDto.GradeLevel;
-using Persent = idcc.Models.AdminDto.Persent;
-using Weight = idcc.Models.AdminDto.Weight;
 
 namespace idcc.Repository;
 

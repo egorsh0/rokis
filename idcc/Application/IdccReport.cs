@@ -1,8 +1,8 @@
 ﻿using idcc.Application.Interfaces;
+using idcc.Dtos;
 using idcc.Infrastructures;
 using idcc.Infrastructures.Interfaces;
 using idcc.Models;
-using idcc.Models.Dto;
 using idcc.Repository.Interfaces;
 
 namespace idcc.Application;
@@ -35,7 +35,7 @@ public class IdccReport : IIdccReport
         _logger.LogInformation("Создание обьекта отчета");
         var report = new ReportDto
         {
-            Name = session.Employee.Name,
+            Name = session.UserProfile.Name,
             StartSession = session.StartTime,
             EndSession = session.EndTime!.Value,
             TestingTime = (session.StartTime - session.EndTime.Value)
