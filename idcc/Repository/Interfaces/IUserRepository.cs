@@ -5,8 +5,8 @@ namespace idcc.Repository.Interfaces;
 
 public interface IUserRepository
 {
-    Task<UserProfile?> GetUserAsync(int id);
-    Task<UserProfile?> GetUserByNameAsync(string name);
-    Task<UserProfile> CreateAsync(UserProfile employee);
+    Task<PersonProfile?> GetUserAsync(int id);
+    Task<PersonProfile?> GetUserByNameAsync(string name);
+    Task<PersonProfile> CreateAsync(PersonProfile employee);
     Task<Role?> GetRoleAsync(string name);
 }

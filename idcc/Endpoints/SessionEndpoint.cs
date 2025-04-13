@@ -19,7 +19,7 @@ public static class SessionEndpoint
                 return Results.BadRequest($"Role with code {roleCode} not found");
             }
 
-            UserProfile? user = null;
+            PersonProfile? user = null;
             if (userId.HasValue)
             {
                 user = await userRepository.GetUserAsync(userId.Value);

@@ -15,11 +15,11 @@ public class SessionRepository : ISessionRepository
         _context = context;
     }
     
-    public async Task<Session> StartSessionAsync(UserProfile userProfile, Role role)
+    public async Task<Session> StartSessionAsync(PersonProfile personProfile, Role role)
     {
         var session = new Session()
         {
-            UserProfile = userProfile,
+            PersonProfile = personProfile,
             Score = 0,
             StartTime = DateTime.Now,
             EndTime = null,
@@ -63,20 +63,20 @@ public class SessionRepository : ISessionRepository
         return await _context.Sessions.FindAsync(id);
     }
 
-    public async Task<List<Session>> GetSessionsAsync(UserProfile userProfile)
+    public async Task<List<Session>> GetSessionsAsync(PersonProfile personProfile)
     {
-        return await _context.Sessions.Where(s => s.UserProfile == userProfile).ToListAsync();
+        return await _context.Sessions.Where(s => s.PersonProfile == personProfile).ToListAsync();
     }
 
     public async Task<Session?> GetActualSessionAsync(string name)
     {
-        var where = _context.Sessions.Where(s => s.UserProfile.Name == name && s.EndTime == null);
-        return await _context.Sessions.SingleOrDefaultAsync(s => s.UserProfile.Name == name && s.EndTime == null);
+        var where = _context.Sessions.Where(s => s.PersonProfile.FullName == name && s.EndTime == null);
+        return await _context.Sessions.SingleOrDefaultAsync(s => s.PersonProfile.FullName == name && s.EndTime == null);
     }
 
     public async Task<Session?> GetFinishSessionAsync(string name)
     {
-        return await _context.Sessions.Where(s => s.UserProfile.Name == name && s.Score >= 0).OrderByDescending(s => s.EndTime).FirstOrDefaultAsync();
+        return await _context.Sessions.Where(s => s.PersonProfile.FullName == name && s.Score >= 0).OrderByDescending(s => s.EndTime).FirstOrDefaultAsync();
     }
 
     public async Task SessionScoreAsync(int id, double score)

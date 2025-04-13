@@ -12,5 +12,5 @@ public class Token
     public string Status { get; set; }
     public string ResultPdfUrl { get; set; }
     
-    public virtual UserProfile UserProfile { get; set; }
+    public virtual PersonProfile PersonProfile { get; set; }
 }

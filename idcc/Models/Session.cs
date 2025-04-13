@@ -10,7 +10,7 @@ public class Session
     
     // ЯВНОЕ поле внешнего ключа
     public int UserId { get; set; }
-    public virtual UserProfile UserProfile { get; set; }
+    public virtual PersonProfile PersonProfile { get; set; }
     
     public DateTime StartTime { get; set; }
     public DateTime? EndTime { get; set; }

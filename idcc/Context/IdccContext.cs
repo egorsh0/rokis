@@ -19,26 +19,44 @@ public class IdccContext : IdentityDbContext<ApplicationUser>
         
         builder.UseSerialColumns();
         
-        // Настраиваем связи 1:1 с ApplicationUser:
-        // CompanyProfile -> ApplicationUser
-        builder.Entity<CompanyProfile>()
-            .HasOne(cp => cp.User)
-            .WithOne()
-            .HasForeignKey<CompanyProfile>(cp => cp.UserId)
-            .OnDelete(DeleteBehavior.Cascade);
-        
-        builder.Entity<UserProfile>()
-            .HasOne(up => up.User)
-            .WithOne()  // или WithOne(u => u.UserProfile), если хотим обратную ссылку
-            .HasForeignKey<UserProfile>(up => up.UserId)
-            .OnDelete(DeleteBehavior.Cascade);
+        // CompanyProfile -> AspNetUsers
+        builder.Entity<CompanyProfile>(entity =>
+        {
+            entity.HasOne(cp => cp.User)
+                .WithOne() 
+                .HasForeignKey<CompanyProfile>(cp => cp.UserId)
+                .OnDelete(DeleteBehavior.Cascade);
 
-        // При желании настраиваем связь на CompanyUser:
-        builder.Entity<UserProfile>()
-            .HasOne(up => up.CompanyUser)
-            .WithMany()  // или WithMany(c => c.Employees), если хотим список сотрудников
-            .HasForeignKey(up => up.CompanyUserId)
-            .OnDelete(DeleteBehavior.Restrict);
+            // Связь 1 (CompanyProfile) -> многие (EmployeeProfile)
+            // Но мы настроим её в EmployeeProfile:
+            // entity.HasMany(cp => cp.Employees)
+            //       .WithOne(e => e.Company)
+            //       .HasForeignKey(e => e.CompanyProfileId);
+        });
+
+        // EmployeeProfile -> AspNetUsers
+        builder.Entity<EmployeeProfile>(entity =>
+        {
+            entity.HasOne(ep => ep.User)
+                .WithOne()
+                .HasForeignKey<EmployeeProfile>(ep => ep.UserId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            // Связь EmployeeProfile -> CompanyProfile
+            entity.HasOne(ep => ep.Company)
+                .WithMany(cp => cp.Employees)
+                .HasForeignKey(ep => ep.CompanyProfileId)
+                .OnDelete(DeleteBehavior.SetNull);
+        });
+
+        // PersonProfile -> AspNetUsers
+        builder.Entity<PersonProfile>(entity =>
+        {
+            entity.HasOne(pp => pp.User)
+                .WithOne()
+                .HasForeignKey<PersonProfile>(pp => pp.UserId)
+                .OnDelete(DeleteBehavior.Cascade);
+        });
     }
     
     /// <summary>
@@ -47,9 +65,14 @@ public class IdccContext : IdentityDbContext<ApplicationUser>
     public DbSet<CompanyProfile> CompanyProfiles { get; set; } = null!;
     
     /// <summary>
-    /// Контекст для таблицы "Пользователь"
+    /// Контекст для таблицы "Сотрудник"
     /// </summary>
-    public DbSet<UserProfile> UserProfiles { get; set; } = null!;
+    public DbSet<EmployeeProfile> EmployeeProfiles { get; set; } = null!;
+    
+    /// <summary>
+    /// Контекст для таблицы "Физ лицо"
+    /// </summary>
+    public DbSet<PersonProfile> PersonProfiles { get; set; } = null!;
     
     /// <summary>
     /// Контекст для таблицы "Токены"

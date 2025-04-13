@@ -15,19 +15,19 @@ public class UserRepository : IUserRepository
         _context = context;
     }
     
-    public async Task<UserProfile?> GetUserAsync(int id)
+    public async Task<PersonProfile?> GetUserAsync(int id)
     {
-        return await _context.UserProfiles.SingleOrDefaultAsync(u => u.Id == id);
+        return await _context.PersonProfiles.SingleOrDefaultAsync(u => u.Id == id);
     }
 
-    public async Task<UserProfile?> GetUserByNameAsync(string name)
+    public async Task<PersonProfile?> GetUserByNameAsync(string name)
     {
-        return await _context.UserProfiles.FindAsync(name);
+        return await _context.PersonProfiles.FindAsync(name);
     }
 
-    public async Task<UserProfile> CreateAsync(UserProfile userProfile)
+    public async Task<PersonProfile> CreateAsync(PersonProfile personProfile)
     {
-        var entryUser = await _context.UserProfiles.AddAsync(userProfile);
+        var entryUser = await _context.PersonProfiles.AddAsync(personProfile);
         await _context.SaveChangesAsync();
         return entryUser.Entity;
     }

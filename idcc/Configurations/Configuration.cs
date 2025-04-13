@@ -94,6 +94,11 @@ public static class Configuration
                 };
             });
         
+        // Репозиторий компании
+        builder.Services.AddScoped<ICompanyRepository, CompanyRepository>();
+        
+        // Репозиторий авторизации
+        builder.Services.AddScoped<IAuthRepository, AuthRepository>();
         
         builder.Services.AddScoped<ITokenRepository, TokenRepository>();
         
