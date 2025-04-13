@@ -40,6 +40,12 @@ services:
     volumes:
       - db_data:/var/lib/postgresql/data
       - ./idcc/InitDb/migration.sql:/docker-entrypoint-initdb.d/init.sql
+        
+  cache:
+    image: redis:7.0.4-alpine
+    restart: always
+    ports:
+      - '6379:6379'
 volumes:
   db_data:
     

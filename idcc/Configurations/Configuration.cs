@@ -7,6 +7,7 @@ using idcc.Infrastructures.Interfaces;
 using idcc.Repository;
 using idcc.Repository.Interfaces;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Caching.Hybrid;
 using Microsoft.OpenApi.Models;
 
 namespace idcc.Configurations;
@@ -20,6 +21,21 @@ public static class Configuration
             .AddJsonOptions(options =>
                 options.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter()));
         var connectionString = builder.Configuration.GetConnectionString("idccDb");
+
+        builder.Services.AddHybridCache(c =>
+        {
+            c.DefaultEntryOptions = new HybridCacheEntryOptions
+            {
+                LocalCacheExpiration = TimeSpan.FromMinutes(5),
+                Expiration = TimeSpan.FromMinutes(5)
+            };
+        });
+        builder.Services.AddStackExchangeRedisCache(options =>
+        {
+            options.Configuration = 
+                builder.Configuration.GetConnectionString("RadisConnection");
+        });
+        
         builder.Services.AddDbContext<IdccContext>(options =>
         {
             options.UseLazyLoadingProxies();
