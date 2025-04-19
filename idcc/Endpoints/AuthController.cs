@@ -203,7 +203,9 @@ public class AuthController : ControllerBase
         var claims = new List<Claim>
         {
             new(ClaimTypes.NameIdentifier, user.Id),
-            new(ClaimTypes.Email, user.Email ?? "")
+            new(ClaimTypes.Email, user.Email ?? ""),
+            new("IP", HttpContext.Connection.RemoteIpAddress?.ToString() ?? ""),
+            new("UserAgent", Request.Headers["User-Agent"].ToString())
         };
 
         // Добавим роли в токен:
@@ -218,6 +220,8 @@ public class AuthController : ControllerBase
         var creds = new SigningCredentials(new SymmetricSecurityKey(key), SecurityAlgorithms.HmacSha256);
 
         var token = new JwtSecurityToken(
+            issuer: "Idcc",
+            audience: "Idcc",
             claims: claims,
             expires: DateTime.UtcNow.AddHours(1),
             signingCredentials: creds

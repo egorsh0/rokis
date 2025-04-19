@@ -6,6 +6,7 @@ using idcc.Context;
 using idcc.Filters;
 using idcc.Infrastructures;
 using idcc.Infrastructures.Interfaces;
+using idcc.Middlewares;
 using idcc.Models;
 using idcc.Repository;
 using idcc.Repository.Interfaces;
@@ -87,12 +88,16 @@ public static class Configuration
                 {
                     ValidateIssuerSigningKey = true,
                     IssuerSigningKey = new SymmetricSecurityKey(key),
-                    ValidateIssuer = false,
-                    ValidateAudience = false,
+                    ValidateIssuer = true,
+                    ValidateAudience = true,
+                    ValidateLifetime = true,
+                    ValidIssuer = "Idcc",
+                    ValidAudience = "Idcc",
                     // При желании можно включить ValidateLifetime = true
                     // и настроить ClockSkew = TimeSpan.Zero, чтобы не было доп. времени
                 };
             });
+        builder.Services.AddAuthorization();
         
         // Репозиторий компании
         builder.Services.AddScoped<ICompanyRepository, CompanyRepository>();
@@ -158,6 +163,8 @@ public static class Configuration
         // Включаем аутентификацию/авторизацию
         app.UseAuthentication();
         app.UseAuthorization();
+        
+        app.UseMiddleware<IpUserAgentValidationMiddleware>();
         
         app.MapControllers();
     }
