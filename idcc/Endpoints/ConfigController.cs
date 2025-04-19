@@ -76,13 +76,13 @@ public class ConfigController : ControllerBase
             await _configRepository.GetPersentsAsync());
     }
 
-    [HttpGet("roles")]
-    public async Task<List<RoleDto>> GetRolesAsync()
+    [HttpGet("direction")]
+    public async Task<List<DirectionDto>> GetDirectionsAsync()
     {
-        _logger.LogInformation("GetRolesAsync");
-        var cachekey = $"{nameof(ConfigController)}.{nameof(GetRolesAsync)}";
-        return await _hybridCache.GetOrCreateAsync<List<RoleDto>>(cachekey, async _ =>
-            await _configRepository.GetRolesAsync());
+        _logger.LogInformation("GetDirectionsAsync");
+        var cachekey = $"{nameof(ConfigController)}.{nameof(GetDirectionsAsync)}";
+        return await _hybridCache.GetOrCreateAsync<List<DirectionDto>>(cachekey, async _ =>
+            await _configRepository.GetDirectionsAsync());
     }
 
     [HttpGet("weights")]
@@ -92,5 +92,14 @@ public class ConfigController : ControllerBase
         var cachekey = $"{nameof(ConfigController)}.{nameof(GetWeightsAsync)}";
         return await _hybridCache.GetOrCreateAsync<List<WeightDto>>(cachekey, async _ =>
             await _configRepository.GetWeightsAsync());
+    }
+
+    [HttpGet]
+    public async Task<List<DiscountRuleDto>> GetDiscountsRuleAsync()
+    {
+        _logger.LogInformation("GetDiscountsRuleAsync");
+        var cachekey = $"{nameof(ConfigController)}.{nameof(GetDiscountsRuleAsync)}";
+        return await _hybridCache.GetOrCreateAsync<List<DiscountRuleDto>>(cachekey, async _ =>
+            await _configRepository.GetDiscountsRuleAsync());
     }
 }

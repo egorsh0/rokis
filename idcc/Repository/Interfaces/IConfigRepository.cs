@@ -12,6 +12,7 @@ public interface IConfigRepository
     Task<List<GradeLevelDto>> GetGradeLevelsAsync();
     Task<List<GradeRelationDto>> GetGradeRelationsAsync();
     Task<List<PersentDto>> GetPersentsAsync();
-    Task<List<RoleDto>> GetRolesAsync();
+    Task<List<DirectionDto>> GetDirectionsAsync();
     Task<List<WeightDto>> GetWeightsAsync();
+    Task<List<DiscountRuleDto>> GetDiscountsRuleAsync();
 }

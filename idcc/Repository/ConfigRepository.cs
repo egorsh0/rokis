@@ -56,9 +56,9 @@ public class ConfigRepository : IConfigRepository
         return [..persents];
     }
 
-    public async Task<List<RoleDto>> GetRolesAsync()
+    public async Task<List<DirectionDto>> GetDirectionsAsync()
     {
-        var roles = await _context.Directions.Select(role => new RoleDto(role.Name, role.Code, role.Description)).ToListAsync();
+        var roles = await _context.Directions.Select(role => new DirectionDto(role.Name, role.Code, role.Description)).ToListAsync();
         return [..roles];
     }
 
@@ -67,5 +67,12 @@ public class ConfigRepository : IConfigRepository
         var weights = await _context.Weights.Select(weight => new WeightDto(weight.Grade.Name, weight.Min, weight.Max))
             .ToListAsync();
         return [..weights];
+    }
+    
+    public async Task<List<DiscountRuleDto>> GetDiscountsRuleAsync()
+    {
+        var discountRules = await _context.DiscountRules.Select(discountRule => new DiscountRuleDto(discountRule.MinQuantity, discountRule.MaxQuantity, discountRule.DiscountRate))
+            .ToListAsync();
+        return [..discountRules];
     }
 }
