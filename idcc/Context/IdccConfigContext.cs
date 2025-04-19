@@ -1,4 +1,5 @@
 ﻿using idcc.Models;
+using idcc.Models.Config;
 using Microsoft.EntityFrameworkCore;
 
 namespace idcc.Context;
@@ -46,7 +47,7 @@ public partial class IdccContext
     public DbSet<Persent> Persents { get; set; }
     
     /// <summary>
-    /// Контекст для таблицы "Количества"
+    /// Контекст для таблицы "Количества вопросов для ..."
     /// </summary>
     public DbSet<Count> Counts { get; set; }
 }

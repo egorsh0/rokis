@@ -13,9 +13,11 @@ using idcc.Repository.Interfaces;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Caching.Hybrid;
+using Microsoft.Extensions.Caching.StackExchangeRedis;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
+using ZiggyCreatures.Caching.Fusion;
+using ZiggyCreatures.Caching.Fusion.Serialization.SystemTextJson;
 
 namespace idcc.Configurations;
 
@@ -29,20 +31,14 @@ public static class Configuration
                 options.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter()));
         var connectionString = builder.Configuration.GetConnectionString("idccDb");
 
-        builder.Services.AddHybridCache(c =>
-        {
-            c.DefaultEntryOptions = new HybridCacheEntryOptions
-            {
-                LocalCacheExpiration = TimeSpan.FromMinutes(5),
-                Expiration = TimeSpan.FromMinutes(5)
-            };
-        });
-        
-        builder.Services.AddStackExchangeRedisCache(options =>
-        {
-            options.Configuration = 
-                builder.Configuration.GetConnectionString("RadisConnection");
-        });
+        // 0. Подключаем кэширование.
+        builder.Services.AddFusionCache()
+            .WithDefaultEntryOptions(options => options.Duration = TimeSpan.FromMinutes(5))
+            .WithSerializer(new FusionCacheSystemTextJsonSerializer())
+            .WithDistributedCache(
+                new RedisCache(new RedisCacheOptions
+                    { Configuration = builder.Configuration.GetConnectionString("RadisConnection") })
+                ).AsHybridCache();
         
         // 1. Подключаем EF Core (PostgreSQL)
         builder.Services.AddDbContext<IdccContext>(options =>
@@ -105,6 +101,10 @@ public static class Configuration
         // Репозиторий авторизации
         builder.Services.AddScoped<IAuthRepository, AuthRepository>();
         
+        // Репозиторий конфигурации
+        builder.Services.AddScoped<IConfigRepository, ConfigRepository>();
+        
+        // Репозиторий работы с токенами
         builder.Services.AddScoped<ITokenRepository, TokenRepository>();
         
         builder.Services.AddScoped<IUserRepository, UserRepository>();
@@ -113,7 +113,6 @@ public static class Configuration
         builder.Services.AddScoped<ISessionRepository, SessionRepository>();
         builder.Services.AddScoped<IUserAnswerRepository, UserAnswerRepository>();
         builder.Services.AddScoped<IDataRepository, DataRepository>();
-        builder.Services.AddScoped<ISettingsRepository, SettingsRepository>();
 
         builder.Services.AddScoped<ITimeCalculate, TimeCalculate>();
         builder.Services.AddScoped<IWeightCalculate, WeightCalculate>();

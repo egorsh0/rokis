@@ -18,6 +18,5 @@ app.RegisterSessionEndpoints();
 app.RegisterQuestionEndpoints();
 app.RegisterReportEndpoints();
 app.RegisterQuestionAdminEndpoints();
-app.RegisterSettingsEndpoints();
 
 app.Run();
