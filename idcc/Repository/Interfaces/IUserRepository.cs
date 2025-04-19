@@ -8,5 +8,5 @@ public interface IUserRepository
     Task<PersonProfile?> GetUserAsync(int id);
     Task<PersonProfile?> GetUserByNameAsync(string name);
     Task<PersonProfile> CreateAsync(PersonProfile employee);
-    Task<Role?> GetRoleAsync(string name);
+    Task<Direction?> GetRoleAsync(string name);
 }

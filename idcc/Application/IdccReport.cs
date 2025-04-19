@@ -33,27 +33,17 @@ public class IdccReport : IIdccReport
     public async Task<ReportDto?> GenerateAsync(Session session)
     {
         _logger.LogInformation("Создание обьекта отчета");
-        var report = new ReportDto
-        {
-            Name = session.PersonProfile.FullName,
-            StartSession = session.StartTime,
-            EndSession = session.EndTime!.Value,
-            TestingTime = (session.StartTime - session.EndTime.Value)
-        };
 
         _logger.LogInformation("Генерация финального Score");
         var finalScoreDto = await CalculateFinalScoreAsync(session);
-
         _logger.LogInformation($"Финальный score: {finalScoreDto}");
-        
-        report.FinalScoreDto = finalScoreDto;
         
         _logger.LogInformation("Генерация score для тем");
         var finalTopicDatas = await CalculateFinalTopicDataAsync(session);
-
         _logger.LogInformation($"Финальный score для тем сгенерирован");
-        report.FinalTopicDatas = finalTopicDatas;
-        
+
+        var report = new ReportDto(session.TokenId, session.StartTime, session.EndTime!.Value,
+            session.StartTime - session.EndTime.Value, finalScoreDto, finalTopicDatas, null);
         return report;
     }
 
@@ -70,7 +60,7 @@ public class IdccReport : IIdccReport
         var sum = 0.0;
         foreach (var userTopic in userTopics)
         {
-            var scores = userAnswers.Where(_ => _.Question.Topic == userTopic.Topic).Select(_ => _.Score).ToList();
+            var scores = userAnswers.Where(userAnswer => userAnswer.Question.Topic == userTopic.Topic).Select(answer => answer.Score).ToList();
             var weight = userTopic.Weight;
             var topicScore = _scoreCalculate.GetTopicScore(scores, weight);
             sum += topicScore;
@@ -78,11 +68,7 @@ public class IdccReport : IIdccReport
 
         var (_, grade) = await _dataRepository.GetGradeLevelAsync(sum);
 
-        return new FinalScoreDto()
-        {
-            Score = sum,
-            Grade = grade.Name
-        };
+        return new FinalScoreDto(sum, grade.Name);
     }
     
     private async Task<List<FinalTopicData>?> CalculateFinalTopicDataAsync(Session session)
@@ -102,16 +88,11 @@ public class IdccReport : IIdccReport
             var scores = questionAnswers.Select(a => a.Score).ToList();
             var weight = userTopic.Weight;
             var topicScore = _scoreCalculate.GetTopicScore(scores, weight);
-            var positive = questionAnswers.Count(_ => _.Score > 0);
-            var negative = questionAnswers.Count(_ => _.Score == 0);
+            var positive = questionAnswers.Count(answer => answer.Score > 0);
+            var negative = questionAnswers.Count(answer => answer.Score == 0);
 
-            var finalTopicData = new FinalTopicData()
-            {
-                Topic = userTopic.Topic.Name,
-                Score = topicScore == 0 ? ValueConst.MinValue : topicScore,
-                Positive = positive,
-                Negative = negative
-            };
+            var finalTopicData = new FinalTopicData(userTopic.Topic.Name,
+                topicScore == 0 ? ValueConst.MinValue : topicScore, positive, negative);
             finalTopicDatas.Add(finalTopicData);
         }
 

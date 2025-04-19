@@ -1,10 +1,13 @@
-﻿using idcc.Repository.Interfaces;
+﻿using System.Security.Claims;
+using idcc.Repository.Interfaces;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace idcc.Endpoints;
 
 [ApiController]
-[Route("api/[controller]")]
+[Route("api/company")]
+[Authorize(Roles="Company")]
 public class CompanyController : ControllerBase
 {
     private readonly ICompanyRepository _companyRepository;
@@ -24,15 +27,9 @@ public class CompanyController : ControllerBase
     /// Но для примера передаём параметрами.
     /// </summary>
     [HttpPost("attach-employee")]
-    public async Task<IActionResult> AttachEmployee([FromQuery] string companyUserId, [FromQuery] string employeeEmail)
+    public async Task<IActionResult> AttachEmployee([FromQuery] string employeeEmail)
     {
-        // Могли бы userId взять из User.Claims, если компания авторизована
-        // var companyUserId = User.FindFirstValue(ClaimTypes.NameIdentifier);
-
-        if (string.IsNullOrEmpty(companyUserId) || string.IsNullOrEmpty(employeeEmail))
-        {
-            return BadRequest("companyUserId or employeeEmail is missing");
-        }
+        var companyUserId = User.FindFirstValue(ClaimTypes.NameIdentifier);
 
         var result = await _companyRepository.AttachEmployeeToCompanyAsync(companyUserId, employeeEmail);
         if (!result)
@@ -60,10 +57,10 @@ public class CompanyController : ControllerBase
 
         return Ok(new
         {
-            Id = company.Id,
+            company.Id,
             Name = company.FullName,
-            INN = company.INN,
-            Email = company.Email,
+            company.INN,
+            company.Email,
             Employees = company.Employees.Select(e => new
             {
                 e.Id,

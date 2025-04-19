@@ -1,12 +1,14 @@
-﻿using idcc.Models;
+﻿using idcc.Dtos;
+using idcc.Models;
 
 namespace idcc.Repository.Interfaces;
 
 public interface ITokenRepository
 {
-    public Task<List<Token?>> GetTokensAsync();
-    
-    public Task<Token?> GetTokenByCodeAsync(string token);
-    
-    public void UpdateToken(Token token);
+    Task<Order> PurchaseAsync(string userId, string role, List<PurchaseTokensDto> items);
+    Task<IEnumerable<Token>> GetTokensForCompanyAsync(string companyUserId);
+    Task<bool> BindTokenToEmployeeAsync(Guid tokenId, string employeeEmail, string companyUserId);
+    Task<IEnumerable<Token>> GetTokensForEmployeeAsync(string employeeUserId);
+    Task<bool> BindUsedTokenToPersonAsync(Guid tokenId, string personEmail);
+    Task<IEnumerable<Token>> GetTokensForPersonAsync(string personUserId);
 }

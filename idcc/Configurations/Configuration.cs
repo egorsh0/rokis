@@ -37,7 +37,9 @@ public static class Configuration
             .WithSerializer(new FusionCacheSystemTextJsonSerializer())
             .WithDistributedCache(
                 new RedisCache(new RedisCacheOptions
-                    { Configuration = builder.Configuration.GetConnectionString("RadisConnection") })
+                {
+                    Configuration = builder.Configuration.GetConnectionString("RadisConnection")
+                })
                 ).AsHybridCache();
         
         // 1. Подключаем EF Core (PostgreSQL)

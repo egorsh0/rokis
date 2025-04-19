@@ -7,9 +7,14 @@ namespace idcc.Context;
 public partial class IdccContext
 {
     /// <summary>
-    /// Контекст для справочника "Роли"
+    /// Контекст для справочника "Направление"
     /// </summary>
-    public DbSet<Role> Roles { get; set; }
+    public DbSet<Direction> Directions { get; set; }
+    
+    /// <summary>
+    /// Контекст для справочника "Скидки"
+    /// </summary>
+    public DbSet<DiscountRule> DiscountRules { get; set; }
     
     /// <summary>
     /// Контекст для справочника "Темы"

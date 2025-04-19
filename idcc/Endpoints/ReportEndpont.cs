@@ -13,10 +13,10 @@ public static class ReportEndpont
     {
         var reports = routes.MapGroup("/api/v1/report");
       
-        reports.MapGet("generate", async (int? sessionId, string? username, bool? full, ISessionRepository sessionRepository, IDataRepository dataRepository, IGraphGenerate graphGenerate,  IIdccReport idccReport) =>
+        reports.MapGet("generate", async (int? sessionId, Guid tokenId, bool? full, ISessionRepository sessionRepository, IDataRepository dataRepository, IGraphGenerate graphGenerate,  IIdccReport idccReport) =>
         {
             // Проверка на открытую сессию
-            Session? session= null;
+            Session? session;
             
             if (sessionId.HasValue)
             {
@@ -24,10 +24,7 @@ public static class ReportEndpont
             }
             else
             {
-                if (!string.IsNullOrWhiteSpace(username))
-                {
-                    session = await sessionRepository.GetFinishSessionAsync(username);
-                }
+                session = await sessionRepository.GetFinishSessionAsync(tokenId);
             }
             if (session is null)
             {
@@ -47,13 +44,17 @@ public static class ReportEndpont
 
             await sessionRepository.SessionScoreAsync(session.Id, report.FinalScoreDto!.Score);
 
-            if (report.FinalTopicDatas is not null)
+            if (report.FinalTopicDatas is null)
+                return Results.Ok(new
+                {
+                    report
+                });
+            var resize = await dataRepository.GetPercentOrDefaultAsync("GraphSize", 25);
+            var img = graphGenerate.Generate(report.FinalTopicDatas, (float)resize);
+            return Results.Ok(new
             {
-                var resize = await dataRepository.GetPercentOrDefaultAsync("GraphSize", 25);
-                var img = graphGenerate.Generate(report.FinalTopicDatas, (float)resize);
-                report.TopicReport = img;
-            }
-            return Results.Ok(report);
+                report, img
+            });
         }).WithOpenApi(x => new OpenApiOperation(x)
         {
             Summary = "Generate report",

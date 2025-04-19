@@ -13,20 +13,17 @@ public static class QuestionEndpoint
     {
         var questions = routes.MapGroup("/api/v1/question");
       
-        questions.MapGet("/", async (int? sessionId, string username, IUserTopicRepository userTopicRepository, IQuestionRepository questionRepository, ISessionRepository sessionRepository) =>
+        questions.MapGet("/", async (int? sessionId, Guid tokenId, IUserTopicRepository userTopicRepository, IQuestionRepository questionRepository, ISessionRepository sessionRepository) =>
         {
             // Проверка на открытую сессию
-            Session? session = null;
+            Session? session;
             if (sessionId.HasValue)
             {
                 session = await sessionRepository.GetSessionAsync(sessionId.Value);
             }
             else
             {
-                if (!string.IsNullOrWhiteSpace(username))
-                {
-                    session = await sessionRepository.GetActualSessionAsync(username);
-                }
+               session = await sessionRepository.GetActualSessionAsync(tokenId);
             }
             if (session is null)
             {
@@ -69,22 +66,19 @@ public static class QuestionEndpoint
             Tags = new List<OpenApiTag> { new() { Name = "Question" } }
         });
         
-        questions.MapPost("/answers", async (int? sessionId, string username, TimeSpan dateInterval, QuestionShortDto question,
+        questions.MapPost("/answers", async (int? sessionId, Guid tokenId, TimeSpan dateInterval, QuestionShortDto question,
             ISessionRepository sessionRepository,
             IIdccApplication idccApplication
         ) =>
         {
-            Session? session= null;
+            Session? session;
             if (sessionId.HasValue)
             {
                 session = await sessionRepository.GetSessionAsync(sessionId.Value);
             }
             else
             {
-                if (!string.IsNullOrWhiteSpace(username))
-                {
-                    session = await sessionRepository.GetActualSessionAsync(username);
-                }
+                session = await sessionRepository.GetActualSessionAsync(tokenId);
             }
             if (session is null)
             {

@@ -32,8 +32,8 @@ public class UserRepository : IUserRepository
         return entryUser.Entity;
     }
     
-    public Task<Role?> GetRoleAsync(string code)
+    public Task<Direction?> GetRoleAsync(string code)
     {
-        return _context.Roles.SingleOrDefaultAsync(r => r.Code == code);
+        return _context.Directions.SingleOrDefaultAsync(r => r.Code == code);
     }
 }

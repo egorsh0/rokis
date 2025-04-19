@@ -5,17 +5,17 @@ namespace idcc.Repository.Interfaces;
 
 public interface ISessionRepository
 {
-    Task<Session> StartSessionAsync(PersonProfile personProfile, Role role);
+    Task<Session> StartSessionAsync(string userId, bool isEmployee, Guid tokenId);
 
     Task<bool> EndSessionAsync(int id, bool faster);
+    
+    Task<IEnumerable<Session>> GetSessionsForUserAsync(string userId, bool isEmployee);
 
     Task<Session?> GetSessionAsync(int id);
-
-    Task<List<Session>> GetSessionsAsync(PersonProfile personProfile);
     
-    Task<Session?> GetActualSessionAsync(string name);
+    Task<Session?> GetActualSessionAsync(Guid tokenId);
     
-    Task<Session?> GetFinishSessionAsync(string name);
+    Task<Session?> GetFinishSessionAsync(Guid tokenId);
     
     Task SessionScoreAsync(int id, double score);
 }

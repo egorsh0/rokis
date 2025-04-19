@@ -1,4 +1,5 @@
 ﻿using idcc.Models;
+using idcc.Models.Config;
 using idcc.Models.Profile;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
@@ -57,6 +58,16 @@ public partial class IdccContext : IdentityDbContext<ApplicationUser>
                 .HasForeignKey<PersonProfile>(pp => pp.UserId)
                 .OnDelete(DeleteBehavior.Cascade);
         });
+        
+        builder.Entity<Direction>().HasIndex(d => d.Name).IsUnique();
+        builder.Entity<DiscountRule>()
+            .HasIndex(r => r.MinQuantity)
+            .IsUnique(false);
+        builder.Entity<Token>().HasKey(t => t.Id);
+        builder.Entity<Order>().HasMany(o => o.Tokens).WithOne(t => t.Order).HasForeignKey(t => t.OrderId);
+        builder.Entity<Session>()
+            .HasOne(s => s.Token).WithMany()
+            .HasForeignKey(s => s.TokenId);
     }
     
     /// <summary>
@@ -90,6 +101,11 @@ public partial class IdccContext : IdentityDbContext<ApplicationUser>
     public DbSet<Order> Orders { get; set; } = null!;
     
     /// <summary>
+    /// Контекст для таблицы "Сессия"
+    /// </summary>
+    public DbSet<Session> Sessions { get; set; }
+    
+    /// <summary>
     /// Контекст для таблицы "Вопросы"
     /// </summary>
     public DbSet<Question> Questions { get; set; }
@@ -98,11 +114,6 @@ public partial class IdccContext : IdentityDbContext<ApplicationUser>
     /// Контекст для таблицы "Ответы"
     /// </summary>
     public DbSet<Answer> Answers { get; set; }
-    
-    /// <summary>
-    /// Контекст для таблицы "Сессия"
-    /// </summary>
-    public DbSet<Session> Sessions { get; set; }
     
     /// <summary>
     /// Контекст для таблицы "Ответы пользователя"

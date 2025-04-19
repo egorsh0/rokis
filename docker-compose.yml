@@ -1,54 +1,47 @@
+version: '3.9'
+
 services:
-
-  idcc:
-    container_name: 'idcc_api'
-    image: 'idcc'
-    build:
-      context: .
-      dockerfile: idcc/Dockerfile
-    ports:
-      - "5000:5000"
-    depends_on:
-     - db
-    networks:
-      - idcc-network
-
-  idcc_bot:
-    container_name: 'idcc_bot'
-    image: 'idcc_bot'
-    build:
-      context: .
-      dockerfile: idcc.Bot/Dockerfile
-    ports:
-      - "6000:6000"
-    depends_on:
-      - idcc
-    networks:
-      - idcc-network
-        
+  # ───── PostgreSQL ───────────────────────────────────────────────────────────
   db:
-    container_name: db_postgresql
-    image: postgres:latest
+    image: postgres:16-alpine
     ports:
       - "5432:5432"
     environment:
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: 787898
       POSTGRES_DB: idcc
-    networks:
-      - idcc-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
     volumes:
       - db_data:/var/lib/postgresql/data
-      - ./idcc/InitDb/migration.sql:/docker-entrypoint-initdb.d/init.sql
-        
+      - ./idcc/docker/seed.sql:/docker-entrypoint-initdb.d/init.sql
+    networks: [idcc-net]
+  
+  # ───── Redis ────────────────────────────────────────────────────────────────
   cache:
     image: redis:7.0.4-alpine
     restart: always
     ports:
       - '6379:6379'
+    networks: [idcc-net]
+  
+  # ───── API ──────────────────────────────────────────────────────────────────
+  idcc:
+    image: idcc
+    build:
+      context: .
+      dockerfile: idcc/Dockerfile
+    depends_on:
+      cache:      { condition: service_started }
+    ports: ["5000:5000"]
+    networks: [idcc-net]
+
 volumes:
   db_data:
-    
+
 networks:
-  idcc-network:
+  idcc-net:
     driver: bridge

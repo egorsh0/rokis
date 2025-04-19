@@ -11,9 +11,9 @@ namespace idcc.Endpoints;
 public class AdministatorController : ControllerBase
 {
     private readonly IQuestionRepository _questionRepository;
-    private readonly ILogger<OrdersController> _logger;
+    private readonly ILogger<AdministatorController> _logger;
 
-    public AdministatorController(IQuestionRepository questionRepository, ILogger<OrdersController> logger)
+    public AdministatorController(IQuestionRepository questionRepository, ILogger<AdministatorController> logger)
     {
         _questionRepository = questionRepository;
         _logger = logger;

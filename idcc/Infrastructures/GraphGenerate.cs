@@ -11,7 +11,7 @@ public class GraphGenerate : IGraphGenerate
 
     private const float _fullCircle = 360f;
 
-    public byte[] Generate(List<FinalTopicData> topicDatas, float resize)
+    public byte[]? Generate(List<FinalTopicData> topicDatas, float resize)
     {
         var N = topicDatas.Count;
         var centerX = _width / 2f;

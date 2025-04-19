@@ -58,7 +58,7 @@ public class ConfigRepository : IConfigRepository
 
     public async Task<List<RoleDto>> GetRolesAsync()
     {
-        var roles = await _context.Roles.Select(role => new RoleDto(role.Name, role.Code, role.Description)).ToListAsync();
+        var roles = await _context.Directions.Select(role => new RoleDto(role.Name, role.Code, role.Description)).ToListAsync();
         return [..roles];
     }
 

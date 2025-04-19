@@ -8,5 +8,5 @@ public class Topic
     public int Id { get; set; }
     public string Name { get; set; }
     public string Description { get; set; }
-    public virtual Role Role { get; set; }
+    public virtual Direction Direction { get; set; }
 }

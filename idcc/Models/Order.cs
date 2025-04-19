@@ -1,17 +1,23 @@
-﻿namespace idcc.Models;
+﻿using System.ComponentModel.DataAnnotations.Schema;
+
+namespace idcc.Models;
 
 public class Order
 {
     public int Id { get; set; }
 
-    public string ProductName { get; set; } = string.Empty;
+    public string UserId { get; set; } = null!;             // AspNetUsers.Id
+    public string Role { get; set; } = null!;               // "Company" или "Person"
+
     public int Quantity { get; set; }
+    [Column(TypeName = "decimal(18,2)")]
+    public decimal UnitPrice { get; set; }
+    [Column(TypeName = "decimal(18,2)")]
+    public decimal TotalPrice { get; set; }
+    [Column(TypeName = "decimal(18,2)")]
+    public decimal DiscountRate { get; set; }               // например, 0.1m = 10%
+    [Column(TypeName = "decimal(18,2)")]
+    public decimal DiscountedTotal { get; set; }
 
-    /// <summary>
-    /// Ссылка на пользователя, оформившего заказ (Company или Person)
-    /// </summary>
-    public string UserId { get; set; } = string.Empty;
-
-    // Навигационное свойство
-    public virtual ApplicationUser? User { get; set; }
+    public virtual ICollection<Token> Tokens { get; set; } = new List<Token>();
 }

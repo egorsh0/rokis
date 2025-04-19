@@ -2,7 +2,7 @@
 
 namespace idcc.Dtos;
 
-public record QuestionShortDto
+public record QuestionShortDto()
 {
     public int Id { get; set; }
     public List<AnswerShortDto> Answers { get; set; } = new();
