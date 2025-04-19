@@ -207,6 +207,61 @@ public class AuthRepository : IAuthRepository
             UserId = user.Id
         };
     }
+    
+    public async Task<AuthResult> RegisterAdministratorAsync(RegisterAdministratorPayload dto)
+    {
+        // 1. Роль "Administrator"
+        if (!await _roleManager.RoleExistsAsync("Administrator"))
+        {
+            var roleRes = await _roleManager.CreateAsync(new IdentityRole("Administrator"));
+            if (!roleRes.Succeeded)
+            {
+                // Формируем список ошибок
+                var errors = roleRes.Errors.Select(e => e.Description).ToList();
+                return new AuthResult
+                {
+                    Succeeded = false,
+                    Errors = errors
+                };
+            }
+        }
+
+        // 2. Создаём пользователя
+        var user = new ApplicationUser
+        {
+            Email = dto.Email,
+            UserName = dto.Email
+        };
+        
+        var createRes = await _userManager.CreateAsync(user, dto.Password);
+        if (!createRes.Succeeded)
+        {
+            // Формируем список ошибок
+            var errors = createRes.Errors.Select(e => e.Description).ToList();
+            return new AuthResult
+            {
+                Succeeded = false,
+                Errors = errors
+            };
+        }
+
+        await _userManager.AddToRoleAsync(user, "Administrator");
+
+        // 3. Профиль
+        var administratorProfile = new AdministratorProfile
+        {
+            Email = dto.Email,
+            UserId = user.Id
+        };
+        _idccContext.AdministratorProfiles.Add(administratorProfile);
+        await _idccContext.SaveChangesAsync();
+
+        return new AuthResult
+        {
+            Succeeded = true,
+            UserId = user.Id
+        };
+    }
 
     // ---------------------------------------------------
     // ЛОГИН (компания, сотрудник, физ. лицо)
@@ -228,14 +283,12 @@ public class AuthRepository : IAuthRepository
         if (user == null) return null;
 
         // Проверяем, что он "Company"
-        bool isCompany = await _userManager.IsInRoleAsync(user, "Company");
+        var isCompany = await _userManager.IsInRoleAsync(user, "Company");
         if (!isCompany) return null;
 
         // Проверяем пароль
         var validPass = await _userManager.CheckPasswordAsync(user, dto.Password);
-        if (!validPass) return null;
-
-        return user;
+        return !validPass ? null : user;
     }
 
     public async Task<ApplicationUser?> LoginEmployeeAsync(LoginEmployeePayload dto)
@@ -244,13 +297,11 @@ public class AuthRepository : IAuthRepository
         var user = await _userManager.FindByEmailAsync(dto.Email);
         if (user == null) return null;
 
-        bool isEmployee = await _userManager.IsInRoleAsync(user, "Employee");
+        var isEmployee = await _userManager.IsInRoleAsync(user, "Employee");
         if (!isEmployee) return null;
 
         var validPass = await _userManager.CheckPasswordAsync(user, dto.Password);
-        if (!validPass) return null;
-
-        return user;
+        return !validPass ? null : user;
     }
 
     public async Task<ApplicationUser?> LoginPersonAsync(LoginPersonPayload dto)
@@ -258,12 +309,22 @@ public class AuthRepository : IAuthRepository
         var user = await _userManager.FindByEmailAsync(dto.Email);
         if (user == null) return null;
 
-        bool isPerson = await _userManager.IsInRoleAsync(user, "Person");
+        var isPerson = await _userManager.IsInRoleAsync(user, "Person");
         if (!isPerson) return null;
 
         var validPass = await _userManager.CheckPasswordAsync(user, dto.Password);
-        if (!validPass) return null;
+        return !validPass ? null : user;
+    }
+    
+    public async Task<ApplicationUser?> LoginAdministratorAsync(LoginAdministratorPayload dto)
+    {
+        var user = await _userManager.FindByEmailAsync(dto.Email);
+        if (user == null) return null;
 
-        return user;
+        var isAdministrator = await _userManager.IsInRoleAsync(user, "Administrator");
+        if (!isAdministrator) return null;
+
+        var validPass = await _userManager.CheckPasswordAsync(user, dto.Password);
+        return !validPass ? null : user;
     }
 }

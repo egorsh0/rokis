@@ -60,6 +60,11 @@ public partial class IdccContext : IdentityDbContext<ApplicationUser>
     }
     
     /// <summary>
+    /// Контекст для таблицы "Администратор"
+    /// </summary>
+    public DbSet<AdministratorProfile> AdministratorProfiles { get; set; } = null!;
+    
+    /// <summary>
     /// Контекст для таблицы "Компания"
     /// </summary>
     public DbSet<CompanyProfile> CompanyProfiles { get; set; } = null!;
