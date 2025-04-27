@@ -1,5 +1,4 @@
 ﻿using idcc.Infrastructures;
-using idcc.Models.Profile;
 using idcc.Repository.Interfaces;
 using Microsoft.OpenApi.Models;
 
@@ -9,7 +8,7 @@ public static class SessionEndpoint
 {
     public static void RegisterSessionEndpoints(this IEndpointRouteBuilder routes)
     {
-        var sessionsRoute = routes.MapGroup("/api/v1/session");
+        var sessionsRoute = routes.MapGroup("/api/session");
 
         sessionsRoute.MapPost("/stop", async (int sessionId, bool faster, ISessionRepository sessionRepository) =>
         {

@@ -13,7 +13,7 @@ public static class ReportEndpont
 {
     public static void RegisterReportEndpoints(this IEndpointRouteBuilder routes)
     {
-        var reports = routes.MapGroup("/api/v1/report");
+        var reports = routes.MapGroup("/api/report");
       
         reports.MapGet("generate", async (int? sessionId, Guid tokenId, bool? full, ISessionRepository sessionRepository, IDataRepository dataRepository, IGraphGenerate graphGenerate,  IConfigRepository configRepository, IReportRepository reportRepository, IIdccReport idccReport) =>
         {

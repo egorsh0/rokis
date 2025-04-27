@@ -8,7 +8,7 @@ using Microsoft.AspNetCore.Mvc;
 namespace idcc.Endpoints;
 
 [ApiController]
-[Route("api/v1/question")]
+[Route("api/question")]
 [Authorize(Roles = "Employee,Person")]
 public class QuestionController : ControllerBase
 {

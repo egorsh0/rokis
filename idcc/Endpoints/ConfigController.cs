@@ -6,7 +6,7 @@ using Microsoft.Extensions.Caching.Hybrid;
 namespace idcc.Endpoints;
 
 [ApiController]
-[Route("api/v1/config")]
+[Route("api/config")]
 public class ConfigController : ControllerBase
 {
     private readonly IConfigRepository _configRepository;

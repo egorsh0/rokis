@@ -7,7 +7,7 @@ using Microsoft.AspNetCore.Mvc;
 namespace idcc.Endpoints;
 
 [ApiController]
-[Route("api/v1/administator")]
+[Route("api/administator")]
 public class AdministatorController : ControllerBase
 {
     private readonly IQuestionRepository _questionRepository;
