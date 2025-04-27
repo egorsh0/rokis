@@ -12,6 +12,12 @@ public record ReportDto(
     List<FinalTopicData>? FinalTopicDatas,
     byte[]? TopicReport);
 
+public record ReportShortDto(
+    Guid    TokenId,
+    double  Score,
+    string  Grade,
+    string? ImageBase64); 
+
 /// <summary>
 /// Итоговая оценка.
 /// </summary>

@@ -30,7 +30,7 @@ public class ConfigRepository : IConfigRepository
 
     public async Task<List<GradeDto>> GetGradesAsync()
     {
-        var grades = await _context.Grades.Select(g => new GradeDto(g.Name, g.Code, g.Description))
+        var grades = await _context.Grades.Select(g => new GradeDto(g.Id, g.Name, g.Code, g.Description))
             .ToListAsync();
         return [..grades];
     }
@@ -58,7 +58,7 @@ public class ConfigRepository : IConfigRepository
 
     public async Task<List<DirectionDto>> GetDirectionsAsync()
     {
-        var roles = await _context.Directions.Select(role => new DirectionDto(role.Name, role.Code, role.Description)).ToListAsync();
+        var roles = await _context.Directions.Select(role => new DirectionDto(role.Id, role.Name, role.Code, role.Description, role.BasePrice)).ToListAsync();
         return [..roles];
     }
 
@@ -74,5 +74,12 @@ public class ConfigRepository : IConfigRepository
         var discountRules = await _context.DiscountRules.Select(discountRule => new DiscountRuleDto(discountRule.MinQuantity, discountRule.MaxQuantity, discountRule.DiscountRate))
             .ToListAsync();
         return [..discountRules];
+    }
+    
+    public async Task<List<MailingDto>> GetMailingRulesAsync()
+    {
+        var mailingRules = await _context.MailingSettings.Select(mailingRule => new MailingDto(mailingRule.MailingCode, mailingRule.IsEnabled, mailingRule.Subject, mailingRule.Body))
+                .ToListAsync();
+        return [..mailingRules];
     }
 }

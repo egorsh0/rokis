@@ -45,10 +45,9 @@ public class CompanyController : ControllerBase
     /// Получить компанию со списком сотрудников
     /// </summary>
     [HttpGet("/")]
-    public async Task<IActionResult> GetCompany([FromQuery] string companyUserId)
+    public async Task<IActionResult> GetCompany()
     {
-        // Опять же, реально бы взяли из токена, 
-        // но для примера – из query param.
+        var companyUserId = User.FindFirstValue(ClaimTypes.NameIdentifier);
         var company = await _companyRepository.GetCompanyWithEmployeesAsync(companyUserId);
         if (company == null)
         {

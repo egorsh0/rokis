@@ -1,8 +1,10 @@
 ﻿using idcc.Context;
+using idcc.Dtos;
 using idcc.Infrastructures;
 using idcc.Models;
 using idcc.Repository.Interfaces;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Query;
 
 namespace idcc.Repository;
 
@@ -15,29 +17,37 @@ public class SessionRepository : ISessionRepository
         _context = context;
     }
     
-    public async Task<Session> StartSessionAsync(string userId, bool isEmployee, Guid tokenId)
+    public async Task<SessionResultDto> StartSessionAsync(string userId, bool isEmployee, Guid tokenId)
     {
         var token = await _context.Tokens.FindAsync(tokenId);
-        if(token==null) throw new Exception("Token not found");
-        if(token.Status!=TokenStatus.Bound) throw new Exception("Token not bound");
+        if (token == null)
+        {
+            return new SessionResultDto(null, tokenId, false, "Token not found");
+        }
+
+        if (token.Status != TokenStatus.Bound)
+        {
+            return new SessionResultDto(null, tokenId, false, "Token not bound");
+        }
 
         switch (isEmployee)
         {
             // Проверим, что текущий userId совпадает с тем, кому он привязан
-            case true when token.EmployeeUserId!=userId:
-            case false when token.PersonUserId!=userId:
-                throw new Exception("Forbidden");
+            case true when token.EmployeeUserId != userId:
+            case false when token.PersonUserId != userId:
+                return new SessionResultDto(null, tokenId, false, "Forbidden");
         }
 
         var session = new Session {
-            TokenId=tokenId,
-            StartTime=DateTime.UtcNow,
-            EmployeeUserId = isEmployee?userId:null,
-            PersonUserId = isEmployee?null:userId
+            TokenId = tokenId,
+            StartTime = DateTime.UtcNow,
+            EmployeeUserId = isEmployee ? userId : null,
+            PersonUserId = isEmployee ? null : userId
         };
         _context.Sessions.Add(session);
+        await CreateSessionUserTopics(session);
         await _context.SaveChangesAsync();
-        return session;
+        return new SessionResultDto(session.Id, session.TokenId, true, null);
     }
 
     public async Task<bool> EndSessionAsync(int id, bool faster)
@@ -65,18 +75,35 @@ public class SessionRepository : ISessionRepository
         return true;
     }
     
-    public async Task<IEnumerable<Session>> GetSessionsForUserAsync(string userId, bool isEmployee)
+    public async Task<IEnumerable<SessionDto>> GetSessionsForUserAsync(
+        string userId,
+        bool   isEmployee)
     {
-        if(isEmployee)
-            return await _context.Sessions
-                .Include(s=>s.Token)
-                .Where(s=>s.EmployeeUserId==userId)
-                .ToListAsync();
-        return await _context.Sessions
-            .Include(s=>s.Token)
-            .Where(s=>s.PersonUserId==userId)
+        // базовый запрос
+        IQueryable<Session> query = _context.Sessions
+            .AsNoTracking()
+            .Include(s => s.Token)                // 1-й Include
+            .ThenInclude(t => t.Direction);   // 2-й Include
+
+        // фильтр по пользователю
+        query = isEmployee
+            ? query.Where(s => s.EmployeeUserId == userId)
+            : query.Where(s => s.PersonUserId   == userId);
+
+        // проекция в DTO (циклов больше нет)
+        return await query.Select(s => new SessionDto(
+                s.Id,
+                s.StartTime,
+                s.EndTime,
+                s.Score,
+                new TokenShortDto(
+                    s.Token.Id,
+                    s.Token.DirectionId,
+                    s.Token.Direction.Name,
+                    s.Token.Status)))
             .ToListAsync();
     }
+
 
     public async Task<Session?> GetSessionAsync(int id)
     {
@@ -101,5 +128,37 @@ public class SessionRepository : ISessionRepository
             session.Score = score;
         }
         await _context.SaveChangesAsync();
+    }
+    
+    private async Task CreateSessionUserTopics(Session session)
+    {
+        var middleGrade = _context.Grades.Single(g => g.Code == "Middle");
+        var weight = _context.Weights.Single(w => w.Grade == middleGrade);
+        var topics = _context.Topics.Where(t => t.Direction == session.Token.Direction);
+        var settingQuestion = await _context.Counts.FirstOrDefaultAsync(c => c.Code == "Question");
+
+        var questionCount = 10;
+        if (settingQuestion is not null)
+        {
+            questionCount = settingQuestion.Value;
+        }
+
+        bool firstActual = true;
+        foreach (var topic in topics)
+        {
+            var userTopic = new UserTopic()
+            {
+                Session = session,
+                Topic = topic,
+                Weight = weight.Min,
+                Grade = middleGrade,
+                IsFinished = false,
+                WasPrevious = false,
+                Actual = firstActual,
+                Count = questionCount
+            };
+            firstActual = false;
+            _context.UserTopics.Add(userTopic);
+        }
     }
 }

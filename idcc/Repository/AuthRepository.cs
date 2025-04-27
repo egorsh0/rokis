@@ -131,24 +131,37 @@ public class AuthRepository : IAuthRepository
             UserId = user.Id
         };
 
-        // Если сразу хотим привязать к компании (опционально):
-        if (!string.IsNullOrEmpty(dto.CompanyUserId))
+        bool linked   = false;
+        CompanyInfoDto? companyDto = null;
+
+        // ---------- 4.  Пытаемся найти компанию по INN или email ----------
+        if (!string.IsNullOrWhiteSpace(dto.CompanyIdentifier))
         {
-            var company = await _idccContext.CompanyProfiles
-                .FirstOrDefaultAsync(cp => cp.UserId == dto.CompanyUserId);
-            if (company != null)
+            var identifier = dto.CompanyIdentifier.Trim();
+            // 4.1 Поиск по INN
+            var companyProfile =
+                await _idccContext.CompanyProfiles
+                    // 4.2 Если не нашли — поиск по email
+                    .FirstOrDefaultAsync(cp => cp.INN == identifier) ?? await _idccContext.CompanyProfiles
+                    .FirstOrDefaultAsync(cp => cp.Email == identifier);
+
+            if (companyProfile != null)
             {
-                employeeProfile.CompanyProfileId = company.Id;
+                employeeProfile.CompanyProfileId = companyProfile.Id;
+                linked  = true;
+                companyDto = new CompanyInfoDto(companyProfile.FullName, companyProfile.INN, companyProfile.Email);
             }
         }
-
+                    
         _idccContext.EmployeeProfiles.Add(employeeProfile);
         await _idccContext.SaveChangesAsync();
 
         return new AuthResult
         {
             Succeeded = true,
-            UserId = user.Id
+            UserId = user.Id,
+            LinkedToCompany = linked,
+            Company = companyDto
         };
     }
 

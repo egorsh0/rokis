@@ -94,12 +94,21 @@ public class ConfigController : ControllerBase
             await _configRepository.GetWeightsAsync());
     }
 
-    [HttpGet]
-    public async Task<List<DiscountRuleDto>> GetDiscountsRuleAsync()
+    [HttpGet("discountsRule")]
+    public async Task<List<DiscountRuleDto>> GetDiscountsRulesAsync()
     {
         _logger.LogInformation("GetDiscountsRuleAsync");
-        var cachekey = $"{nameof(ConfigController)}.{nameof(GetDiscountsRuleAsync)}";
+        var cachekey = $"{nameof(ConfigController)}.{nameof(GetDiscountsRulesAsync)}";
         return await _hybridCache.GetOrCreateAsync<List<DiscountRuleDto>>(cachekey, async _ =>
             await _configRepository.GetDiscountsRuleAsync());
+    }
+    
+    [HttpGet("mails")]
+    public async Task<List<MailingDto>> GetMailingRulesAsync()
+    {
+        _logger.LogInformation("GetMailingRulesAsync");
+        var cachekey = $"{nameof(ConfigController)}.{nameof(GetMailingRulesAsync)}";
+        return await _hybridCache.GetOrCreateAsync<List<MailingDto>>(cachekey, async _ =>
+            await _configRepository.GetMailingRulesAsync());
     }
 }

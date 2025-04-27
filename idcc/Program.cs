@@ -13,7 +13,6 @@ app.RegisterMiddlewares();
 app.RegisterPingEndpoints();
 
 app.RegisterSessionEndpoints();
-app.RegisterQuestionEndpoints();
 app.RegisterReportEndpoints();
 
 app.Run();

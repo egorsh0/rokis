@@ -65,39 +65,40 @@ public class QuestionRepository : IQuestionRepository
         var notAdded = new List<string>();
         foreach (var question in questions)
         {
-            var topic = await _context.Topics.Where(_ => _.Name == question.Topic).SingleOrDefaultAsync();
+            var topic = await _context.Topics.Where(t => t.Name == question.Topic).SingleOrDefaultAsync();
             if (topic is null)
             {
                 notAdded.Add(question.Content);
-                break;
             }
-
-            try
+            else
             {
-                var q = await _context.Questions.AddAsync(new Question()
+                try
                 {
-                    Topic = topic,
-                    Content = question.Content,
-                    Weight = question.Weight,
-                    IsMultipleChoice = question.IsMultipleChoice
-                });
-
-
-                foreach (var answer in question.Answers)
-                {
-                    await _context.Answers.AddAsync(new Answer()
+                    var q = await _context.Questions.AddAsync(new Question()
                     {
-                        Question = q.Entity,
-                        Content = answer.Content,
-                        IsCorrect = answer.IsCorrect
+                        Topic = topic,
+                        Content = question.Content,
+                        Weight = question.Weight,
+                        IsMultipleChoice = question.IsMultipleChoice
                     });
-                }
 
-                await _context.SaveChangesAsync();
-            }
-            catch (Exception ex)
-            {
-                notAdded.Add(question.Content);
+
+                    foreach (var answer in question.Answers)
+                    {
+                        await _context.Answers.AddAsync(new Answer()
+                        {
+                            Question = q.Entity,
+                            Content = answer.Content,
+                            IsCorrect = answer.IsCorrect
+                        });
+                    }
+
+                    await _context.SaveChangesAsync();
+                }
+                catch (Exception ex)
+                {
+                    notAdded.Add(question.Content);
+                }
             }
         }
 

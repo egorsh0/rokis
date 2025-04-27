@@ -21,7 +21,6 @@ public class AdministatorController : ControllerBase
 
     [HttpPost]
     [Route("question/create")]
-    [Authorize("Administrator")]
     public async Task<IResult> Create([FromBody] List<QuestionAdminDto> questions)
     {
         if (!questions.Any())

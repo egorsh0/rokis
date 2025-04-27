@@ -46,32 +46,44 @@ public class IdccApplication : IIdccApplication
 
     public async Task<string?> CalculateScoreAsync(Session session, int interval, int questionId, List<int> answerIds)
     {
+        // ───────────────── 1.  Получаем вопрос ─────────────────
         var question = await _questionRepository.GetQuestionAsync(questionId);
         if (question is null)
-        {
             return ErrorMessages.QUESTION_IS_NULL;
-        }
-        
+
         _weight = question.Weight;
         
+        // ───────────────── 2.  Пустой список ответов ────────────
         if (!answerIds.Any())
         {
-            _logger.LogInformation($"Список ответов для сессии {session.Id} и вопроса {questionId} пустой.");
-            
+            _logger.LogInformation($"Список ответов для сессии {session.Id} и вопроса {questionId} пуст.");
             _isCorrectAnswer = false;
-            await _userAnswerRepository.CreateUserAnswerAsync(session, question,
-                interval, 0, DateTime.Now);
-        
+            await _userAnswerRepository.CreateUserAnswerAsync(session, question, interval, 0, DateTime.Now);
             return null;
         }
         
+        // ───────────────── 3.  Одиночный VS множественный ──────
         if (!question.IsMultipleChoice && answerIds.Count > 1)
         {
             return ErrorMessages.QUESTION_IS_NOT_MULTIPLY;
         }
         
-        // Посчитать коэффицент времени K
         
+        // ───────────────── 4.  Подтягиваем варианты ответа ─────
+        var answers = await _questionRepository.GetAnswersAsync(question);
+
+        // ---------- НОВАЯ ПРОВЕРКА: все ли id присутствуют ----------
+        var validIds = answers.Select(a => a.Id).ToHashSet();
+        var invalid  = answerIds.Where(id => !validIds.Contains(id)).ToList();
+
+        if (invalid.Any())
+        {
+            // можете сформировать свою ошибку; пример:
+            _logger.LogWarning($"Вопрос {questionId}: некорректные id ответов [{string.Join(",", invalid)}]");
+            return ErrorMessages.ANSWER_ID_NOT_FOUND;   // создайте константу / функцию
+        }
+
+        // ───────────────── 5.  Коэффициент времени K ────────────
         var actualTopic = await _userTopicRepository.GetActualTopicAsync(session);
         if (actualTopic is null)
         {
@@ -85,21 +97,19 @@ public class IdccApplication : IIdccApplication
         }
 
         var k = _timeCalculate.K(interval, times.Value.average, times.Value.min, times.Value.max);
-    
-        // Посчитать и сохранить Score за ответ
 
-        var answers = await _questionRepository.GetAnswersAsync(question);
-        var answeredCount = (from userAnswerId in answerIds let ans = answers where ans.Any(a => a.Id == userAnswerId && a.IsCorrect) select userAnswerId).Count();
+        // ───────────────── 6.  Подсчёт балла ────────────────────
+        var answeredCorrect = answers
+            .Count(a => a.IsCorrect && answerIds.Contains(a.Id));
 
-        var totalCount = answers.Count(a => a.IsCorrect);
-        
-        var score = _scoreCalculate.GetScore(_weight, k, answeredCount, totalCount);
+        var totalCorrect = answers.Count(a => a.IsCorrect);
+
+        var score = _scoreCalculate.GetScore(_weight, k, answeredCorrect, totalCorrect);
         _isCorrectAnswer = score > 0;
 
-        _logger.LogInformation($"Сессия: {session.Id}; Вопрос: {questionId}; Коэффицент времени K: {k}; Score: {score}.");
-        await _userAnswerRepository.CreateUserAnswerAsync(session, question,
-            interval, score, DateTime.Now);
-        
+        _logger.LogInformation($"Сессия:{session.Id}; Вопрос:{questionId}; K:{k}; Score:{score}");
+
+        await _userAnswerRepository.CreateUserAnswerAsync(session, question, interval, score, DateTime.Now);
         return null;
     }
 

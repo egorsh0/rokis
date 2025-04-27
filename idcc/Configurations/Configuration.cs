@@ -10,6 +10,7 @@ using idcc.Middlewares;
 using idcc.Models;
 using idcc.Repository;
 using idcc.Repository.Interfaces;
+using idcc.Service;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
@@ -42,6 +43,16 @@ public static class Configuration
                 })
                 ).AsHybridCache();
         
+        // 0.0 Подключаем рассылки
+        
+        var smtpSettings = builder.Configuration.GetSection("SmtpSettings").Get<SmtpSettings>();
+        if (smtpSettings != null)
+        {
+            builder.Services.AddSingleton(smtpSettings);
+            builder.Services.AddScoped<IEmailService, MailKitEmailService>();
+            builder.Services.AddScoped<IInviteService, InviteService>();
+        }
+
         // 1. Подключаем EF Core (PostgreSQL)
         builder.Services.AddDbContext<IdccContext>(options =>
         {
@@ -109,10 +120,12 @@ public static class Configuration
         // Репозиторий работы с токенами
         builder.Services.AddScoped<ITokenRepository, TokenRepository>();
         
+        // Репозиторий сессий
+        builder.Services.AddScoped<ISessionRepository, SessionRepository>();
+        
         builder.Services.AddScoped<IUserRepository, UserRepository>();
         builder.Services.AddScoped<IQuestionRepository, QuestionRepository>();
         builder.Services.AddScoped<IUserTopicRepository, UserTopicRepository>();
-        builder.Services.AddScoped<ISessionRepository, SessionRepository>();
         builder.Services.AddScoped<IUserAnswerRepository, UserAnswerRepository>();
         builder.Services.AddScoped<IDataRepository, DataRepository>();
 
@@ -123,6 +136,7 @@ public static class Configuration
         
         builder.Services.AddScoped<IGraphGenerate, GraphGenerate>();
 
+        builder.Services.AddScoped<IReportRepository, ReportRepository>();
         builder.Services.AddScoped<IIdccApplication, IdccApplication>();
         builder.Services.AddScoped<IIdccReport, IdccReport>();
 

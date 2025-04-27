@@ -1,15 +1,15 @@
-﻿using idcc.Models;
-using idcc.Models.Profile;
+﻿using idcc.Dtos;
+using idcc.Models;
 
 namespace idcc.Repository.Interfaces;
 
 public interface ISessionRepository
 {
-    Task<Session> StartSessionAsync(string userId, bool isEmployee, Guid tokenId);
+    Task<SessionResultDto> StartSessionAsync(string userId, bool isEmployee, Guid tokenId);
 
     Task<bool> EndSessionAsync(int id, bool faster);
     
-    Task<IEnumerable<Session>> GetSessionsForUserAsync(string userId, bool isEmployee);
+    Task<IEnumerable<SessionDto>> GetSessionsForUserAsync(string userId, bool isEmployee);
 
     Task<Session?> GetSessionAsync(int id);
     

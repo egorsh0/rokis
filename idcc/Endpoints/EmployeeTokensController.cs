@@ -9,12 +9,12 @@ namespace idcc.Endpoints;
 
 [ApiController]
 [Route("api/employee/tokens")]
-[Authorize(Roles="Employee")]
+[Authorize(Roles = "Employee")]
 public class EmployeeTokensController : ControllerBase
 {
     private readonly ITokenRepository _tokenRepository;
     private readonly ISessionRepository _sessionRepository;
-    public EmployeeTokensController(ITokenRepository tokenRepository, SessionRepository sessionRepository)
+    public EmployeeTokensController(ITokenRepository tokenRepository, ISessionRepository sessionRepository)
     {
         _tokenRepository = tokenRepository;
         _sessionRepository = sessionRepository;
@@ -28,22 +28,30 @@ public class EmployeeTokensController : ControllerBase
     }
 
     [HttpPost("bind-used")]
-    public async Task<IActionResult> BindUsed([FromBody]BindUsedTokenDto dto){
-        var ok = await _tokenRepository.BindUsedTokenToPersonAsync(dto.TokenId,dto.UserEmail);
+    public async Task<IActionResult> BindUsed([FromBody]BindUsedTokenDto dto)
+    {
+        var ok = await _tokenRepository.BindUsedTokenToPersonAsync(dto.TokenId, dto.UserEmail);
         return ok ? Ok() : BadRequest("Cannot bind used token");
     }
 
     [HttpPost("session/start")]
-    public async Task<IActionResult> StartSession([FromBody]StartSessionDto dto){
+    public async Task<IActionResult> StartSession([FromBody]StartSessionDto dto)
+    {
         var userId = User.FindFirstValue(ClaimTypes.NameIdentifier)!;
-        var session = await _sessionRepository.StartSessionAsync(userId,true,dto.TokenId);
-        return Ok(session);
+        var session = await _sessionRepository.StartSessionAsync(userId, true, dto.TokenId);
+        if (session.Succeeded)
+        {
+            return Ok(session);
+        }
+
+        return BadRequest(session);
     }
 
     [HttpGet("sessions")]
-    public async Task<IActionResult> Sessions(){
+    public async Task<IActionResult> Sessions()
+    {
         var userId = User.FindFirstValue(ClaimTypes.NameIdentifier)!;
-        var sessions = await _sessionRepository.GetSessionsForUserAsync(userId,true);
+        var sessions = await _sessionRepository.GetSessionsForUserAsync(userId, true);
         return Ok(sessions);
     }
 }
