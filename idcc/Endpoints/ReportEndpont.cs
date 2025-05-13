@@ -5,7 +5,6 @@ using idcc.Infrastructures.Interfaces;
 using idcc.Models;
 using idcc.Repository.Interfaces;
 using Microsoft.Extensions.Caching.Hybrid;
-using Microsoft.OpenApi.Models;
 
 namespace idcc.Endpoints;
 
@@ -13,9 +12,24 @@ public static class ReportEndpont
 {
     public static void RegisterReportEndpoints(this IEndpointRouteBuilder routes)
     {
-        var reports = routes.MapGroup("/api/report");
+        var reports = routes.MapGroup("/api/report")
+            .WithTags("Report");
       
-        reports.MapGet("generate", async (int? sessionId, Guid tokenId, bool? full, ISessionRepository sessionRepository, IDataRepository dataRepository, IGraphGenerate graphGenerate,  IConfigRepository configRepository, IReportRepository reportRepository, IIdccReport idccReport) =>
+        reports.MapGet("generate", 
+            /// <summary>Генерация (или попытка) итогового PDF-отчёта.</summary>
+            /// <remarks>
+            /// <para>
+            /// • Принимает <c>sessionId</c> **или** <c>tokenId</c>.<br/>
+            /// • Если отчёт уже существует → <c>400 Отчет уже существует.</c>.<br/>
+            /// • По завершении сохраняет результат в БД и кеш не затрагивает.
+            /// </para>
+            /// </remarks>
+            /// <param name="sessionId">Идентификатор сессии (опц.).</param>
+            /// <param name="tokenId">GUID токена (обязателен, если нет <c>sessionId</c>).</param>
+            /// <param name="full">Принудительно пересоздать отчёт, даже если сессия завершена.</param>
+            /// <response code="200">Объект отчёта (и base64-картинка, если есть).</response>
+            /// <response code="400">Логическая ошибка.</response>  
+            async (int? sessionId, Guid tokenId, bool? full, ISessionRepository sessionRepository, IDataRepository dataRepository, IGraphGenerate graphGenerate,  IConfigRepository configRepository, IReportRepository reportRepository, IIdccReport idccReport) =>
         {
             // ---------- 1.  Находим сессию ----------
             Session? session = sessionId.HasValue
@@ -69,17 +83,23 @@ public static class ReportEndpont
                 image   : imgBytes);
             
             // ---------- 6.  Возврат клиенту ----------
-            return Results.Ok(imgBytes is null
-                ? new { report }
-                : new { report, img = imgBytes });
-        }).WithOpenApi(x => new OpenApiOperation(x)
-        {
-            Summary = "Generate report",
-            Description = "Returns report.",
-            Tags = new List<OpenApiTag> { new() { Name = "Report" } }
-        });
+            /* -------- 6. Ответ клиенту --------*/
+            var dto = new ReportGeneratedDto(report, imgBytes is null
+                ? null
+                : Convert.ToBase64String(imgBytes));
+
+            return Results.Ok(dto);
+        }).Produces<ReportGeneratedDto>()
+            .Produces<string>(400);
         
-        reports.MapGet("get", async (
+        // ═══════════════════════════════════════════════════════
+        //              GET /api/report/get
+        // ═══════════════════════════════════════════════════════
+        reports.MapGet("get",
+                /// <summary>Получить ранее сформированный отчёт из кеша/БД.</summary>
+                /// <response code="200">Короткая форма отчёта.</response>
+                /// <response code="400">Отчёт не найден / не указаны параметры.</response>
+                async (
                 int?                 sessionId,
                 Guid?                tokenId,
                 HybridCache       cache,
@@ -97,32 +117,21 @@ public static class ReportEndpont
                 ? $"Report:Token:{tokenId}"
                 : $"Report:Session:{sessionId}";
             // ── пробуем достать из кэша или создать ─────────────────
-            var reportDto = await cache.GetOrCreateAsync<ReportShortDto?>(cacheKey,
-                async _ =>
-                {
-                    var rr = tokenId is not null
-                        ? await reportRepository.GetByTokenAsync(tokenId.Value)
-                        : await reportRepository.GetBySessionAsync(sessionId!.Value);
-
-                    if (rr is null)
-                    {
-                        return null;
-                    }
-
-                    return new ReportShortDto(
-                        rr.TokenId,
-                        rr.Score,
-                        rr.Grade.Name,
-                        rr.Image is null ? null : Convert.ToBase64String(rr.Image));
-                });
-
-            return reportDto is null ? Results.BadRequest(ErrorMessages.REPORT_NOT_FOUND) : Results.Ok(reportDto);
-        })
-            .WithOpenApi(x => new OpenApiOperation(x)
+            var dto = await cache.GetOrCreateAsync<ReportShortDto?>(cacheKey, async _ =>
             {
-                Summary     = "Get saved report",
-                Description = "Возвращает ранее сгенерированный отчёт по tokenId или sessionId",
-                Tags = new List<OpenApiTag> { new() { Name = "Report" } }
+                var rr = tokenId is not null
+                    ? await reportRepository.GetByTokenAsync(tokenId.Value)
+                    : await reportRepository.GetBySessionAsync(sessionId!.Value);
+
+                return rr is null ? null : new ReportShortDto(
+                    rr.TokenId,
+                    rr.Score,
+                    rr.Grade.Name,
+                    rr.Image is null ? null : Convert.ToBase64String(rr.Image));
             });
+
+            return dto is null ? Results.BadRequest(ErrorMessages.REPORT_NOT_FOUND) : Results.Ok(dto);
+        }).Produces<ReportShortDto>()
+            .Produces<string>(400);
     }
 }

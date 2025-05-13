@@ -5,6 +5,8 @@ using Microsoft.Extensions.Caching.Hybrid;
 
 namespace idcc.Endpoints;
 
+/// <summary>Читает справочники / конфигурационные данные, которые редко меняются.</summary>
+/// <remarks>Каждый метод использует HybridCache (In-Memory + Redis). TTL указан в конфигурации.</remarks>
 [ApiController]
 [Route("api/config")]
 public class ConfigController : ControllerBase
@@ -22,7 +24,12 @@ public class ConfigController : ControllerBase
         _logger = logger;
     }
 
+    /*────────── 1. AnswerTimes ──────────*/
+    /// <summary>Время ответа на вопросы (по диапазонам).</summary>
+    /// <remarks>Используется движком для расчёта K-коэффициента.</remarks>
     [HttpGet("answerTimes")]
+    [ProducesResponseType(typeof(IEnumerable<AnswerTimeDto>), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status500InternalServerError)]
     public async Task<List<AnswerTimeDto>> GetAnswerTimesAsync()
     {
         _logger.LogInformation("GetAnswerTimesAsync");
@@ -31,7 +38,11 @@ public class ConfigController : ControllerBase
             await _configRepository.GetAnswerTimesAsync());
     }
 
+    /*────────── 2. Counts ──────────*/
+    /// <summary>Справочник счётчиков.</summary>
     [HttpGet("counts")]
+    [ProducesResponseType(typeof(IEnumerable<CountDto>), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status500InternalServerError)]
     public async Task<List<CountDto>> GetCountsAsync()
     {
         _logger.LogInformation("GetCountsAsync");
@@ -40,7 +51,11 @@ public class ConfigController : ControllerBase
             await _configRepository.GetCountsAsync());
     }
 
+    /*────────── 3. Grades ──────────*/
+    /// <summary>Список грейдов (Junior/Middle/Senior…).</summary>
     [HttpGet("grades")]
+    [ProducesResponseType(typeof(IEnumerable<GradeDto>), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status500InternalServerError)]
     public async Task<List<GradeDto>> GetGradesAsync()
     {
         _logger.LogInformation("GetGradesAsync");
@@ -49,7 +64,11 @@ public class ConfigController : ControllerBase
             await _configRepository.GetGradesAsync());
     }
 
+    /*────────── 4. GradeLevels ──────────*/
+    /// <summary>Уровни внутри грейда.</summary>
     [HttpGet("gradeLevels")]
+    [ProducesResponseType(typeof(IEnumerable<GradeLevelDto>), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status500InternalServerError)]
     public async Task<List<GradeLevelDto>> GetGradeLevelsAsync()
     {
         _logger.LogInformation("GetGradeLevelsAsync");
@@ -58,7 +77,11 @@ public class ConfigController : ControllerBase
             await _configRepository.GetGradeLevelsAsync());
     }
 
+    /*────────── 5. GradeRelations ──────────*/
+    /// <summary>Связка «Grade → GradeLevel → Score диапазон».</summary>
     [HttpGet("gradeRelations")]
+    [ProducesResponseType(typeof(IEnumerable<GradeRelationDto>), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status500InternalServerError)]
     public async Task<List<GradeRelationDto>> GetGradeRelationsAsync()
     {
         _logger.LogInformation("GetGradeRelationsAsync");
@@ -67,7 +90,11 @@ public class ConfigController : ControllerBase
             await _configRepository.GetGradeRelationsAsync());
     }
 
-    [HttpGet("persents")]
+    /*────────── 6. Percents ──────────*/
+    /// <summary>Процентные коэффициенты.</summary>
+    [HttpGet("percents")]
+    [ProducesResponseType(typeof(IEnumerable<PersentDto>), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status500InternalServerError)]
     public async Task<List<PersentDto>> GetPersentsAsync()
     {
         _logger.LogInformation("GetPersentsAsync");
@@ -76,7 +103,11 @@ public class ConfigController : ControllerBase
             await _configRepository.GetPersentsAsync());
     }
 
+    /*────────── 7. Directions ──────────*/
+    /// <summary>Направления (QA, DEV, SA…).</summary>
     [HttpGet("direction")]
+    [ProducesResponseType(typeof(IEnumerable<DirectionDto>), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status500InternalServerError)]
     public async Task<List<DirectionDto>> GetDirectionsAsync()
     {
         _logger.LogInformation("GetDirectionsAsync");
@@ -85,7 +116,11 @@ public class ConfigController : ControllerBase
             await _configRepository.GetDirectionsAsync());
     }
 
+    /*────────── 8. Weights ──────────*/
+    /// <summary>Весовые коэффициенты.</summary>
     [HttpGet("weights")]
+    [ProducesResponseType(typeof(IEnumerable<WeightDto>), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status500InternalServerError)]
     public async Task<List<WeightDto>> GetWeightsAsync()
     {
         _logger.LogInformation("GetWeightsAsync");
@@ -94,7 +129,11 @@ public class ConfigController : ControllerBase
             await _configRepository.GetWeightsAsync());
     }
 
+    /*────────── 9. Discount rules ──────────*/
+    /// <summary>Шкала скидок при покупке токенов.</summary>
     [HttpGet("discountsRule")]
+    [ProducesResponseType(typeof(IEnumerable<DiscountRuleDto>), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status500InternalServerError)]
     public async Task<List<DiscountRuleDto>> GetDiscountsRulesAsync()
     {
         _logger.LogInformation("GetDiscountsRuleAsync");
@@ -103,7 +142,11 @@ public class ConfigController : ControllerBase
             await _configRepository.GetDiscountsRuleAsync());
     }
     
+    /*────────── 10. Mailing rules ──────────*/
+    /// <summary>Правила email-рассылок.</summary>
     [HttpGet("mails")]
+    [ProducesResponseType(typeof(IEnumerable<MailingDto>), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status500InternalServerError)]
     public async Task<List<MailingDto>> GetMailingRulesAsync()
     {
         _logger.LogInformation("GetMailingRulesAsync");

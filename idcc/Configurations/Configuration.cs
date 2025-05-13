@@ -1,4 +1,5 @@
-﻿using System.Text;
+﻿using System.Reflection;
+using System.Text;
 using System.Text.Json.Serialization;
 using idcc.Application;
 using idcc.Application.Interfaces;
@@ -159,6 +160,10 @@ public static class Configuration
                 Type = SecuritySchemeType.ApiKey,
                 Scheme = "Bearer"
             });
+            
+            // Добавление документации в Swagger
+            var xml = $"{Assembly.GetExecutingAssembly().GetName().Name}.xml";
+            c.IncludeXmlComments(Path.Combine(AppContext.BaseDirectory, xml));
             
             // Подключаем наш OperationFilter (см. далее)
             c.OperationFilter<AuthorizeCheckOperationFilter>();

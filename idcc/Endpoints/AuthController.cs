@@ -9,8 +9,9 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.IdentityModel.Tokens;
 
-namespace MyProject.Controllers;
+namespace idcc.Endpoints;
 
+/// <summary>Регистрация и аутентификация пользователей (Company / Employee / Person).</summary>
 [ApiController]
 [Route("api/auth")]
 public class AuthController : ControllerBase
@@ -20,6 +21,7 @@ public class AuthController : ControllerBase
     private readonly IConfiguration _configuration;
     private readonly ILogger<AuthController> _logger;
 
+    
     public AuthController(
         UserManager<ApplicationUser> userManager,
         IAuthRepository authRepository, 
@@ -32,8 +34,23 @@ public class AuthController : ControllerBase
         _logger = logger;
     }
 
-        // ------------------ РЕГИСТРАЦИЯ ---------------------
+    // ═══════════════════════════════════════════════════════
+    //     POST /auth/register/company
+    // ═══════════════════════════════════════════════════════
+    /// <summary>Регистрация компании.</summary>
+    /// <remarks>
+    /// **Сценарий:** вызывается при создании новой компании.<br/>
+    /// При успехе — <c>200 OK</c>, иначе <c>400</c> со списком ошибок Identity.
+    /// </remarks>
+    /// <param name="dto">JSON с реквизитами компании.</param>
+    /// <response code="200">Компания зарегистрирована.</response>
+    /// <response code="400">Ошибка валидации (например, пароль слабый).</response>
+    /// <response code="500">Непредвиденная ошибка сервера.</response>
     [HttpPost("register/company")]
+    [Consumes("application/json")]
+    [ProducesResponseType(typeof(string), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(object), StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status500InternalServerError)]
     public async Task<IActionResult> RegisterCompany([FromBody] RegisterCompanyPayload dto)
     {
         try
@@ -54,7 +71,18 @@ public class AuthController : ControllerBase
         }
     }
 
+    /// <summary>Регистрация сотрудника компании.</summary>
+    /// <remarks>
+    /// При передаче <c>companyIdentifier</c> (ИНН или email компании)
+    /// сотрудник сразу связывается с этой компанией.
+    /// </remarks>
+    /// <response code="200">Сотрудник зарегистрирован.</response>
+    /// <response code="400">Ошибки Identity.</response>
     [HttpPost("register/employee")]
+    [Consumes("application/json")]
+    [ProducesResponseType(typeof(string), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(object), StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status500InternalServerError)]
     public async Task<IActionResult> RegisterEmployee([FromBody] RegisterEmployeePayload dto)
     {
         try
@@ -75,7 +103,14 @@ public class AuthController : ControllerBase
         }
     }
 
+    /// <summary>Регистрация физического лица.</summary>
+    /// <response code="200">Физ. лицо зарегистрировано.</response>
+    /// <response code="400">Ошибки Identity.</response>
     [HttpPost("register/person")]
+    [Consumes("application/json")]
+    [ProducesResponseType(typeof(string), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(object), StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status500InternalServerError)]
     public async Task<IActionResult> RegisterPerson([FromBody] RegisterPersonPayload dto)
     {
         try
@@ -97,7 +132,15 @@ public class AuthController : ControllerBase
     }
 
     // ------------------ ЛОГИН ---------------------
+    /// <summary>Аутентификация компании (ИНН/email + пароль).</summary>
+    /// <remarks>Возвращает JWT-токен c role=<c>Company</c>.</remarks>
+    /// <response code="200">Успешная авторизация, тело: <c>{ token }</c>.</response>
+    /// <response code="401">Неверные учётные данные.</response>
     [HttpPost("login/company")]
+    [Consumes("application/json")]
+    [ProducesResponseType(typeof(JwtResponse), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(string),      StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(StatusCodes.Status500InternalServerError)]
     public async Task<IActionResult> LoginCompany([FromBody] LoginCompanyPayload dto)
     {
         try
@@ -118,7 +161,15 @@ public class AuthController : ControllerBase
         }
     }
 
+    /// <summary>Аутентификация сотрудника (email + пароль).</summary>
+    /// <remarks>JWT c role=<c>Employee</c>.</remarks>
+    /// <response code="200">Успешно.</response>
+    /// <response code="401">Неверные данные.</response>
     [HttpPost("login/employee")]
+    [Consumes("application/json")]
+    [ProducesResponseType(typeof(JwtResponse), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(string),      StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(StatusCodes.Status500InternalServerError)]
     public async Task<IActionResult> LoginEmployee([FromBody] LoginEmployeePayload dto)
     {
         try
@@ -138,7 +189,13 @@ public class AuthController : ControllerBase
         }
     }
 
+    /// <summary>Аутентификация физического лица.</summary>
+    /// <remarks>JWT c role=<c>Person</c>.</remarks>
     [HttpPost("login/person")]
+    [Consumes("application/json")]
+    [ProducesResponseType(typeof(JwtResponse), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(string),      StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(StatusCodes.Status500InternalServerError)]
     public async Task<IActionResult> LoginPerson([FromBody] LoginPersonPayload dto)
     {
         try
@@ -158,12 +215,17 @@ public class AuthController : ControllerBase
         }
     }
     
-    /// <summary>
-    /// Возвращает сведения о текущем пользователе (идентификатор, email, роли).
-    /// Только для авторизованных (Authorize).
-    /// </summary>
+    /// <summary>Текущий авторизованный пользователь.</summary>
+    /// <response code="200">
+    /// <example>
+    /// { "userId":"…","email":"…","roles":["Employee"] }
+    /// </example>
+    /// </response>
+    /// <response code="401">Если токен не передан или истёк.</response>
     [HttpGet("whoami")]
     [Authorize]
+    [ProducesResponseType(typeof(object), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
     public IActionResult WhoAmI()
     {
         // Найдём NameIdentifier (AspNetUsers.Id), если он есть
