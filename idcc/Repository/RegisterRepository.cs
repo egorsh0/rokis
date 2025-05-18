@@ -8,13 +8,13 @@ using Microsoft.EntityFrameworkCore;
 
 namespace idcc.Repository;
 
-public class AuthRepository : IAuthRepository
+public class RegisterRepository : IAuthRepository
 {
     private readonly UserManager<ApplicationUser> _userManager;
     private readonly RoleManager<IdentityRole> _roleManager;
     private readonly IdccContext _idccContext;
 
-    public AuthRepository(
+    public RegisterRepository(
         UserManager<ApplicationUser> userManager,
         RoleManager<IdentityRole> roleManager,
         IdccContext idccContext)
@@ -29,6 +29,8 @@ public class AuthRepository : IAuthRepository
     // ---------------------------------------------------
     public async Task<AuthResult> RegisterCompanyAsync(RegisterCompanyPayload dto)
     {
+        var errors = new List<string>();
+        
         // 1. Убедимся, что роль "Company" существует
         if (!await _roleManager.RoleExistsAsync("Company"))
         {
@@ -36,7 +38,7 @@ public class AuthRepository : IAuthRepository
             if (!roleRes.Succeeded)
             {
                 // Формируем список ошибок
-                var errors = roleRes.Errors.Select(e => e.Description).ToList();
+                errors = roleRes.Errors.Select(e => e.Description).ToList();
                 return new AuthResult
                 {
                     Succeeded = false,
@@ -44,6 +46,26 @@ public class AuthRepository : IAuthRepository
                 };
             }
         }
+        
+        // 1.1. Проверки email и INN при регистрации.
+        
+        // — проверка Email —
+        if (await _idccContext.Users.AnyAsync(u => u.Email == dto.Email))
+        {
+            errors.Add("EMAIL_ALREADY_EXISTS");
+        }
+
+        // — проверка ИНН —
+        if (await _idccContext.CompanyProfiles.AnyAsync(c => c.INN == dto.INN))
+        {
+            errors.Add("INN_ALREADY_EXISTS");
+        }
+
+        if (errors.Count > 0)
+        {
+            return new AuthResult { Succeeded = false, Errors = errors };
+        }
+        
 
         // 2. Создаём пользователя (Identity)
         var user = new ApplicationUser
@@ -56,7 +78,7 @@ public class AuthRepository : IAuthRepository
         if (!createRes.Succeeded)
         {
             // Формируем список ошибок
-            var errors = createRes.Errors.Select(e => e.Description).ToList();
+            errors = createRes.Errors.Select(e => e.Description).ToList();
             return new AuthResult
             {
                 Succeeded = false,
@@ -87,6 +109,7 @@ public class AuthRepository : IAuthRepository
 
     public async Task<AuthResult> RegisterEmployeeAsync(RegisterEmployeePayload dto)
     {
+        var errors = new List<string>();
         // 1. Роль "Employee"
         if (!await _roleManager.RoleExistsAsync("Employee"))
         {
@@ -94,13 +117,25 @@ public class AuthRepository : IAuthRepository
             if (!roleRes.Succeeded)
             {
                 // Формируем список ошибок
-                var errors = roleRes.Errors.Select(e => e.Description).ToList();
+                errors = roleRes.Errors.Select(e => e.Description).ToList();
                 return new AuthResult
                 {
                     Succeeded = false,
                     Errors = errors
                 };
             }
+        }
+        
+        // 1.5. Проверка Email
+        // ── проверка Email ─────────────────────────────────────
+        if (await _idccContext.Users.AnyAsync(u => u.Email == dto.Email))
+        {
+            errors.Add("EMAIL_ALREADY_EXISTS");
+        }
+
+        if (errors.Count > 0)
+        {
+            return new AuthResult { Succeeded = false, Errors = errors };
         }
 
         // 2. Создаём ApplicationUser
@@ -113,7 +148,7 @@ public class AuthRepository : IAuthRepository
         if (!createRes.Succeeded)
         {
             // Формируем список ошибок
-            var errors = createRes.Errors.Select(e => e.Description).ToList();
+            errors = createRes.Errors.Select(e => e.Description).ToList();
             return new AuthResult
             {
                 Succeeded = false,
@@ -167,6 +202,8 @@ public class AuthRepository : IAuthRepository
 
     public async Task<AuthResult> RegisterPersonAsync(RegisterPersonPayload dto)
     {
+        var errors = new List<string>();
+        
         // 1. Роль "Person"
         if (!await _roleManager.RoleExistsAsync("Person"))
         {
@@ -174,7 +211,7 @@ public class AuthRepository : IAuthRepository
             if (!roleRes.Succeeded)
             {
                 // Формируем список ошибок
-                var errors = roleRes.Errors.Select(e => e.Description).ToList();
+                errors = roleRes.Errors.Select(e => e.Description).ToList();
                 return new AuthResult
                 {
                     Succeeded = false,
@@ -182,7 +219,19 @@ public class AuthRepository : IAuthRepository
                 };
             }
         }
+        
+        // 1.5. Проверка Email
 
+        if (await _idccContext.Users.AnyAsync(u => u.Email == dto.Email))
+        {
+            errors.Add("EMAIL_ALREADY_EXISTS");
+        }
+
+        if (errors.Count > 0)
+        {
+            return new AuthResult { Succeeded = false, Errors = errors };
+        }
+        
         // 2. Создаём пользователя
         var user = new ApplicationUser
         {
@@ -194,7 +243,7 @@ public class AuthRepository : IAuthRepository
         if (!createRes.Succeeded)
         {
             // Формируем список ошибок
-            var errors = createRes.Errors.Select(e => e.Description).ToList();
+            errors = createRes.Errors.Select(e => e.Description).ToList();
             return new AuthResult
             {
                 Succeeded = false,

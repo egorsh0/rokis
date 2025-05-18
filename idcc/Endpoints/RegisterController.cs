@@ -13,20 +13,20 @@ namespace idcc.Endpoints;
 
 /// <summary>Регистрация и аутентификация пользователей (Company / Employee / Person).</summary>
 [ApiController]
-[Route("api/auth")]
-public class AuthController : ControllerBase
+[Route("api/register")]
+public class RegisterController : ControllerBase
 {
     private readonly UserManager<ApplicationUser> _userManager;
     private readonly IAuthRepository _authRepository;
     private readonly IConfiguration _configuration;
-    private readonly ILogger<AuthController> _logger;
+    private readonly ILogger<RegisterController> _logger;
 
     
-    public AuthController(
+    public RegisterController(
         UserManager<ApplicationUser> userManager,
         IAuthRepository authRepository, 
         IConfiguration configuration,
-        ILogger<AuthController> logger)
+        ILogger<RegisterController> logger)
     {
         _userManager = userManager;
         _authRepository = authRepository;
@@ -40,16 +40,20 @@ public class AuthController : ControllerBase
     /// <summary>Регистрация компании.</summary>
     /// <remarks>
     /// **Сценарий:** вызывается при создании новой компании.<br/>
-    /// При успехе — <c>200 OK</c>, иначе <c>400</c> со списком ошибок Identity.
+    /// При успехе — <c>200 OK</c>, иначе <c>409</c> со списком ошибок Identity.
+    /// <response code="409">
+    /// EMAIL_ALREADY_EXISTS — почта уже зарегистрирована.<br/>
+    /// INN_ALREADY_EXISTS   — компания с таким ИНН существует.
+    /// </response>
     /// </remarks>
     /// <param name="dto">JSON с реквизитами компании.</param>
     /// <response code="200">Компания зарегистрирована.</response>
-    /// <response code="400">Ошибка валидации (например, пароль слабый).</response>
+    /// <response code="409">Ошибка валидации (например, пароль слабый).</response>
     /// <response code="500">Непредвиденная ошибка сервера.</response>
     [HttpPost("register/company")]
     [Consumes("application/json")]
     [ProducesResponseType(typeof(string), StatusCodes.Status200OK)]
-    [ProducesResponseType(typeof(object), StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(typeof(object), StatusCodes.Status409Conflict)]
     [ProducesResponseType(StatusCodes.Status500InternalServerError)]
     public async Task<IActionResult> RegisterCompany([FromBody] RegisterCompanyPayload dto)
     {
@@ -59,7 +63,7 @@ public class AuthController : ControllerBase
             if (!result.Succeeded)
             {
                 // Возвращаем BadRequest + список ошибок
-                return BadRequest(new { result.Errors });
+                return Conflict(new { result.Errors });
             }
             _logger.LogInformation("Registered company userId={UserId}, INN={INN}", result.UserId, dto.INN);
             return Ok("Company registered successfully");
@@ -75,13 +79,16 @@ public class AuthController : ControllerBase
     /// <remarks>
     /// При передаче <c>companyIdentifier</c> (ИНН или email компании)
     /// сотрудник сразу связывается с этой компанией.
+    /// <response code="409">
+    /// EMAIL_ALREADY_EXISTS — пользователь с таким email уже есть.
+    /// </response>
     /// </remarks>
     /// <response code="200">Сотрудник зарегистрирован.</response>
-    /// <response code="400">Ошибки Identity.</response>
+    /// <response code="409">Ошибки Identity.</response>
     [HttpPost("register/employee")]
     [Consumes("application/json")]
     [ProducesResponseType(typeof(string), StatusCodes.Status200OK)]
-    [ProducesResponseType(typeof(object), StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(typeof(object), StatusCodes.Status409Conflict)]
     [ProducesResponseType(StatusCodes.Status500InternalServerError)]
     public async Task<IActionResult> RegisterEmployee([FromBody] RegisterEmployeePayload dto)
     {
@@ -90,8 +97,8 @@ public class AuthController : ControllerBase
             var result = await _authRepository.RegisterEmployeeAsync(dto);
             if (!result.Succeeded)
             {
-                // Возвращаем BadRequest + список ошибок
-                return BadRequest(new { result.Errors });
+                // Возвращаем Conflict + список ошибок
+                return Conflict(new { result.Errors });
             }
             _logger.LogInformation("Registered employee userId={UserId}", result.UserId);
             return Ok("Employee registered successfully");
@@ -104,12 +111,17 @@ public class AuthController : ControllerBase
     }
 
     /// <summary>Регистрация физического лица.</summary>
+    /// <remarks>
+    /// <response code="409">
+    /// EMAIL_ALREADY_EXISTS — почта уже используется.
+    /// </response>
+    /// </remarks>
     /// <response code="200">Физ. лицо зарегистрировано.</response>
-    /// <response code="400">Ошибки Identity.</response>
+    /// <response code="409">Ошибки Identity.</response>
     [HttpPost("register/person")]
     [Consumes("application/json")]
     [ProducesResponseType(typeof(string), StatusCodes.Status200OK)]
-    [ProducesResponseType(typeof(object), StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(typeof(object), StatusCodes.Status409Conflict)]
     [ProducesResponseType(StatusCodes.Status500InternalServerError)]
     public async Task<IActionResult> RegisterPerson([FromBody] RegisterPersonPayload dto)
     {
@@ -118,8 +130,8 @@ public class AuthController : ControllerBase
             var result = await _authRepository.RegisterPersonAsync(dto);
             if (!result.Succeeded)
             {
-                // Возвращаем BadRequest + список ошибок
-                return BadRequest(new { result.Errors });
+                // Возвращаем Conflict + список ошибок
+                return Conflict(new { result.Errors });
             }
             _logger.LogInformation("Registered person userId={UserId}", result.UserId);
             return Ok("Person registered successfully");
