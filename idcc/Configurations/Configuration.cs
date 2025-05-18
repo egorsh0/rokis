@@ -111,6 +111,10 @@ public static class Configuration
         
         // Репозиторий компании
         builder.Services.AddScoped<ICompanyRepository, CompanyRepository>();
+        // Репозиторий сотрудника
+        builder.Services.AddScoped<IEmployeeRepository, EmployeeRepository>();
+        // Репозиторий физ лица
+        builder.Services.AddScoped<IPersonRepository,   PersonRepository>();
         
         // Репозиторий авторизации
         builder.Services.AddScoped<IAuthRepository, AuthRepository>();

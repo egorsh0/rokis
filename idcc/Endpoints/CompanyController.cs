@@ -1,5 +1,6 @@
 ﻿using System.ComponentModel.DataAnnotations;
 using System.Security.Claims;
+using idcc.Dtos;
 using idcc.Repository.Interfaces;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -61,7 +62,7 @@ public class CompanyController : ControllerBase
     /// <response code="200">Успешно, JSON с компанией и сотрудниками.</response>
     /// <response code="404">Компания не найдена (маловероятно, если токен валиден).</response>
     [HttpGet]
-    [ProducesResponseType(typeof(CompanyWithEmployeesDto), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(CompanyProfileDto), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(string),                 StatusCodes.Status404NotFound)]
     public async Task<IActionResult> GetCompany()
     {
@@ -72,24 +73,13 @@ public class CompanyController : ControllerBase
             return NotFound("Company not found");
         }
 
-        var dto = new CompanyWithEmployeesDto(
+        var dto = new CompanyProfileDto(
             company.Id,
             company.FullName,
             company.INN,
             company.Email,
-            company.Employees.Select(e => new EmployeeShortDto(e.Id, e.FullName, e.Email)));
+            company.Employees.Select(e => new EmployeeProfileShortDto(e.Id, e.FullName, e.Email)));
 
         return Ok(dto);
     }
 }
-
-/// <summary>DTO для краткого описания сотрудника.</summary>
-public record EmployeeShortDto(int Id, string FullName, string Email);
-
-/// <summary>DTO «Компания + сотрудники».</summary>
-public record CompanyWithEmployeesDto(
-    int                       Id,
-    string                    Name,
-    string                    INN,
-    string                    Email,
-    IEnumerable<EmployeeShortDto> Employees);
