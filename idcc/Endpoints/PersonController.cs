@@ -1,7 +1,9 @@
 ﻿using System.Security.Claims;
 using idcc.Dtos;
+using idcc.Models;
 using idcc.Repository.Interfaces;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 
 namespace idcc.Endpoints;
@@ -13,12 +15,15 @@ namespace idcc.Endpoints;
 public class PersonController : ControllerBase
 {
     private readonly IPersonRepository _personRepository;
+    private readonly UserManager<ApplicationUser> _userManager;
     private readonly ILogger<PersonController> _logger;
 
     public PersonController(IPersonRepository personRepository,
+        UserManager<ApplicationUser> userManager,
         ILogger<PersonController> logger)
     {
         _personRepository = personRepository;
+        _userManager = userManager;
         _logger = logger;
     }
 
@@ -47,5 +52,32 @@ public class PersonController : ControllerBase
             person.Email);
 
         return Ok(dto);
+    }
+    
+    // PATCH /api/person   (частичное обновление)
+    [HttpPatch]
+    [ProducesResponseType(StatusCodes.Status204NoContent)]
+    [ProducesResponseType(typeof(string), StatusCodes.Status400BadRequest)]
+    public async Task<IActionResult> Patch([FromBody] UpdatePersonDto dto)
+    {
+        var uid = User.FindFirstValue(ClaimTypes.NameIdentifier)!;
+        var ok  = await _personRepository.UpdatePersonAsync(uid, dto);
+        return ok ? NoContent() : BadRequest("Nothing to update");
+    }
+    
+    // POST /api/person/change-password
+    [HttpPost("change-password")]
+    [ProducesResponseType(StatusCodes.Status204NoContent)]
+    [ProducesResponseType(typeof(string), StatusCodes.Status400BadRequest)]
+    public async Task<IActionResult> ChangePassword([FromBody] ChangePasswordDto dto)
+    {
+        if (dto.NewPassword != dto.ConfirmNewPassword)
+        {
+            return BadRequest("Passwords do not match");
+        }
+
+        var user = await _userManager.GetUserAsync(User);
+        var res  = await _userManager.ChangePasswordAsync(user!, dto.OldPassword, dto.NewPassword);
+        return res.Succeeded ? NoContent() : BadRequest(res.Errors.Select(e => e.Description));
     }
 }

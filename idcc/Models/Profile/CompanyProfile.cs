@@ -16,11 +16,23 @@ public class CompanyProfile
     [Required]
     [MaxLength(200)]
     public string FullName { get; set; } = string.Empty;
+    
+    /// <summary>
+    /// Юр адрес
+    /// </summary>
+    [MaxLength(256)]
+    public string? LegalAddress { get; set; } 
 
     /// <summary>ИНН</summary>
     [Required]
     [MaxLength(12)]
     public string INN { get; set; } = string.Empty;
+    
+    /// <summary>
+    /// КПП
+    /// </summary>
+    [MaxLength(9)]
+    public string? Kpp        { get; set; }  
 
     /// <summary>Email компании (дублируется, но можно хранить и в Identity)</summary>
     [Required]

@@ -1,4 +1,5 @@
 ﻿using idcc.Context;
+using idcc.Dtos;
 using idcc.Models.Profile;
 using idcc.Repository.Interfaces;
 using Microsoft.EntityFrameworkCore;
@@ -55,5 +56,51 @@ public class CompanyRepository : ICompanyRepository
             .FirstOrDefaultAsync(cp => cp.UserId == companyUserId);
 
         return company;
+    }
+    
+    public async Task<bool> UpdateCompanyAsync(string userId, UpdateCompanyDto dto)
+    {
+        var entity = await _idccContext.CompanyProfiles
+            .FirstOrDefaultAsync(cp => cp.UserId == userId);
+        if (entity is null)
+            return false;
+
+        var changed = false;
+
+        if (dto.Name is not null && dto.Name != entity.FullName)
+        {
+            entity.FullName = dto.Name;
+            changed = true;
+        }
+
+        if (dto.LegalAddress is not null && dto.LegalAddress != entity.LegalAddress)
+        {
+            entity.LegalAddress = dto.LegalAddress;
+            changed = true;
+        }
+
+        if (dto.Email is not null && dto.Email != entity.Email)
+        {
+            entity.Email = dto.Email;
+            changed = true;
+        }
+
+        if (dto.Inn is not null && dto.Inn != entity.INN)
+        {
+            entity.INN = dto.Inn;
+            changed = true;
+        }
+
+        if (dto.Kpp is not null && dto.Kpp != entity.Kpp)
+        {
+            entity.Kpp = dto.Kpp;
+            changed = true;
+        }
+
+        if (!changed)
+            return false;
+
+        await _idccContext.SaveChangesAsync();
+        return true;
     }
 }

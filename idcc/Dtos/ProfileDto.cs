@@ -8,13 +8,17 @@ public record EmployeeProfileDto(
 public record CompanyProfileShortDto(
     int    Id,
     string Name,
+    string? LegalAddress,
     string Inn,
+    string? Kpp,
     string Email);
 
 public record CompanyProfileDto(
     int    Id,
     string Name,
+    string? LegalAddress,
     string Inn,
+    string? Kpp,
     string Email,
     IEnumerable<EmployeeProfileShortDto> Employees);
 

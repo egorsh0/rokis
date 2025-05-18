@@ -1,8 +1,10 @@
 ﻿using System.ComponentModel.DataAnnotations;
 using System.Security.Claims;
 using idcc.Dtos;
+using idcc.Models;
 using idcc.Repository.Interfaces;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 
 namespace idcc.Endpoints;
@@ -14,12 +16,15 @@ namespace idcc.Endpoints;
 public class CompanyController : ControllerBase
 {
     private readonly ICompanyRepository _companyRepository;
+    private readonly UserManager<ApplicationUser> _userManager;
     private readonly ILogger<CompanyController> _logger;
 
     public CompanyController(ICompanyRepository companyRepository,
+        UserManager<ApplicationUser> userManager,
                              ILogger<CompanyController> logger)
     {
         _companyRepository = companyRepository;
+        _userManager = userManager;
         _logger = logger;
     }
 
@@ -76,10 +81,48 @@ public class CompanyController : ControllerBase
         var dto = new CompanyProfileDto(
             company.Id,
             company.FullName,
+            company.LegalAddress,
             company.INN,
+            company.Kpp,
             company.Email,
             company.Employees.Select(e => new EmployeeProfileShortDto(e.Id, e.FullName, e.Email)));
 
         return Ok(dto);
+    }
+    
+    // PATCH /api/company   (частичное обновление)
+    /// <summary>
+    /// Частичное обновление данных компании
+    /// </summary>
+    /// <param name="dto">Модель компании для частичного обновления</param>
+    /// <response code="204">Успешно - данные изменены.</response>
+    /// <response code="400">Данные не обновлены.</response>
+    [HttpPatch]
+    [ProducesResponseType(StatusCodes.Status204NoContent)]
+    [ProducesResponseType(typeof(string), StatusCodes.Status400BadRequest)]
+    public async Task<IActionResult> PatchCompany([FromBody] UpdateCompanyDto dto)
+    {
+        var uid = User.FindFirstValue(ClaimTypes.NameIdentifier)!;
+        var ok  = await _companyRepository.UpdateCompanyAsync(uid, dto);
+        return ok ? NoContent() : BadRequest("Nothing to update");
+    }
+    
+    // POST /api/company/change-password
+    [HttpPost("change-password")]
+    [ProducesResponseType(StatusCodes.Status204NoContent)]
+    [ProducesResponseType(typeof(string), StatusCodes.Status400BadRequest)]
+    public async Task<IActionResult> ChangePassword([FromBody] ChangePasswordDto dto)
+    {
+        if (dto.NewPassword != dto.ConfirmNewPassword)
+        {
+            return BadRequest("Passwords do not match");
+        }
+
+        var user = await _userManager.GetUserAsync(User);
+        var res  = await _userManager.ChangePasswordAsync(user!, dto.OldPassword, dto.NewPassword);
+
+        return res.Succeeded
+            ? NoContent()
+            : BadRequest(string.Join("; ", res.Errors.Select(e => e.Description)));
     }
 }
