@@ -152,7 +152,7 @@ public class AuthController : ControllerBase
             }
             // Генерируем JWT, если нужно
             var token = await GenerateJwtTokenAsync(user);
-            return Ok(new { token });
+            return Ok(token);
         }
         catch (Exception ex)
         {
@@ -180,7 +180,7 @@ public class AuthController : ControllerBase
                 return Unauthorized("Invalid credentials");
             }
             var token = await GenerateJwtTokenAsync(user);
-            return Ok(new { token });
+            return Ok(token);
         }
         catch (Exception ex)
         {
@@ -206,7 +206,7 @@ public class AuthController : ControllerBase
                 return Unauthorized("Invalid credentials");
             }
             var token = await GenerateJwtTokenAsync(user);
-            return Ok(new { token });
+            return Ok(token);
         }
         catch (Exception ex)
         {
@@ -258,7 +258,7 @@ public class AuthController : ControllerBase
     // ------------------------------------------------------------
     // Пример генерации JWT
     // ------------------------------------------------------------
-    private async Task<string> GenerateJwtTokenAsync(ApplicationUser user)
+    private async Task<LoginDto> GenerateJwtTokenAsync(ApplicationUser user)
     {
         var roles = await _userManager.GetRolesAsync(user);
 
@@ -288,7 +288,7 @@ public class AuthController : ControllerBase
             expires: DateTime.UtcNow.AddHours(1),
             signingCredentials: creds
         );
-
-        return new JwtSecurityTokenHandler().WriteToken(token);
+        var login = new LoginDto(new JwtSecurityTokenHandler().WriteToken(token), roles.ToList());
+        return login;
     }
 }

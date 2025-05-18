@@ -9,3 +9,5 @@ public class AuthResult
     public bool LinkedToCompany  { get; set; }
     public CompanyInfoDto? Company { get; set; }
 }
+
+public record LoginDto(string Token, List<string> Roles);
