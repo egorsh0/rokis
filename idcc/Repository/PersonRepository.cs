@@ -19,9 +19,11 @@ public class PersonRepository : IPersonRepository
         var person = await _idccContext.PersonProfiles
             .FirstOrDefaultAsync(p => p.UserId == userId);
         if (person is null)
+        {
             return false;
+        }
 
-        bool changed = false;
+        var changed = false;
 
         if (dto.FullName is not null && dto.FullName != person.FullName)
         {

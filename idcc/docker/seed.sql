@@ -8,7 +8,7 @@ START TRANSACTION;
 
 DO $EF$
     BEGIN
-        IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20250427102553_InitialCreate') THEN
+        IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20250518091649_InitialCreate') THEN
             CREATE TABLE "AspNetRoles" (
                                            "Id" text NOT NULL,
                                            "Name" character varying(256),
@@ -21,7 +21,7 @@ DO $EF$
 
 DO $EF$
     BEGIN
-        IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20250427102553_InitialCreate') THEN
+        IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20250518091649_InitialCreate') THEN
             CREATE TABLE "AspNetUsers" (
                                            "Id" text NOT NULL,
                                            "DisplayName" character varying(255) NOT NULL,
@@ -46,7 +46,7 @@ DO $EF$
 
 DO $EF$
     BEGIN
-        IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20250427102553_InitialCreate') THEN
+        IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20250518091649_InitialCreate') THEN
             CREATE TABLE "Counts" (
                                       "Id" serial NOT NULL,
                                       "Code" text NOT NULL,
@@ -59,7 +59,7 @@ DO $EF$
 
 DO $EF$
     BEGIN
-        IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20250427102553_InitialCreate') THEN
+        IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20250518091649_InitialCreate') THEN
             CREATE TABLE "Directions" (
                                           "Id" serial NOT NULL,
                                           "Name" text NOT NULL,
@@ -73,7 +73,7 @@ DO $EF$
 
 DO $EF$
     BEGIN
-        IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20250427102553_InitialCreate') THEN
+        IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20250518091649_InitialCreate') THEN
             CREATE TABLE "DiscountRules" (
                                              "Id" serial NOT NULL,
                                              "MinQuantity" integer NOT NULL,
@@ -86,7 +86,7 @@ DO $EF$
 
 DO $EF$
     BEGIN
-        IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20250427102553_InitialCreate') THEN
+        IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20250518091649_InitialCreate') THEN
             CREATE TABLE "Grades" (
                                       "Id" serial NOT NULL,
                                       "Name" text NOT NULL,
@@ -99,7 +99,7 @@ DO $EF$
 
 DO $EF$
     BEGIN
-        IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20250427102553_InitialCreate') THEN
+        IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20250518091649_InitialCreate') THEN
             CREATE TABLE "Invites" (
                                        "Id" uuid NOT NULL,
                                        "Email" text NOT NULL,
@@ -113,7 +113,7 @@ DO $EF$
 
 DO $EF$
     BEGIN
-        IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20250427102553_InitialCreate') THEN
+        IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20250518091649_InitialCreate') THEN
             CREATE TABLE "MailingSettings" (
                                                "Id" serial NOT NULL,
                                                "MailingCode" text NOT NULL,
@@ -127,7 +127,7 @@ DO $EF$
 
 DO $EF$
     BEGIN
-        IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20250427102553_InitialCreate') THEN
+        IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20250518091649_InitialCreate') THEN
             CREATE TABLE "Orders" (
                                       "Id" serial NOT NULL,
                                       "UserId" text NOT NULL,
@@ -144,7 +144,7 @@ DO $EF$
 
 DO $EF$
     BEGIN
-        IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20250427102553_InitialCreate') THEN
+        IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20250518091649_InitialCreate') THEN
             CREATE TABLE "Persents" (
                                         "Id" serial NOT NULL,
                                         "Code" text NOT NULL,
@@ -157,7 +157,7 @@ DO $EF$
 
 DO $EF$
     BEGIN
-        IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20250427102553_InitialCreate') THEN
+        IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20250518091649_InitialCreate') THEN
             CREATE TABLE "AspNetRoleClaims" (
                                                 "Id" serial NOT NULL,
                                                 "RoleId" text NOT NULL,
@@ -171,7 +171,7 @@ DO $EF$
 
 DO $EF$
     BEGIN
-        IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20250427102553_InitialCreate') THEN
+        IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20250518091649_InitialCreate') THEN
             CREATE TABLE "AdministratorProfiles" (
                                                      "Id" serial NOT NULL,
                                                      "Email" character varying(200) NOT NULL,
@@ -184,7 +184,7 @@ DO $EF$
 
 DO $EF$
     BEGIN
-        IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20250427102553_InitialCreate') THEN
+        IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20250518091649_InitialCreate') THEN
             CREATE TABLE "AspNetUserClaims" (
                                                 "Id" serial NOT NULL,
                                                 "UserId" text NOT NULL,
@@ -198,7 +198,7 @@ DO $EF$
 
 DO $EF$
     BEGIN
-        IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20250427102553_InitialCreate') THEN
+        IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20250518091649_InitialCreate') THEN
             CREATE TABLE "AspNetUserLogins" (
                                                 "LoginProvider" text NOT NULL,
                                                 "ProviderKey" text NOT NULL,
@@ -212,7 +212,7 @@ DO $EF$
 
 DO $EF$
     BEGIN
-        IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20250427102553_InitialCreate') THEN
+        IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20250518091649_InitialCreate') THEN
             CREATE TABLE "AspNetUserRoles" (
                                                "UserId" text NOT NULL,
                                                "RoleId" text NOT NULL,
@@ -225,7 +225,7 @@ DO $EF$
 
 DO $EF$
     BEGIN
-        IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20250427102553_InitialCreate') THEN
+        IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20250518091649_InitialCreate') THEN
             CREATE TABLE "AspNetUserTokens" (
                                                 "UserId" text NOT NULL,
                                                 "LoginProvider" text NOT NULL,
@@ -239,11 +239,13 @@ DO $EF$
 
 DO $EF$
     BEGIN
-        IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20250427102553_InitialCreate') THEN
+        IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20250518091649_InitialCreate') THEN
             CREATE TABLE "CompanyProfiles" (
                                                "Id" serial NOT NULL,
                                                "FullName" character varying(200) NOT NULL,
+                                               "LegalAddress" character varying(256),
                                                "INN" character varying(12) NOT NULL,
+                                               "Kpp" character varying(9),
                                                "Email" character varying(200) NOT NULL,
                                                "UserId" text NOT NULL,
                                                CONSTRAINT "PK_CompanyProfiles" PRIMARY KEY ("Id"),
@@ -254,7 +256,7 @@ DO $EF$
 
 DO $EF$
     BEGIN
-        IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20250427102553_InitialCreate') THEN
+        IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20250518091649_InitialCreate') THEN
             CREATE TABLE "PersonProfiles" (
                                               "Id" serial NOT NULL,
                                               "FullName" character varying(200) NOT NULL,
@@ -268,7 +270,7 @@ DO $EF$
 
 DO $EF$
     BEGIN
-        IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20250427102553_InitialCreate') THEN
+        IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20250518091649_InitialCreate') THEN
             CREATE TABLE "Topics" (
                                       "Id" serial NOT NULL,
                                       "Name" text NOT NULL,
@@ -282,7 +284,7 @@ DO $EF$
 
 DO $EF$
     BEGIN
-        IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20250427102553_InitialCreate') THEN
+        IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20250518091649_InitialCreate') THEN
             CREATE TABLE "AnswerTimes" (
                                            "Id" serial NOT NULL,
                                            "GradeId" integer NOT NULL,
@@ -297,7 +299,7 @@ DO $EF$
 
 DO $EF$
     BEGIN
-        IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20250427102553_InitialCreate') THEN
+        IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20250518091649_InitialCreate') THEN
             CREATE TABLE "GradeLevels" (
                                            "Id" serial NOT NULL,
                                            "GradeId" integer NOT NULL,
@@ -310,7 +312,7 @@ DO $EF$
 
 DO $EF$
     BEGIN
-        IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20250427102553_InitialCreate') THEN
+        IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20250518091649_InitialCreate') THEN
             CREATE TABLE "GradeRelations" (
                                               "Id" serial NOT NULL,
                                               "StartId" integer,
@@ -324,7 +326,7 @@ DO $EF$
 
 DO $EF$
     BEGIN
-        IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20250427102553_InitialCreate') THEN
+        IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20250518091649_InitialCreate') THEN
             CREATE TABLE "Weights" (
                                        "Id" serial NOT NULL,
                                        "GradeId" integer NOT NULL,
@@ -338,7 +340,7 @@ DO $EF$
 
 DO $EF$
     BEGIN
-        IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20250427102553_InitialCreate') THEN
+        IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20250518091649_InitialCreate') THEN
             CREATE TABLE "Tokens" (
                                       "Id" uuid NOT NULL,
                                       "DirectionId" integer NOT NULL,
@@ -361,7 +363,7 @@ DO $EF$
 
 DO $EF$
     BEGIN
-        IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20250427102553_InitialCreate') THEN
+        IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20250518091649_InitialCreate') THEN
             CREATE TABLE "EmployeeProfiles" (
                                                 "Id" serial NOT NULL,
                                                 "FullName" character varying(200) NOT NULL,
@@ -377,7 +379,7 @@ DO $EF$
 
 DO $EF$
     BEGIN
-        IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20250427102553_InitialCreate') THEN
+        IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20250518091649_InitialCreate') THEN
             CREATE TABLE "Questions" (
                                          "Id" serial NOT NULL,
                                          "Content" text NOT NULL,
@@ -392,7 +394,23 @@ DO $EF$
 
 DO $EF$
     BEGIN
-        IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20250427102553_InitialCreate') THEN
+        IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20250518091649_InitialCreate') THEN
+            CREATE TABLE "Reports" (
+                                       "Id" serial NOT NULL,
+                                       "TokenId" uuid NOT NULL,
+                                       "Score" double precision NOT NULL,
+                                       "GradeId" integer NOT NULL,
+                                       "Image" bytea,
+                                       CONSTRAINT "PK_Reports" PRIMARY KEY ("Id"),
+                                       CONSTRAINT "FK_Reports_Grades_GradeId" FOREIGN KEY ("GradeId") REFERENCES "Grades" ("Id") ON DELETE CASCADE,
+                                       CONSTRAINT "FK_Reports_Tokens_TokenId" FOREIGN KEY ("TokenId") REFERENCES "Tokens" ("Id") ON DELETE CASCADE
+            );
+        END IF;
+    END $EF$;
+
+DO $EF$
+    BEGIN
+        IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20250518091649_InitialCreate') THEN
             CREATE TABLE "Sessions" (
                                         "Id" serial NOT NULL,
                                         "TokenId" uuid NOT NULL,
@@ -413,7 +431,7 @@ DO $EF$
 
 DO $EF$
     BEGIN
-        IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20250427102553_InitialCreate') THEN
+        IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20250518091649_InitialCreate') THEN
             CREATE TABLE "Answers" (
                                        "Id" serial NOT NULL,
                                        "QuestionId" integer NOT NULL,
@@ -427,7 +445,7 @@ DO $EF$
 
 DO $EF$
     BEGIN
-        IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20250427102553_InitialCreate') THEN
+        IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20250518091649_InitialCreate') THEN
             CREATE TABLE "UserAnswers" (
                                            "Id" serial NOT NULL,
                                            "SessionId" integer NOT NULL,
@@ -444,7 +462,7 @@ DO $EF$
 
 DO $EF$
     BEGIN
-        IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20250427102553_InitialCreate') THEN
+        IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20250518091649_InitialCreate') THEN
             CREATE TABLE "UserTopics" (
                                           "Id" serial NOT NULL,
                                           "SessionId" integer NOT NULL,
@@ -465,247 +483,261 @@ DO $EF$
 
 DO $EF$
     BEGIN
-        IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20250427102553_InitialCreate') THEN
+        IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20250518091649_InitialCreate') THEN
             CREATE INDEX "IX_AdministratorProfiles_UserId" ON "AdministratorProfiles" ("UserId");
         END IF;
     END $EF$;
 
 DO $EF$
     BEGIN
-        IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20250427102553_InitialCreate') THEN
+        IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20250518091649_InitialCreate') THEN
             CREATE INDEX "IX_Answers_QuestionId" ON "Answers" ("QuestionId");
         END IF;
     END $EF$;
 
 DO $EF$
     BEGIN
-        IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20250427102553_InitialCreate') THEN
+        IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20250518091649_InitialCreate') THEN
             CREATE INDEX "IX_AnswerTimes_GradeId" ON "AnswerTimes" ("GradeId");
         END IF;
     END $EF$;
 
 DO $EF$
     BEGIN
-        IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20250427102553_InitialCreate') THEN
+        IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20250518091649_InitialCreate') THEN
             CREATE INDEX "IX_AspNetRoleClaims_RoleId" ON "AspNetRoleClaims" ("RoleId");
         END IF;
     END $EF$;
 
 DO $EF$
     BEGIN
-        IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20250427102553_InitialCreate') THEN
+        IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20250518091649_InitialCreate') THEN
             CREATE UNIQUE INDEX "RoleNameIndex" ON "AspNetRoles" ("NormalizedName");
         END IF;
     END $EF$;
 
 DO $EF$
     BEGIN
-        IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20250427102553_InitialCreate') THEN
+        IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20250518091649_InitialCreate') THEN
             CREATE INDEX "IX_AspNetUserClaims_UserId" ON "AspNetUserClaims" ("UserId");
         END IF;
     END $EF$;
 
 DO $EF$
     BEGIN
-        IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20250427102553_InitialCreate') THEN
+        IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20250518091649_InitialCreate') THEN
             CREATE INDEX "IX_AspNetUserLogins_UserId" ON "AspNetUserLogins" ("UserId");
         END IF;
     END $EF$;
 
 DO $EF$
     BEGIN
-        IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20250427102553_InitialCreate') THEN
+        IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20250518091649_InitialCreate') THEN
             CREATE INDEX "IX_AspNetUserRoles_RoleId" ON "AspNetUserRoles" ("RoleId");
         END IF;
     END $EF$;
 
 DO $EF$
     BEGIN
-        IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20250427102553_InitialCreate') THEN
+        IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20250518091649_InitialCreate') THEN
             CREATE INDEX "EmailIndex" ON "AspNetUsers" ("NormalizedEmail");
         END IF;
     END $EF$;
 
 DO $EF$
     BEGIN
-        IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20250427102553_InitialCreate') THEN
+        IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20250518091649_InitialCreate') THEN
             CREATE UNIQUE INDEX "UserNameIndex" ON "AspNetUsers" ("NormalizedUserName");
         END IF;
     END $EF$;
 
 DO $EF$
     BEGIN
-        IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20250427102553_InitialCreate') THEN
+        IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20250518091649_InitialCreate') THEN
             CREATE UNIQUE INDEX "IX_CompanyProfiles_UserId" ON "CompanyProfiles" ("UserId");
         END IF;
     END $EF$;
 
 DO $EF$
     BEGIN
-        IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20250427102553_InitialCreate') THEN
+        IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20250518091649_InitialCreate') THEN
             CREATE UNIQUE INDEX "IX_Directions_Name" ON "Directions" ("Name");
         END IF;
     END $EF$;
 
 DO $EF$
     BEGIN
-        IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20250427102553_InitialCreate') THEN
+        IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20250518091649_InitialCreate') THEN
             CREATE INDEX "IX_DiscountRules_MinQuantity" ON "DiscountRules" ("MinQuantity");
         END IF;
     END $EF$;
 
 DO $EF$
     BEGIN
-        IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20250427102553_InitialCreate') THEN
+        IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20250518091649_InitialCreate') THEN
             CREATE INDEX "IX_EmployeeProfiles_CompanyProfileId" ON "EmployeeProfiles" ("CompanyProfileId");
         END IF;
     END $EF$;
 
 DO $EF$
     BEGIN
-        IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20250427102553_InitialCreate') THEN
+        IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20250518091649_InitialCreate') THEN
             CREATE UNIQUE INDEX "IX_EmployeeProfiles_UserId" ON "EmployeeProfiles" ("UserId");
         END IF;
     END $EF$;
 
 DO $EF$
     BEGIN
-        IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20250427102553_InitialCreate') THEN
+        IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20250518091649_InitialCreate') THEN
             CREATE INDEX "IX_GradeLevels_GradeId" ON "GradeLevels" ("GradeId");
         END IF;
     END $EF$;
 
 DO $EF$
     BEGIN
-        IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20250427102553_InitialCreate') THEN
+        IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20250518091649_InitialCreate') THEN
             CREATE INDEX "IX_GradeRelations_EndId" ON "GradeRelations" ("EndId");
         END IF;
     END $EF$;
 
 DO $EF$
     BEGIN
-        IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20250427102553_InitialCreate') THEN
+        IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20250518091649_InitialCreate') THEN
             CREATE INDEX "IX_GradeRelations_StartId" ON "GradeRelations" ("StartId");
         END IF;
     END $EF$;
 
 DO $EF$
     BEGIN
-        IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20250427102553_InitialCreate') THEN
+        IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20250518091649_InitialCreate') THEN
             CREATE UNIQUE INDEX "IX_PersonProfiles_UserId" ON "PersonProfiles" ("UserId");
         END IF;
     END $EF$;
 
 DO $EF$
     BEGIN
-        IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20250427102553_InitialCreate') THEN
+        IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20250518091649_InitialCreate') THEN
             CREATE INDEX "IX_Questions_TopicId" ON "Questions" ("TopicId");
         END IF;
     END $EF$;
 
 DO $EF$
     BEGIN
-        IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20250427102553_InitialCreate') THEN
+        IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20250518091649_InitialCreate') THEN
+            CREATE INDEX "IX_Reports_GradeId" ON "Reports" ("GradeId");
+        END IF;
+    END $EF$;
+
+DO $EF$
+    BEGIN
+        IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20250518091649_InitialCreate') THEN
+            CREATE INDEX "IX_Reports_TokenId" ON "Reports" ("TokenId");
+        END IF;
+    END $EF$;
+
+DO $EF$
+    BEGIN
+        IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20250518091649_InitialCreate') THEN
             CREATE INDEX "IX_Sessions_EmployeeId" ON "Sessions" ("EmployeeId");
         END IF;
     END $EF$;
 
 DO $EF$
     BEGIN
-        IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20250427102553_InitialCreate') THEN
+        IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20250518091649_InitialCreate') THEN
             CREATE INDEX "IX_Sessions_PersonId" ON "Sessions" ("PersonId");
         END IF;
     END $EF$;
 
 DO $EF$
     BEGIN
-        IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20250427102553_InitialCreate') THEN
+        IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20250518091649_InitialCreate') THEN
             CREATE INDEX "IX_Sessions_TokenId" ON "Sessions" ("TokenId");
         END IF;
     END $EF$;
 
 DO $EF$
     BEGIN
-        IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20250427102553_InitialCreate') THEN
+        IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20250518091649_InitialCreate') THEN
             CREATE INDEX "IX_Tokens_DirectionId" ON "Tokens" ("DirectionId");
         END IF;
     END $EF$;
 
 DO $EF$
     BEGIN
-        IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20250427102553_InitialCreate') THEN
+        IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20250518091649_InitialCreate') THEN
             CREATE INDEX "IX_Tokens_EmployeeId" ON "Tokens" ("EmployeeId");
         END IF;
     END $EF$;
 
 DO $EF$
     BEGIN
-        IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20250427102553_InitialCreate') THEN
+        IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20250518091649_InitialCreate') THEN
             CREATE INDEX "IX_Tokens_OrderId" ON "Tokens" ("OrderId");
         END IF;
     END $EF$;
 
 DO $EF$
     BEGIN
-        IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20250427102553_InitialCreate') THEN
+        IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20250518091649_InitialCreate') THEN
             CREATE INDEX "IX_Tokens_PersonId" ON "Tokens" ("PersonId");
         END IF;
     END $EF$;
 
 DO $EF$
     BEGIN
-        IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20250427102553_InitialCreate') THEN
+        IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20250518091649_InitialCreate') THEN
             CREATE INDEX "IX_Topics_DirectionId" ON "Topics" ("DirectionId");
         END IF;
     END $EF$;
 
 DO $EF$
     BEGIN
-        IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20250427102553_InitialCreate') THEN
+        IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20250518091649_InitialCreate') THEN
             CREATE INDEX "IX_UserAnswers_QuestionId" ON "UserAnswers" ("QuestionId");
         END IF;
     END $EF$;
 
 DO $EF$
     BEGIN
-        IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20250427102553_InitialCreate') THEN
+        IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20250518091649_InitialCreate') THEN
             CREATE INDEX "IX_UserAnswers_SessionId" ON "UserAnswers" ("SessionId");
         END IF;
     END $EF$;
 
 DO $EF$
     BEGIN
-        IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20250427102553_InitialCreate') THEN
+        IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20250518091649_InitialCreate') THEN
             CREATE INDEX "IX_UserTopics_GradeId" ON "UserTopics" ("GradeId");
         END IF;
     END $EF$;
 
 DO $EF$
     BEGIN
-        IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20250427102553_InitialCreate') THEN
+        IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20250518091649_InitialCreate') THEN
             CREATE INDEX "IX_UserTopics_SessionId" ON "UserTopics" ("SessionId");
         END IF;
     END $EF$;
 
 DO $EF$
     BEGIN
-        IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20250427102553_InitialCreate') THEN
+        IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20250518091649_InitialCreate') THEN
             CREATE INDEX "IX_UserTopics_TopicId" ON "UserTopics" ("TopicId");
         END IF;
     END $EF$;
 
 DO $EF$
     BEGIN
-        IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20250427102553_InitialCreate') THEN
+        IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20250518091649_InitialCreate') THEN
             CREATE INDEX "IX_Weights_GradeId" ON "Weights" ("GradeId");
         END IF;
     END $EF$;
 
 DO $EF$
     BEGIN
-        IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20250427102553_InitialCreate') THEN
+        IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20250518091649_InitialCreate') THEN
             INSERT INTO "__EFMigrationsHistory" ("MigrationId", "ProductVersion")
-            VALUES ('20250427102553_InitialCreate', '9.0.4');
+            VALUES ('20250518091649_InitialCreate', '9.0.4');
         END IF;
     END $EF$;
 COMMIT;
@@ -713,14 +745,14 @@ COMMIT;
 
 /*  
 Конфигурация Counts 
-*/  
+*/
 
 INSERT INTO "Counts" ("Id", "Code", "Description", "Value") VALUES (1, 'Raise', 'Количество вопросов для повышения уровня', 3);
 INSERT INTO "Counts" ("Id", "Code", "Description", "Value") VALUES (2, 'Question', 'Количество вопросов в топике', 10);
 
 /*  
 Конфигурация Grades 
-*/  
+*/
 
 INSERT INTO "Grades" ("Id", "Name", "Code", "Description") VALUES (1, 'Junior', 'Junior', 'Grade of Junior');
 INSERT INTO "Grades" ("Id", "Name", "Code", "Description") VALUES (2, 'Middle', 'Middle', 'Grade of Middle');
@@ -728,7 +760,7 @@ INSERT INTO "Grades" ("Id", "Name", "Code", "Description") VALUES (3, 'Senior', 
 
 /*  
 Конфигурация Persents 
-*/  
+*/
 
 INSERT INTO "Persents" ("Id", "Code", "Description", "Value") VALUES (1, 'GainWeight', 'Верхняя граница веса', 0.2);
 INSERT INTO "Persents" ("Id", "Code", "Description", "Value") VALUES (2, 'LessWeight', 'Нижняя граница веса', 0.1);
@@ -738,14 +770,14 @@ INSERT INTO "Persents" ("Id", "Code", "Description", "Value") VALUES (5, 'GraphS
 
 /*  
 Конфигурация Direction 
-*/  
+*/
 
 INSERT INTO "Directions" ("Id", "Name", "Code", "Description", "BasePrice") VALUES (1, 'QA', 'QA', 'Quality assurance', 1000);
 INSERT INTO "Directions" ("Id", "Name", "Code", "Description", "BasePrice") VALUES (2, 'SA', 'SA', 'System analises', 2000);
 
 /*  
 Конфигурация GradeLevels 
-*/  
+*/
 
 INSERT INTO "GradeLevels" ("Id", "GradeId", "Level") VALUES (1, 1, 0.1);
 INSERT INTO "GradeLevels" ("Id", "GradeId", "Level") VALUES (2, 2, 0.4);
@@ -753,7 +785,7 @@ INSERT INTO "GradeLevels" ("Id", "GradeId", "Level") VALUES (3, 3, 0.5);
 
 /*  
 Конфигурация GradeRelations 
-*/  
+*/
 
 INSERT INTO "GradeRelations" ("Id", "StartId", "EndId") VALUES (2, null, 1);
 INSERT INTO "GradeRelations" ("Id", "StartId", "EndId") VALUES (3, 1, 2);
@@ -762,7 +794,7 @@ INSERT INTO "GradeRelations" ("Id", "StartId", "EndId") VALUES (5, 3, null);
 
 /*  
 Конфигурация AnswerTimes 
-*/  
+*/
 
 INSERT INTO "AnswerTimes" ("Id", "GradeId", "Average", "Min", "Max") VALUES (1, 1, 60, 0.95, 1.05);
 INSERT INTO "AnswerTimes" ("Id", "GradeId", "Average", "Min", "Max") VALUES (2, 2, 90, 0.93, 1.07);
@@ -771,7 +803,7 @@ INSERT INTO "AnswerTimes" ("Id", "GradeId", "Average", "Min", "Max") VALUES (3, 
 
 /*  
 Конфигурация Weights 
-*/ 
+*/
 
 INSERT INTO "Weights" ("Id", "GradeId", "Min", "Max") VALUES (1, 1, 0.2, 0.4);
 INSERT INTO "Weights" ("Id", "GradeId", "Min", "Max") VALUES (2, 2, 0.4, 0.6);
