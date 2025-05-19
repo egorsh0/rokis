@@ -43,7 +43,7 @@ public class EmployeeController : ControllerBase
 
         if (emp == null)
         {
-            return NotFound("Employee not found");
+            return NotFound(new ResponseDto("Employee not found"));
         }
 
         var dto = new EmployeeProfileDto(
@@ -70,8 +70,8 @@ public class EmployeeController : ControllerBase
     public async Task<IActionResult> Patch([FromBody] UpdateEmployeeDto dto)
     {
         var uid = User.FindFirstValue(ClaimTypes.NameIdentifier)!;
-        var ok  = await _employeeRepository.UpdateEmployeeAsync(uid, dto);
-        return ok ? NoContent() : BadRequest("Nothing to update");
+        var updateResult  = await _employeeRepository.UpdateEmployeeAsync(uid, dto);
+        return updateResult.Succeeded ? NoContent() : BadRequest(new ResponseDto(updateResult.Errors));
     }
     
     // POST /api/employee/change-password
@@ -82,7 +82,7 @@ public class EmployeeController : ControllerBase
     {
         if (dto.NewPassword != dto.ConfirmNewPassword)
         {
-            return BadRequest("Passwords do not match");
+            return BadRequest(new ResponseDto("Passwords do not match"));
         }
 
         var user = await _userManager.GetUserAsync(User);

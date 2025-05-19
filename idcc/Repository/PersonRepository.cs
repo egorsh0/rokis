@@ -14,13 +14,26 @@ public class PersonRepository : IPersonRepository
     public Task<PersonProfile?> GetPersonAsync(string personUserId) =>
         _idccContext.PersonProfiles.FirstOrDefaultAsync(pp => pp.UserId == personUserId);
     
-    public async Task<bool> UpdatePersonAsync(string userId, UpdatePersonDto dto)
+    public async Task<UpdateResult> UpdatePersonAsync(string userId, UpdatePersonDto dto)
     {
+        var errors = new List<string>();
+        // ── проверка Email ─────────────────────────────────────
+        if (await _idccContext.Users.AnyAsync(u => u.Email == dto.Email))
+        {
+            errors.Add("EMAIL_ALREADY_EXISTS");
+        }
+
+        if (errors.Count > 0)
+        {
+            return new UpdateResult(false, errors);
+        }
+        
         var person = await _idccContext.PersonProfiles
             .FirstOrDefaultAsync(p => p.UserId == userId);
         if (person is null)
         {
-            return false;
+            errors.Add("Person not found");
+            return new UpdateResult(false, errors);
         }
 
         var changed = false;
@@ -38,9 +51,12 @@ public class PersonRepository : IPersonRepository
         }
 
         if (!changed)
-            return false;
+        {
+            errors.Add("Could not update  person");
+            return new UpdateResult(false, errors);
+        }
 
         await _idccContext.SaveChangesAsync();
-        return true;
+        return new UpdateResult(true, Array.Empty<string>().ToList());
     }
 }

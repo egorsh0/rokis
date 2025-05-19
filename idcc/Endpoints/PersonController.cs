@@ -43,7 +43,7 @@ public class PersonController : ControllerBase
 
         if (person == null)
         {
-            return NotFound("Person not found");
+            return NotFound(new ResponseDto("Person not found"));
         }
 
         var dto = new PersonProfileDto(
@@ -61,8 +61,8 @@ public class PersonController : ControllerBase
     public async Task<IActionResult> Patch([FromBody] UpdatePersonDto dto)
     {
         var uid = User.FindFirstValue(ClaimTypes.NameIdentifier)!;
-        var ok  = await _personRepository.UpdatePersonAsync(uid, dto);
-        return ok ? NoContent() : BadRequest("Nothing to update");
+        var updateResult  = await _personRepository.UpdatePersonAsync(uid, dto);
+        return updateResult.Succeeded ? NoContent() : BadRequest(new ResponseDto(updateResult.Errors));
     }
     
     // POST /api/person/change-password
@@ -73,7 +73,7 @@ public class PersonController : ControllerBase
     {
         if (dto.NewPassword != dto.ConfirmNewPassword)
         {
-            return BadRequest("Passwords do not match");
+            return BadRequest(new ResponseDto("Passwords do not match"));
         }
 
         var user = await _userManager.GetUserAsync(User);

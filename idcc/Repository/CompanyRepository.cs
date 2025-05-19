@@ -58,12 +58,33 @@ public class CompanyRepository : ICompanyRepository
         return company;
     }
     
-    public async Task<bool> UpdateCompanyAsync(string userId, UpdateCompanyDto dto)
+    public async Task<UpdateResult> UpdateCompanyAsync(string userId, UpdateCompanyDto dto)
     {
+        var errors = new List<string>();
+        // — проверка Email —
+        if (await _idccContext.Users.AnyAsync(u => u.Email == dto.Email))
+        {
+            errors.Add("EMAIL_ALREADY_EXISTS");
+        }
+
+        // — проверка ИНН —
+        if (await _idccContext.CompanyProfiles.AnyAsync(c => c.INN == dto.Inn))
+        {
+            errors.Add("INN_ALREADY_EXISTS");
+        }
+
+        if (errors.Count > 0)
+        {
+            return new UpdateResult(false, errors);
+        }
+        
         var entity = await _idccContext.CompanyProfiles
             .FirstOrDefaultAsync(cp => cp.UserId == userId);
         if (entity is null)
-            return false;
+        {
+            errors.Add("CompanyProfile not found");
+            return new UpdateResult(false, errors);
+        }
 
         var changed = false;
 
@@ -98,9 +119,12 @@ public class CompanyRepository : ICompanyRepository
         }
 
         if (!changed)
-            return false;
+        {
+            errors.Add("Could not update ");
+            return new UpdateResult(false, errors);
+        }
 
         await _idccContext.SaveChangesAsync();
-        return true;
+        return new UpdateResult(true, Array.Empty<string>().ToList());
     }
 }

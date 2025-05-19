@@ -53,11 +53,11 @@ public class CompanyController : ControllerBase
         var result = await _companyRepository.AttachEmployeeToCompanyAsync(companyUserId!, employeeEmail);
         if (!result)
         {
-            return NotFound("Either company or employee not found");
+            return NotFound(new ResponseDto("Either company or employee not found"));
         }
 
         _logger.LogInformation("Attached employee {Email} to company {CompanyUserId}", employeeEmail, companyUserId);
-        return Ok("Employee attached successfully");
+        return Ok(new ResponseDto("Employee attached successfully"));
     }
 
     // ═══════════════════════════════════════════════════════
@@ -75,7 +75,7 @@ public class CompanyController : ControllerBase
         var company = await _companyRepository.GetCompanyWithEmployeesAsync(companyUserId!);
         if (company == null)
         {
-            return NotFound("Company not found");
+            return NotFound(new ResponseDto("Company not found"));
         }
 
         var dto = new CompanyProfileDto(
@@ -103,8 +103,8 @@ public class CompanyController : ControllerBase
     public async Task<IActionResult> PatchCompany([FromBody] UpdateCompanyDto dto)
     {
         var uid = User.FindFirstValue(ClaimTypes.NameIdentifier)!;
-        var ok  = await _companyRepository.UpdateCompanyAsync(uid, dto);
-        return ok ? NoContent() : BadRequest("Nothing to update");
+        var updateResult  = await _companyRepository.UpdateCompanyAsync(uid, dto);
+        return updateResult.Succeeded ? NoContent() : BadRequest(new ResponseDto(updateResult.Errors));
     }
     
     // POST /api/company/change-password
@@ -115,7 +115,7 @@ public class CompanyController : ControllerBase
     {
         if (dto.NewPassword != dto.ConfirmNewPassword)
         {
-            return BadRequest("Passwords do not match");
+            return BadRequest(new ResponseDto("Passwords do not match"));
         }
 
         var user = await _userManager.GetUserAsync(User);

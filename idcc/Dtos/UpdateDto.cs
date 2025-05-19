@@ -16,6 +16,8 @@ public record UpdateEmployeeDto(
 public record UpdatePersonDto(
     string? FullName,
     [EmailAddress] string? Email);
+
+public record UpdateResult(bool Succeeded, List<string> Errors);
     
 public record ChangePasswordDto(
     [property: Required] string OldPassword,

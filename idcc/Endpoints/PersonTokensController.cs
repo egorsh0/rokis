@@ -72,10 +72,10 @@ public class PersonTokensController : ControllerBase
     {
         if (dto.TokenId == Guid.Empty)
         {
-            return BadRequest("TokenId is required");
+            return BadRequest(new ResponseDto("TokenId is required"));
         }
         var ok = await _tokenRepository.BindUsedTokenToPersonAsync(dto.TokenId,dto.UserEmail);
-        return ok ? Ok() : BadRequest("Cannot bind used token");
+        return ok ? Ok() : BadRequest(new ResponseDto("Cannot bind used token"));
     }
 
     // ═══════════════════════════════════════════════════════
@@ -92,7 +92,7 @@ public class PersonTokensController : ControllerBase
     {
         if (dto.TokenId == Guid.Empty)
         {
-            return BadRequest("TokenId is required");
+            return BadRequest(new ResponseDto("TokenId is required"));
         }
         var userId = User.FindFirstValue(ClaimTypes.NameIdentifier)!;
         var session = await _sessionRepository.StartSessionAsync(userId,false, dto.TokenId);

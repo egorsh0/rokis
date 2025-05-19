@@ -38,23 +38,23 @@ public static class ReportEndpont
 
             if (session is null)
             {
-                return Results.BadRequest(ErrorMessages.SESSION_IS_NOT_EXIST);
+                return Results.BadRequest(new ResponseDto(ErrorMessages.SESSION_IS_NOT_EXIST));
             }
 
             if (session.EndTime is not null && session.Score > 0 && !full.HasValue)
             {
-                return Results.BadRequest(ErrorMessages.SESSION_IS_FINISHED);
+                return Results.BadRequest(new ResponseDto(ErrorMessages.SESSION_IS_FINISHED));
             }
             
             // ---------- 1.1  Проверяем: отчёт уже существует? ----------
             if (await reportRepository.ExistsForTokenAsync(session.TokenId))
-                return Results.BadRequest(ErrorMessages.REPORT_ALREADY_EXISTS);
+                return Results.BadRequest(new ResponseDto(ErrorMessages.REPORT_ALREADY_EXISTS));
             
             // ---------- 2.  Генерируем отчёт ----------
             var report = await idccReport.GenerateAsync(session);
             if (report is null)
             {
-                return Results.BadRequest(ErrorMessages.REPORT_IS_FAILED);
+                return Results.BadRequest(new ResponseDto(ErrorMessages.REPORT_IS_FAILED));
             }
 
             // ---------- 3.  Обновляем Score в сессии ----------
@@ -107,7 +107,7 @@ public static class ReportEndpont
         {
             if (sessionId is null && tokenId is null)
             {
-                return Results.BadRequest("Specify sessionId or tokenId");
+                return Results.BadRequest(new ResponseDto("Specify sessionId or tokenId"));
             }
 
             // ── формируем ключ ─────────────────────────────────────
@@ -130,7 +130,7 @@ public static class ReportEndpont
                     rr.Image is null ? null : Convert.ToBase64String(rr.Image));
             });
 
-            return dto is null ? Results.BadRequest(ErrorMessages.REPORT_NOT_FOUND) : Results.Ok(dto);
+            return dto is null ? Results.BadRequest(new ResponseDto(ErrorMessages.REPORT_NOT_FOUND)) : Results.Ok(dto);
         }).Produces<ReportShortDto>()
             .Produces<string>(400);
     }

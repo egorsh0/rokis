@@ -62,16 +62,15 @@ public class RegisterController : ControllerBase
             var result = await _authRepository.RegisterCompanyAsync(dto);
             if (!result.Succeeded)
             {
-                // Возвращаем BadRequest + список ошибок
                 return Conflict(new { result.Errors });
             }
             _logger.LogInformation("Registered company userId={UserId}, INN={INN}", result.UserId, dto.INN);
-            return Ok("Company registered successfully");
+            return Ok(new ResponseDto("Company registered successfully"));
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error registering company");
-            return StatusCode(500, "Internal server error");
+            return StatusCode(500, new ResponseDto("Internal server error"));
         }
     }
 
@@ -97,16 +96,15 @@ public class RegisterController : ControllerBase
             var result = await _authRepository.RegisterEmployeeAsync(dto);
             if (!result.Succeeded)
             {
-                // Возвращаем Conflict + список ошибок
                 return Conflict(new { result.Errors });
             }
             _logger.LogInformation("Registered employee userId={UserId}", result.UserId);
-            return Ok("Employee registered successfully");
+            return Ok(new ResponseDto("Employee registered successfully"));
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error registering employee");
-            return StatusCode(500, "Internal server error");
+            return StatusCode(500, new ResponseDto("Internal server error"));
         }
     }
 
@@ -130,16 +128,15 @@ public class RegisterController : ControllerBase
             var result = await _authRepository.RegisterPersonAsync(dto);
             if (!result.Succeeded)
             {
-                // Возвращаем Conflict + список ошибок
                 return Conflict(new { result.Errors });
             }
             _logger.LogInformation("Registered person userId={UserId}", result.UserId);
-            return Ok("Person registered successfully");
+            return Ok(new ResponseDto("Person registered successfully"));
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error registering person");
-            return StatusCode(500, "Internal server error");
+            return StatusCode(500, new ResponseDto("Internal server error"));
         }
     }
 
@@ -160,7 +157,7 @@ public class RegisterController : ControllerBase
             var user = await _authRepository.LoginCompanyAsync(dto);
             if (user == null)
             {
-                return Unauthorized("Invalid credentials");
+                return Unauthorized(new ResponseDto("Invalid credentials"));
             }
             // Генерируем JWT, если нужно
             var token = await GenerateJwtTokenAsync(user);
@@ -169,7 +166,7 @@ public class RegisterController : ControllerBase
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error login company");
-            return StatusCode(500, "Internal server error");
+            return StatusCode(500, new ResponseDto("Internal server error"));
         }
     }
 
@@ -189,7 +186,7 @@ public class RegisterController : ControllerBase
             var user = await _authRepository.LoginEmployeeAsync(dto);
             if (user == null)
             {
-                return Unauthorized("Invalid credentials");
+                return Unauthorized(new ResponseDto("Invalid credentials"));
             }
             var token = await GenerateJwtTokenAsync(user);
             return Ok(token);
@@ -197,7 +194,7 @@ public class RegisterController : ControllerBase
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error login employee");
-            return StatusCode(500, "Internal server error");
+            return StatusCode(500, new ResponseDto("Internal server error"));
         }
     }
 
@@ -215,7 +212,7 @@ public class RegisterController : ControllerBase
             var user = await _authRepository.LoginPersonAsync(dto);
             if (user == null)
             {
-                return Unauthorized("Invalid credentials");
+                return Unauthorized(new ResponseDto("Invalid credentials"));
             }
             var token = await GenerateJwtTokenAsync(user);
             return Ok(token);
@@ -223,7 +220,7 @@ public class RegisterController : ControllerBase
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error login person");
-            return StatusCode(500, "Internal server error");
+            return StatusCode(500, new ResponseDto("Internal server error"));
         }
     }
     

@@ -16,14 +16,29 @@ public class EmployeeRepository : IEmployeeRepository
             .Include(ep => ep.Company)
             .FirstOrDefaultAsync(ep => ep.UserId == employeeUserId);
     
-    public async Task<bool> UpdateEmployeeAsync(string userId, UpdateEmployeeDto dto)
+    public async Task<UpdateResult> UpdateEmployeeAsync(string userId, UpdateEmployeeDto dto)
     {
+        var errors = new List<string>();
+        // ── проверка Email ─────────────────────────────────────
+        if (await _idccContext.Users.AnyAsync(u => u.Email == dto.Email))
+        {
+            errors.Add("EMAIL_ALREADY_EXISTS");
+        }
+
+        if (errors.Count > 0)
+        {
+            return new UpdateResult(false, errors);
+        }
+        
         var emp = await _idccContext.EmployeeProfiles
             .FirstOrDefaultAsync(e => e.UserId == userId);
         if (emp is null)
-            return false;
+        {
+            errors.Add("Employee not found");
+            return new UpdateResult(false, errors);
+        }
 
-        bool changed = false;
+        var changed = false;
 
         if (dto.FullName is not null && dto.FullName != emp.FullName)
         {
@@ -38,9 +53,12 @@ public class EmployeeRepository : IEmployeeRepository
         }
 
         if (!changed)
-            return false;
+        {
+            errors.Add("Could not update employee");
+            return new UpdateResult(false, errors);
+        }
 
         await _idccContext.SaveChangesAsync();
-        return true;
+        return new UpdateResult(true, Array.Empty<string>().ToList());
     }
 }

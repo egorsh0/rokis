@@ -65,12 +65,12 @@ public class QuestionController : ControllerBase
 
         if (session == null)
         {
-            return BadRequest(ErrorMessages.SESSION_IS_NOT_EXIST);
+            return BadRequest(new ResponseDto(ErrorMessages.SESSION_IS_NOT_EXIST));
         }
 
         if (session.EndTime != null)
         {
-            return BadRequest(ErrorMessages.SESSION_IS_FINISHED);
+            return BadRequest(new ResponseDto(ErrorMessages.SESSION_IS_FINISHED));
         }
 
         if (!await _topicRepository.HasOpenTopic(session))
@@ -82,7 +82,7 @@ public class QuestionController : ControllerBase
         var userTopic = await _topicRepository.GetRandomTopicAsync(session);
         if (userTopic == null)
         {
-            return BadRequest(ErrorMessages.GET_RANDOM_TOPIC);
+            return BadRequest(new ResponseDto(ErrorMessages.GET_RANDOM_TOPIC));
         }
 
         var question = await _questionRepository.GetQuestionAsync(userTopic);
@@ -126,12 +126,12 @@ public class QuestionController : ControllerBase
 
         if (session == null)
         {
-            return BadRequest(ErrorMessages.SESSION_IS_NOT_EXIST);
+            return BadRequest(new ResponseDto(ErrorMessages.SESSION_IS_NOT_EXIST));
         }
 
         if (session.EndTime != null)
         {
-            return BadRequest(ErrorMessages.SESSION_IS_FINISHED);
+            return BadRequest(new ResponseDto(ErrorMessages.SESSION_IS_FINISHED));
         }
 
         var res = await _idccApplication.CalculateScoreAsync(
@@ -142,7 +142,7 @@ public class QuestionController : ControllerBase
 
         if (res != null)
         {
-            return BadRequest(res);
+            return BadRequest(new ResponseDto(res));
         }
 
         res = await _idccApplication.CalculateTopicWeightAsync(session);

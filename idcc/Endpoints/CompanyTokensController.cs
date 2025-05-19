@@ -78,8 +78,8 @@ public class CompanyTokensController : ControllerBase
         var ok = await _tokenRepository.BindTokenToEmployeeAsync(dto.TokenId, dto.EmployeeEmail, userId);
         if (!ok)
         {
-            return BadRequest("Cannot bind (token or employee invalid)");
+            return BadRequest(new ResponseDto("Cannot bind (token or employee invalid)"));
         }
-        return Ok();
+        return Ok(new ResponseDto("Token successfully bound"));
     }
 }

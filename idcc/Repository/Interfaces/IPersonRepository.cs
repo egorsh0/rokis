@@ -6,5 +6,5 @@ namespace idcc.Repository.Interfaces;
 public interface IPersonRepository
 {
     Task<PersonProfile?> GetPersonAsync(string personUserId);
-    Task<bool> UpdatePersonAsync(string userId,   UpdatePersonDto  dto);
+    Task<UpdateResult> UpdatePersonAsync(string userId,   UpdatePersonDto  dto);
 }
