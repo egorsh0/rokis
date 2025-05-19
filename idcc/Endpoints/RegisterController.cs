@@ -50,7 +50,7 @@ public class RegisterController : ControllerBase
     /// <response code="200">Компания зарегистрирована.</response>
     /// <response code="409">Ошибка валидации (например, пароль слабый).</response>
     /// <response code="500">Непредвиденная ошибка сервера.</response>
-    [HttpPost("register/company")]
+    [HttpPost("company")]
     [Consumes("application/json")]
     [ProducesResponseType(typeof(string), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(object), StatusCodes.Status409Conflict)]
@@ -85,7 +85,7 @@ public class RegisterController : ControllerBase
     /// </remarks>
     /// <response code="200">Сотрудник зарегистрирован.</response>
     /// <response code="409">Ошибки Identity.</response>
-    [HttpPost("register/employee")]
+    [HttpPost("employee")]
     [Consumes("application/json")]
     [ProducesResponseType(typeof(string), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(object), StatusCodes.Status409Conflict)]
@@ -118,7 +118,7 @@ public class RegisterController : ControllerBase
     /// </remarks>
     /// <response code="200">Физ. лицо зарегистрировано.</response>
     /// <response code="409">Ошибки Identity.</response>
-    [HttpPost("register/person")]
+    [HttpPost("person")]
     [Consumes("application/json")]
     [ProducesResponseType(typeof(string), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(object), StatusCodes.Status409Conflict)]
