@@ -62,7 +62,7 @@ public class PersonController : ControllerBase
     {
         var uid = User.FindFirstValue(ClaimTypes.NameIdentifier)!;
         var updateResult  = await _personRepository.UpdatePersonAsync(uid, dto);
-        return updateResult.Succeeded ? NoContent() : BadRequest(new ResponseDto(updateResult.Errors));
+        return updateResult.Succeeded ? NoContent() : BadRequest(new ResponseDto(string.Join(Environment.NewLine, updateResult.Errors)));
     }
     
     // POST /api/person/change-password

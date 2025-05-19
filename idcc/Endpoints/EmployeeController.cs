@@ -71,7 +71,7 @@ public class EmployeeController : ControllerBase
     {
         var uid = User.FindFirstValue(ClaimTypes.NameIdentifier)!;
         var updateResult  = await _employeeRepository.UpdateEmployeeAsync(uid, dto);
-        return updateResult.Succeeded ? NoContent() : BadRequest(new ResponseDto(updateResult.Errors));
+        return updateResult.Succeeded ? NoContent() : BadRequest(new ResponseDto(string.Join(Environment.NewLine, updateResult.Errors)));
     }
     
     // POST /api/employee/change-password

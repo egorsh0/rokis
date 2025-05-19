@@ -104,7 +104,7 @@ public class CompanyController : ControllerBase
     {
         var uid = User.FindFirstValue(ClaimTypes.NameIdentifier)!;
         var updateResult  = await _companyRepository.UpdateCompanyAsync(uid, dto);
-        return updateResult.Succeeded ? NoContent() : BadRequest(new ResponseDto(updateResult.Errors));
+        return updateResult.Succeeded ? NoContent() : BadRequest(new ResponseDto(string.Join(Environment.NewLine, updateResult.Errors)));
     }
     
     // POST /api/company/change-password
