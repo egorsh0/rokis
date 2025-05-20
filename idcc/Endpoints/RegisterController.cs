@@ -149,11 +149,41 @@ public class RegisterController : ControllerBase
     [ProducesResponseType(typeof(JwtResponse), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(string),      StatusCodes.Status401Unauthorized)]
     [ProducesResponseType(StatusCodes.Status500InternalServerError)]
-    public async Task<IActionResult> LoginEmployee([FromBody] LoginPayload dto)
+    public async Task<IActionResult> Login([FromBody] LoginPayload dto)
     {
         try
         {
             var user = await _registerRepository.LoginAsync(dto);
+            if (user == null)
+            {
+                return Unauthorized(new ResponseDto("Invalid credentials"));
+            }
+            var token = await GenerateJwtTokenAsync(user);
+            return Ok(token);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error login employee");
+            return StatusCode(500, new ResponseDto("Internal server error"));
+        }
+    }
+    
+    /// <summary>Обновление токена для текущего пользователя.</summary>
+    /// <remarks>JWT c role=<c>Company/Employee/Person</c>.</remarks>
+    /// <response code="200">Успешно.</response>
+    /// <response code="401">Неверные данные.</response>
+    [HttpGet("refresh")]
+    [Authorize]
+    [Consumes("application/json")]
+    [ProducesResponseType(typeof(JwtResponse), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(string),      StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(StatusCodes.Status500InternalServerError)]
+    public async Task<IActionResult> RefreshToken()
+    {
+        try
+        {
+            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier)!;
+            var user = await _registerRepository.FindUserAsync(userId);
             if (user == null)
             {
                 return Unauthorized(new ResponseDto("Invalid credentials"));
@@ -241,6 +271,10 @@ public class RegisterController : ControllerBase
             expires: DateTime.UtcNow.AddHours(1),
             signingCredentials: creds
         );
+        
+        var utcTime = DateTime.UtcNow;
+        user.PasswordLastChanged = utcTime;
+        await _userManager.UpdateAsync(user);
         var login = new LoginDto(new JwtSecurityTokenHandler().WriteToken(token), roles.ToList());
         return login;
     }

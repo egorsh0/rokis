@@ -189,6 +189,7 @@ public static class Configuration
         app.UseAuthorization();
         
         app.UseMiddleware<IpUserAgentValidationMiddleware>();
+        app.UseMiddleware<PasswordExpirationMiddleware>();
         
         app.MapControllers();
     }

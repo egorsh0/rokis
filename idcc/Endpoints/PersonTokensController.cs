@@ -15,7 +15,7 @@ public class PersonTokensController : ControllerBase
 {
     private readonly ITokenRepository _tokenRepository;
     private readonly ISessionRepository _sessionRepository;
-    public PersonTokensController(ITokenRepository tokenRepository, SessionRepository sessionRepository)
+    public PersonTokensController(ITokenRepository tokenRepository, ISessionRepository sessionRepository)
     {
         _tokenRepository = tokenRepository;
         _sessionRepository = sessionRepository;

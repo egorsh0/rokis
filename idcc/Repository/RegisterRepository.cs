@@ -336,4 +336,10 @@ public class RegisterRepository : IRegisterRepository
         var validPass = await _userManager.CheckPasswordAsync(user, dto.Password);
         return !validPass ? null : user;
     }
+    
+    public async Task<ApplicationUser?> FindUserAsync(string userId)
+    {
+        var user = await _userManager.FindByIdAsync(userId);
+        return user ?? null;
+    }
 }

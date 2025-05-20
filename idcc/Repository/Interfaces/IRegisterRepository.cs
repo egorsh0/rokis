@@ -14,4 +14,6 @@ public interface IRegisterRepository
 
     // Логин
     Task<ApplicationUser?> LoginAsync(LoginPayload dto);
+    
+    Task<ApplicationUser?> FindUserAsync(string userId);
 }
