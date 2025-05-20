@@ -3,7 +3,7 @@ using idcc.Models;
 
 namespace idcc.Repository.Interfaces;
 
-public interface IAuthRepository
+public interface IRegisterRepository
 {
     // Регистрация
     Task<AuthResult> RegisterCompanyAsync(RegisterCompanyPayload dto);
@@ -13,8 +13,5 @@ public interface IAuthRepository
     Task<AuthResult> RegisterAdministratorAsync(RegisterAdministratorPayload dto);
 
     // Логин
-    Task<ApplicationUser?> LoginCompanyAsync(LoginCompanyPayload dto);
-    Task<ApplicationUser?> LoginEmployeeAsync(LoginEmployeePayload dto);
-    Task<ApplicationUser?> LoginPersonAsync(LoginPersonPayload dto);
-    Task<ApplicationUser?> LoginAdministratorAsync(LoginAdministratorPayload dto);
+    Task<ApplicationUser?> LoginAsync(LoginPayload dto);
 }

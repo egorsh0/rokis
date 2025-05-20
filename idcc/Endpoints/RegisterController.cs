@@ -17,19 +17,19 @@ namespace idcc.Endpoints;
 public class RegisterController : ControllerBase
 {
     private readonly UserManager<ApplicationUser> _userManager;
-    private readonly IAuthRepository _authRepository;
+    private readonly IRegisterRepository _registerRepository;
     private readonly IConfiguration _configuration;
     private readonly ILogger<RegisterController> _logger;
 
     
     public RegisterController(
         UserManager<ApplicationUser> userManager,
-        IAuthRepository authRepository, 
+        IRegisterRepository registerRepository, 
         IConfiguration configuration,
         ILogger<RegisterController> logger)
     {
         _userManager = userManager;
-        _authRepository = authRepository;
+        _registerRepository = registerRepository;
         _configuration = configuration;
         _logger = logger;
     }
@@ -59,7 +59,7 @@ public class RegisterController : ControllerBase
     {
         try
         {
-            var result = await _authRepository.RegisterCompanyAsync(dto);
+            var result = await _registerRepository.RegisterCompanyAsync(dto);
             if (!result.Succeeded)
             {
                 return Conflict(new { result.Errors });
@@ -93,7 +93,7 @@ public class RegisterController : ControllerBase
     {
         try
         {
-            var result = await _authRepository.RegisterEmployeeAsync(dto);
+            var result = await _registerRepository.RegisterEmployeeAsync(dto);
             if (!result.Succeeded)
             {
                 return Conflict(new { result.Errors });
@@ -125,7 +125,7 @@ public class RegisterController : ControllerBase
     {
         try
         {
-            var result = await _authRepository.RegisterPersonAsync(dto);
+            var result = await _registerRepository.RegisterPersonAsync(dto);
             if (!result.Succeeded)
             {
                 return Conflict(new { result.Errors });
@@ -140,50 +140,20 @@ public class RegisterController : ControllerBase
         }
     }
 
-    // ------------------ ЛОГИН ---------------------
-    /// <summary>Аутентификация компании (ИНН/email + пароль).</summary>
-    /// <remarks>Возвращает JWT-токен c role=<c>Company</c>.</remarks>
-    /// <response code="200">Успешная авторизация, тело: <c>{ token }</c>.</response>
-    /// <response code="401">Неверные учётные данные.</response>
-    [HttpPost("login/company")]
-    [Consumes("application/json")]
-    [ProducesResponseType(typeof(JwtResponse), StatusCodes.Status200OK)]
-    [ProducesResponseType(typeof(string),      StatusCodes.Status401Unauthorized)]
-    [ProducesResponseType(StatusCodes.Status500InternalServerError)]
-    public async Task<IActionResult> LoginCompany([FromBody] LoginCompanyPayload dto)
-    {
-        try
-        {
-            var user = await _authRepository.LoginCompanyAsync(dto);
-            if (user == null)
-            {
-                return Unauthorized(new ResponseDto("Invalid credentials"));
-            }
-            // Генерируем JWT, если нужно
-            var token = await GenerateJwtTokenAsync(user);
-            return Ok(token);
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error login company");
-            return StatusCode(500, new ResponseDto("Internal server error"));
-        }
-    }
-
-    /// <summary>Аутентификация сотрудника (email + пароль).</summary>
-    /// <remarks>JWT c role=<c>Employee</c>.</remarks>
+    /// <summary>Аутентификация компании, сотрудника, физ лица (email + пароль).</summary>
+    /// <remarks>JWT c role=<c>Company/Employee/Person</c>.</remarks>
     /// <response code="200">Успешно.</response>
     /// <response code="401">Неверные данные.</response>
-    [HttpPost("login/employee")]
+    [HttpPost("login")]
     [Consumes("application/json")]
     [ProducesResponseType(typeof(JwtResponse), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(string),      StatusCodes.Status401Unauthorized)]
     [ProducesResponseType(StatusCodes.Status500InternalServerError)]
-    public async Task<IActionResult> LoginEmployee([FromBody] LoginEmployeePayload dto)
+    public async Task<IActionResult> LoginEmployee([FromBody] LoginPayload dto)
     {
         try
         {
-            var user = await _authRepository.LoginEmployeeAsync(dto);
+            var user = await _registerRepository.LoginAsync(dto);
             if (user == null)
             {
                 return Unauthorized(new ResponseDto("Invalid credentials"));
@@ -194,32 +164,6 @@ public class RegisterController : ControllerBase
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error login employee");
-            return StatusCode(500, new ResponseDto("Internal server error"));
-        }
-    }
-
-    /// <summary>Аутентификация физического лица.</summary>
-    /// <remarks>JWT c role=<c>Person</c>.</remarks>
-    [HttpPost("login/person")]
-    [Consumes("application/json")]
-    [ProducesResponseType(typeof(JwtResponse), StatusCodes.Status200OK)]
-    [ProducesResponseType(typeof(string),      StatusCodes.Status401Unauthorized)]
-    [ProducesResponseType(StatusCodes.Status500InternalServerError)]
-    public async Task<IActionResult> LoginPerson([FromBody] LoginPersonPayload dto)
-    {
-        try
-        {
-            var user = await _authRepository.LoginPersonAsync(dto);
-            if (user == null)
-            {
-                return Unauthorized(new ResponseDto("Invalid credentials"));
-            }
-            var token = await GenerateJwtTokenAsync(user);
-            return Ok(token);
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error login person");
             return StatusCode(500, new ResponseDto("Internal server error"));
         }
     }

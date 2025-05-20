@@ -8,7 +8,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace idcc.Repository;
 
-public class RegisterRepository : IAuthRepository
+public class RegisterRepository : IRegisterRepository
 {
     private readonly UserManager<ApplicationUser> _userManager;
     private readonly RoleManager<IdentityRole> _roleManager;
@@ -325,66 +325,13 @@ public class RegisterRepository : IAuthRepository
         };
     }
 
-    // ---------------------------------------------------
-    // ЛОГИН (компания, сотрудник, физ. лицо)
-    // ---------------------------------------------------
-    public async Task<ApplicationUser?> LoginCompanyAsync(LoginCompanyPayload dto)
+    public async Task<ApplicationUser?> LoginAsync(LoginPayload dto)
     {
-        // 1. Ищем по Email
-        var user = await _userManager.FindByEmailAsync(dto.INNOrEmail);
-        // 2. Если не нашли, ищем в CompanyProfile по INN
+        var user = await _userManager.FindByEmailAsync(dto.Email);
         if (user == null)
         {
-            var companyProfile = await _idccContext.CompanyProfiles
-                .FirstOrDefaultAsync(cp => cp.INN == dto.INNOrEmail);
-            if (companyProfile != null)
-            {
-                user = await _userManager.FindByIdAsync(companyProfile.UserId);
-            }
+            return null;
         }
-        if (user == null) return null;
-
-        // Проверяем, что он "Company"
-        var isCompany = await _userManager.IsInRoleAsync(user, "Company");
-        if (!isCompany) return null;
-
-        // Проверяем пароль
-        var validPass = await _userManager.CheckPasswordAsync(user, dto.Password);
-        return !validPass ? null : user;
-    }
-
-    public async Task<ApplicationUser?> LoginEmployeeAsync(LoginEmployeePayload dto)
-    {
-        // Сотрудник заходит только по Email
-        var user = await _userManager.FindByEmailAsync(dto.Email);
-        if (user == null) return null;
-
-        var isEmployee = await _userManager.IsInRoleAsync(user, "Employee");
-        if (!isEmployee) return null;
-
-        var validPass = await _userManager.CheckPasswordAsync(user, dto.Password);
-        return !validPass ? null : user;
-    }
-
-    public async Task<ApplicationUser?> LoginPersonAsync(LoginPersonPayload dto)
-    {
-        var user = await _userManager.FindByEmailAsync(dto.Email);
-        if (user == null) return null;
-
-        var isPerson = await _userManager.IsInRoleAsync(user, "Person");
-        if (!isPerson) return null;
-
-        var validPass = await _userManager.CheckPasswordAsync(user, dto.Password);
-        return !validPass ? null : user;
-    }
-    
-    public async Task<ApplicationUser?> LoginAdministratorAsync(LoginAdministratorPayload dto)
-    {
-        var user = await _userManager.FindByEmailAsync(dto.Email);
-        if (user == null) return null;
-
-        var isAdministrator = await _userManager.IsInRoleAsync(user, "Administrator");
-        if (!isAdministrator) return null;
 
         var validPass = await _userManager.CheckPasswordAsync(user, dto.Password);
         return !validPass ? null : user;

@@ -117,7 +117,7 @@ public static class Configuration
         builder.Services.AddScoped<IPersonRepository,   PersonRepository>();
         
         // Репозиторий авторизации
-        builder.Services.AddScoped<IAuthRepository, RegisterRepository>();
+        builder.Services.AddScoped<IRegisterRepository, RegisterRepository>();
         
         // Репозиторий конфигурации
         builder.Services.AddScoped<IConfigRepository, ConfigRepository>();
