@@ -238,28 +238,28 @@ public class RegisterController : ControllerBase
         return Ok(result);
     }
     
-    // ------------------------------------------------------------
-    // Пример генерации JWT
-    // ------------------------------------------------------------
     private async Task<LoginDto> GenerateJwtTokenAsync(ApplicationUser user)
     {
+        // ── 1.  обновляем SecurityStamp ────────────────────────────
+        await _userManager.UpdateSecurityStampAsync(user);
+        var newStamp = await _userManager.GetSecurityStampAsync(user);
+        
         var roles = await _userManager.GetRolesAsync(user);
 
+        // ── 2.  базовые claims ─────────────────────────────────────
         var claims = new List<Claim>
         {
             new(ClaimTypes.NameIdentifier, user.Id),
             new(ClaimTypes.Email, user.Email ?? ""),
-            new("IP", HttpContext.Connection.RemoteIpAddress?.ToString() ?? ""),
-            new("UserAgent", Request.Headers["User-Agent"].ToString())
+            //new("IP", HttpContext.Connection.RemoteIpAddress?.ToString() ?? ""),
+            //new("UserAgent", Request.Headers["User-Agent"].ToString()),
+            new("AspNet.Identity.SecurityStamp", newStamp)
         };
 
         // Добавим роли в токен:
-        foreach (var role in roles)
-        {
-            claims.Add(new Claim(ClaimTypes.Role, role));
-        }
-
-        // Далее ваши обычные шаги:
+        claims.AddRange(roles.Select(r => new Claim(ClaimTypes.Role, r)));
+        
+        // ── 3.  формируем JWT ─────────────────────────────────────
         var secret = _configuration["Jwt:Secret"];
         var key = Encoding.UTF8.GetBytes(secret!);
         var creds = new SigningCredentials(new SymmetricSecurityKey(key), SecurityAlgorithms.HmacSha256);
@@ -268,7 +268,7 @@ public class RegisterController : ControllerBase
             issuer: "Idcc",
             audience: "Idcc",
             claims: claims,
-            expires: DateTime.UtcNow.AddHours(1),
+            expires: DateTime.UtcNow.AddMinutes(15),
             signingCredentials: creds
         );
         

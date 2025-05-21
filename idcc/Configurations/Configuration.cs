@@ -1,4 +1,5 @@
 ﻿using System.Reflection;
+using System.Security.Claims;
 using System.Text;
 using System.Text.Json.Serialization;
 using idcc.Application;
@@ -105,6 +106,45 @@ public static class Configuration
                     ValidAudience = "Idcc",
                     // При желании можно включить ValidateLifetime = true
                     // и настроить ClockSkew = TimeSpan.Zero, чтобы не было доп. времени
+                };
+                
+                // ── дополнительная проверка SecurityStamp ─────────────────
+                options.Events = new JwtBearerEvents
+                {
+                    OnTokenValidated = async ctx =>
+                    {
+                        var principal = ctx.Principal!;
+                        var stampFromToken = principal
+                            .FindFirst("AspNet.Identity.SecurityStamp")?.Value;
+
+                        // если claim не найден → отклоняем
+                        if (stampFromToken is null)
+                        {
+                            ctx.Fail("SecurityStamp missing");
+                            return;
+                        }
+
+                        var userId = principal.FindFirstValue(ClaimTypes.NameIdentifier);
+                        if (userId is null)
+                        {
+                            return;
+                        }
+                        var userMgr = ctx.HttpContext.RequestServices.GetRequiredService<UserManager<ApplicationUser>>();
+                        var user = await userMgr.FindByIdAsync(userId);
+
+                        if (user is null)
+                        {
+                            ctx.Fail("User not found");
+                            return;
+                        }
+
+                        var currentStamp = await userMgr.GetSecurityStampAsync(user);
+
+                        if (!string.Equals(stampFromToken, currentStamp, StringComparison.Ordinal))
+                        {
+                            ctx.Fail("Token security stamp is no longer valid");
+                        }
+                    }
                 };
             });
         builder.Services.AddAuthorization();
