@@ -19,16 +19,6 @@ public class EmployeeRepository : IEmployeeRepository
     public async Task<UpdateResult> UpdateEmployeeAsync(string userId, UpdateEmployeeDto dto)
     {
         var errors = new List<string>();
-        // ── проверка Email ─────────────────────────────────────
-        if (await _idccContext.Users.AnyAsync(u => u.Email == dto.Email))
-        {
-            errors.Add("EMAIL_ALREADY_EXISTS");
-        }
-
-        if (errors.Count > 0)
-        {
-            return new UpdateResult(false, errors);
-        }
         
         var emp = await _idccContext.EmployeeProfiles
             .FirstOrDefaultAsync(e => e.UserId == userId);
@@ -37,7 +27,24 @@ public class EmployeeRepository : IEmployeeRepository
             errors.Add("Employee not found");
             return new UpdateResult(false, errors);
         }
+        
+        // 1. Проверка Email (только если меняется)
+        if (dto.Email is not null && dto.Email != emp.Email)
+        {
+            var emailBusy = await _idccContext.Users
+                .AnyAsync(u => u.Email == dto.Email && u.Id != userId);
 
+            if (emailBusy)
+            {
+                errors.Add("EMAIL_ALREADY_EXISTS");
+            }
+        }
+
+        if (errors.Count > 0)
+        {
+            return new UpdateResult(false, errors);
+        }
+        
         var changed = false;
 
         if (dto.FullName is not null && dto.FullName != emp.FullName)

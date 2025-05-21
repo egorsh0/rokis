@@ -61,28 +61,41 @@ public class CompanyRepository : ICompanyRepository
     public async Task<UpdateResult> UpdateCompanyAsync(string userId, UpdateCompanyDto dto)
     {
         var errors = new List<string>();
-        // — проверка Email —
-        if (await _idccContext.Users.AnyAsync(u => u.Email == dto.Email))
-        {
-            errors.Add("EMAIL_ALREADY_EXISTS");
-        }
-
-        // — проверка ИНН —
-        if (await _idccContext.CompanyProfiles.AnyAsync(c => c.INN == dto.Inn))
-        {
-            errors.Add("INN_ALREADY_EXISTS");
-        }
-
-        if (errors.Count > 0)
-        {
-            return new UpdateResult(false, errors);
-        }
         
+        // 0. Загружаем профиль + пользователя один раз
         var entity = await _idccContext.CompanyProfiles
             .FirstOrDefaultAsync(cp => cp.UserId == userId);
         if (entity is null)
         {
-            errors.Add("CompanyProfile not found");
+            return new UpdateResult(false, ["COMPANY_NOT_FOUND"]);
+        }
+        
+        // 1. Проверка Email (только если меняется)
+        if (dto.Email is not null && dto.Email != entity.Email)
+        {
+            var emailBusy = await _idccContext.Users
+                .AnyAsync(u => u.Email == dto.Email && u.Id != userId);
+
+            if (emailBusy)
+            {
+                errors.Add("EMAIL_ALREADY_EXISTS");
+            }
+        }
+
+        // 2. Проверка ИНН (если меняется)
+        if (dto.Inn is not null && dto.Inn != entity.INN)
+        {
+            var innBusy = await _idccContext.CompanyProfiles
+                .AnyAsync(c => c.INN == dto.Inn && c.UserId != userId);
+
+            if (innBusy)
+            {
+                errors.Add("INN_ALREADY_EXISTS");
+            }
+        }
+
+        if (errors.Count != 0)
+        {
             return new UpdateResult(false, errors);
         }
 
