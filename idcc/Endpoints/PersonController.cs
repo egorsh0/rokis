@@ -71,9 +71,9 @@ public class PersonController : ControllerBase
     [ProducesResponseType(typeof(string), StatusCodes.Status400BadRequest)]
     public async Task<IActionResult> ChangePassword([FromBody] ChangePasswordDto dto)
     {
-        if (dto.NewPassword != dto.ConfirmNewPassword)
+        if (!ModelState.IsValid)
         {
-            return BadRequest(new ResponseDto("Passwords do not match"));
+            return BadRequest(ModelState);
         }
 
         var user = await _userManager.GetUserAsync(User);
