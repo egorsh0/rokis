@@ -95,16 +95,16 @@ public class CompanyController : ControllerBase
     /// Частичное обновление данных компании
     /// </summary>
     /// <param name="dto">Модель компании для частичного обновления</param>
-    /// <response code="204">Успешно - данные изменены.</response>
+    /// <response code="200">Успешно - данные изменены (The data is changed).</response>
     /// <response code="400">Данные не обновлены.</response>
     [HttpPatch]
-    [ProducesResponseType(StatusCodes.Status204NoContent)]
+    [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(string), StatusCodes.Status400BadRequest)]
     public async Task<IActionResult> PatchCompany([FromBody] UpdateCompanyDto dto)
     {
         var uid = User.FindFirstValue(ClaimTypes.NameIdentifier)!;
         var updateResult  = await _companyRepository.UpdateCompanyAsync(uid, dto);
-        return updateResult.Succeeded ? NoContent() : BadRequest(new ResponseDto(string.Join(Environment.NewLine, updateResult.Errors)));
+        return updateResult.Succeeded ? Ok(new ResponseDto("The data is changed")) : BadRequest(new ResponseDto(string.Join(Environment.NewLine, updateResult.Errors)));
     }
     
     // POST /api/company/change-password

@@ -55,14 +55,20 @@ public class PersonController : ControllerBase
     }
     
     // PATCH /api/person   (частичное обновление)
+    /// <summary>
+    /// Частичное обновление данных клиента
+    /// </summary>
+    /// <param name="dto">Модель клиента для частичного обновления</param>
+    /// <response code="200">Успешно - данные изменены (The data is changed).</response>
+    /// <response code="400">Данные не обновлены.</response>
     [HttpPatch]
-    [ProducesResponseType(StatusCodes.Status204NoContent)]
+    [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(string), StatusCodes.Status400BadRequest)]
     public async Task<IActionResult> Patch([FromBody] UpdatePersonDto dto)
     {
         var uid = User.FindFirstValue(ClaimTypes.NameIdentifier)!;
         var updateResult  = await _personRepository.UpdatePersonAsync(uid, dto);
-        return updateResult.Succeeded ? NoContent() : BadRequest(new ResponseDto(string.Join(Environment.NewLine, updateResult.Errors)));
+        return updateResult.Succeeded ? Ok(new ResponseDto("The data is changed")) : BadRequest(new ResponseDto(string.Join(Environment.NewLine, updateResult.Errors)));
     }
     
     // POST /api/person/change-password

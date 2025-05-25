@@ -64,14 +64,23 @@ public class EmployeeController : ControllerBase
     }
     
     // PATCH /api/employee   (частичное обновление)
+    /// <summary>
+    /// Частичное обновление данных сотрудника
+    /// </summary>
+    /// <param name="dto">Модель сотрудника для частичного обновления</param>
+    /// <response code="200">Успешно - данные изменены (The data is changed).</response>
+    /// <response code="400">Данные не обновлены.</response>
     [HttpPatch]
-    [ProducesResponseType(StatusCodes.Status204NoContent)]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(string), StatusCodes.Status400BadRequest)]
+    [HttpPatch]
+    [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(string), StatusCodes.Status400BadRequest)]
     public async Task<IActionResult> Patch([FromBody] UpdateEmployeeDto dto)
     {
         var uid = User.FindFirstValue(ClaimTypes.NameIdentifier)!;
         var updateResult  = await _employeeRepository.UpdateEmployeeAsync(uid, dto);
-        return updateResult.Succeeded ? NoContent() : BadRequest(new ResponseDto(string.Join(Environment.NewLine, updateResult.Errors)));
+        return updateResult.Succeeded ? Ok(new ResponseDto("The data is changed")) : BadRequest(new ResponseDto(string.Join(Environment.NewLine, updateResult.Errors)));
     }
     
     // POST /api/employee/change-password
