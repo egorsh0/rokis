@@ -4,9 +4,11 @@ using System.Text;
 using idcc.Dtos;
 using idcc.Models;
 using idcc.Repository.Interfaces;
+using idcc.Service;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.WebUtilities;
 using Microsoft.IdentityModel.Tokens;
 
 namespace idcc.Endpoints;
@@ -196,6 +198,64 @@ public class RegisterController : ControllerBase
             _logger.LogError(ex, "Error login employee");
             return StatusCode(500, new ResponseDto("Internal server error"));
         }
+    }
+    
+    /// <summary>Отправить письмо для сброса пароля.</summary>
+    [HttpPost("forgot-password")]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(string), StatusCodes.Status404NotFound)]
+    [ProducesResponseType(typeof(ResponseDto), StatusCodes.Status400BadRequest)]
+    public async Task<IActionResult> ForgotPassword([FromBody] ForgotPasswordDto dto,
+        [FromServices] IEmailService emailService, 
+        [FromServices] IConfigRepository configRepository)
+    {
+        var user = await _userManager.FindByEmailAsync(dto.Email);
+        if (user is null)
+        {
+            return NotFound("User not found");
+        }
+
+        var token = await _userManager.GeneratePasswordResetTokenAsync(user);
+        var encoded = WebEncoders.Base64UrlEncode(Encoding.UTF8.GetBytes(token));
+
+        var link =
+            $"{dto.BaseUrl}/reset-password?userId={user.Id}&token={encoded}";
+        
+        var template = await configRepository.GetMailingAsync("ResetPassword");
+        if (template is null)
+        {
+            return BadRequest(new ResponseDto("Mailing template ResetPassword disabled or missing"));
+        }
+        
+        var body = template.Body.Replace("{link}", link, StringComparison.InvariantCulture);
+        
+        await emailService.SendEmailAsync(user.Email!, template.Subject, body);
+        return Ok(new ResponseDto("Password reset email sent"));
+    }
+    
+    /// <summary>Задать новый пароль по полученной ссылке.</summary>
+    [HttpPost("reset-password")]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ResponseDto), StatusCodes.Status400BadRequest)]
+    public async Task<IActionResult> ResetPassword([FromBody] ResetPasswordDto dto)
+    {
+        if (dto.NewPassword != dto.ConfirmPassword)
+        {
+            return BadRequest(new ResponseDto("Passwords do not match"));
+        }
+
+        var user = await _userManager.FindByIdAsync(dto.UserId);
+        if (user is null)
+        {
+            return BadRequest(new ResponseDto("Invalid user"));
+        }
+
+        var decoded = Encoding.UTF8.GetString(WebEncoders.Base64UrlDecode(dto.Token));
+        var result  = await _userManager.ResetPasswordAsync(user, decoded, dto.NewPassword);
+
+        return result.Succeeded
+            ? Ok(new ResponseDto("Password reset successfully"))
+            : BadRequest(new ResponseDto(string.Join("; ", result.Errors.Select(e => e.Description))));
     }
     
     /// <summary>Текущий авторизованный пользователь.</summary>

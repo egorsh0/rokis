@@ -1,7 +1,9 @@
 ﻿using idcc.Context;
 using idcc.Dtos;
+using idcc.Models;
 using idcc.Models.Profile;
 using idcc.Repository.Interfaces;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 
 namespace idcc.Repository;
@@ -9,10 +11,12 @@ namespace idcc.Repository;
 public class CompanyRepository : ICompanyRepository
 {
     private readonly IdccContext _idccContext;
+    private readonly UserManager<ApplicationUser> _userManager;
 
-    public CompanyRepository(IdccContext idccContext)
+    public CompanyRepository(IdccContext idccContext, UserManager<ApplicationUser> userManager)
     {
         _idccContext = idccContext;
+        _userManager = userManager;
     }
 
     /// <summary>
@@ -63,30 +67,34 @@ public class CompanyRepository : ICompanyRepository
         var errors = new List<string>();
         
         // 0. Загружаем профиль + пользователя один раз
-        var entity = await _idccContext.CompanyProfiles
-            .FirstOrDefaultAsync(cp => cp.UserId == userId);
-        if (entity is null)
+        var profile = await _idccContext.CompanyProfiles.FirstOrDefaultAsync(cp => cp.UserId == userId);
+        if (profile is null)
+        {
+            return new UpdateResult(false, ["COMPANY_NOT_FOUND"]);
+        }
+        
+        var user = await _userManager.FindByIdAsync(userId);
+        if (user is null)
         {
             return new UpdateResult(false, ["COMPANY_NOT_FOUND"]);
         }
         
         // 1. Проверка Email (только если меняется)
-        if (dto.Email is not null && dto.Email != entity.Email)
+        if (!string.IsNullOrWhiteSpace(dto.Email) &&
+            !dto.Email.Equals(profile.Email, StringComparison.OrdinalIgnoreCase))
         {
-            var emailBusy = await _idccContext.Users
-                .AnyAsync(u => u.Email == dto.Email && u.Id != userId);
-
-            if (emailBusy)
+            var exists = await _userManager.FindByEmailAsync(dto.Email);
+            if (exists is not null && exists.Id != userId)
             {
                 errors.Add("EMAIL_ALREADY_EXISTS");
             }
         }
 
         // 2. Проверка ИНН (если меняется)
-        if (dto.Inn is not null && dto.Inn != entity.INN)
+        if (!string.IsNullOrWhiteSpace(dto.Inn) && dto.Inn != profile.INN)
         {
-            var innBusy = await _idccContext.CompanyProfiles
-                .AnyAsync(c => c.INN == dto.Inn && c.UserId != userId);
+            bool innBusy = await _idccContext.CompanyProfiles
+                .AnyAsync(cp => cp.INN == dto.Inn && cp.UserId != userId);
 
             if (innBusy)
             {
@@ -94,50 +102,66 @@ public class CompanyRepository : ICompanyRepository
             }
         }
 
-        if (errors.Count != 0)
+        if (errors.Any())
         {
             return new UpdateResult(false, errors);
         }
 
-        var changed = false;
+        
+        // 3. Мапим not-null поля
+        bool changed = false;
 
-        if (dto.Name is not null && dto.Name != entity.FullName)
+        if (!string.IsNullOrWhiteSpace(dto.Name) && dto.Name != profile.FullName)
         {
-            entity.FullName = dto.Name;
+            profile.FullName = dto.Name;
             changed = true;
         }
 
-        if (dto.LegalAddress is not null && dto.LegalAddress != entity.LegalAddress)
+        if (!string.IsNullOrWhiteSpace(dto.LegalAddress) && dto.LegalAddress != profile.LegalAddress)
         {
-            entity.LegalAddress = dto.LegalAddress;
+            profile.LegalAddress = dto.LegalAddress;
             changed = true;
         }
 
-        if (dto.Email is not null && dto.Email != entity.Email)
+        if (!string.IsNullOrWhiteSpace(dto.Kpp) && dto.Kpp != profile.Kpp)
         {
-            entity.Email = dto.Email;
+            profile.Kpp = dto.Kpp;
             changed = true;
         }
 
-        if (dto.Inn is not null && dto.Inn != entity.INN)
+        if (!string.IsNullOrWhiteSpace(dto.Email) &&
+            !dto.Email.Equals(profile.Email, StringComparison.OrdinalIgnoreCase))
         {
-            entity.INN = dto.Inn;
+            // 3.1 профиль
+            profile.Email = dto.Email;
+
+            // 3.2 AspNetUsers
+            user.Email  = dto.Email;
+            user.UserName = dto.Email;
+            user.NormalizedEmail = _userManager.NormalizeEmail(dto.Email);
+            user.NormalizedUserName = user.NormalizedEmail;
+
+            var idRes = await _userManager.UpdateAsync(user);
+            if (!idRes.Succeeded)
+            {
+                errors.AddRange(idRes.Errors.Select(e => e.Description));
+                return new UpdateResult(false, errors);
+            }
             changed = true;
         }
 
-        if (dto.Kpp is not null && dto.Kpp != entity.Kpp)
+        if (!string.IsNullOrWhiteSpace(dto.Inn) && dto.Inn != profile.INN)
         {
-            entity.Kpp = dto.Kpp;
+            profile.INN = dto.Inn;
             changed = true;
         }
 
         if (!changed)
         {
-            errors.Add("Could not update ");
-            return new UpdateResult(false, errors);
+            return new UpdateResult(false, ["NOTHING_TO_UPDATE"]);
         }
 
         await _idccContext.SaveChangesAsync();
-        return new UpdateResult(true, Array.Empty<string>().ToList());
+        return new UpdateResult(true, []);
     }
 }

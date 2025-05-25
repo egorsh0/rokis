@@ -16,4 +16,5 @@ public interface IConfigRepository
     Task<List<WeightDto>> GetWeightsAsync();
     Task<List<DiscountRuleDto>> GetDiscountsRuleAsync();
     Task<List<MailingDto>> GetMailingRulesAsync();
+    Task<MailingDto?> GetMailingAsync(string code);
 }

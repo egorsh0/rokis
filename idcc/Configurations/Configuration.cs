@@ -47,7 +47,7 @@ public static class Configuration
         
         // 0.0 Подключаем рассылки
         
-        var smtpSettings = builder.Configuration.GetSection("SmtpSettings").Get<SmtpSettings>();
+        var smtpSettings = builder.Configuration.GetSection("Smtp").Get<SmtpSettings>();
         if (smtpSettings != null)
         {
             builder.Services.AddSingleton(smtpSettings);

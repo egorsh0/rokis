@@ -1,7 +1,9 @@
 ﻿using idcc.Context;
 using idcc.Dtos;
+using idcc.Models;
 using idcc.Models.Profile;
 using idcc.Repository.Interfaces;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 
 namespace idcc.Repository;
@@ -9,7 +11,13 @@ namespace idcc.Repository;
 public class EmployeeRepository : IEmployeeRepository
 {
     private readonly IdccContext _idccContext;
-    public EmployeeRepository(IdccContext idccContext) => _idccContext = idccContext;
+    private readonly UserManager<ApplicationUser> _userManager;
+
+    public EmployeeRepository(IdccContext idccContext, UserManager<ApplicationUser> userManager)
+    {
+        _idccContext = idccContext;
+        _userManager = userManager;
+    }
 
     public async Task<EmployeeProfile?> GetEmployeeWithCompanyAsync(string employeeUserId) =>
         await _idccContext.EmployeeProfiles
@@ -20,52 +28,74 @@ public class EmployeeRepository : IEmployeeRepository
     {
         var errors = new List<string>();
         
-        var emp = await _idccContext.EmployeeProfiles
+        // ── 1.  Профиль сотрудника ─────────────────────────────
+        var profile = await _idccContext.EmployeeProfiles
             .FirstOrDefaultAsync(e => e.UserId == userId);
-        if (emp is null)
+
+        if (profile is null)
         {
-            errors.Add("Employee not found");
-            return new UpdateResult(false, errors);
+            return new UpdateResult(false, ["EMPLOYEE_NOT_FOUND"]);
         }
         
-        // 1. Проверка Email (только если меняется)
-        if (dto.Email is not null && dto.Email != emp.Email)
+        // ── 2.  Пользователь Identity ──────────────────────────
+        var user = await _userManager.FindByIdAsync(userId);
+        if (user is null)
         {
-            var emailBusy = await _idccContext.Users
-                .AnyAsync(u => u.Email == dto.Email && u.Id != userId);
-
-            if (emailBusy)
+            return new UpdateResult(false, ["EMPLOYEE_NOT_FOUND"]);
+        }
+        
+        // ── 3.  Проверка email, если он меняется ───────────────
+        if (!string.IsNullOrWhiteSpace(dto.Email) &&
+            !string.Equals(dto.Email, profile.Email, StringComparison.OrdinalIgnoreCase))
+        {
+            var existing = await _userManager.FindByEmailAsync(dto.Email);
+            if (existing is not null && existing.Id != userId)
             {
                 errors.Add("EMAIL_ALREADY_EXISTS");
             }
         }
 
-        if (errors.Count > 0)
+        if (errors.Any())
         {
             return new UpdateResult(false, errors);
         }
-        
+        // ── 4.  Мапим not-null поля ────────────────────────────
         var changed = false;
 
-        if (dto.FullName is not null && dto.FullName != emp.FullName)
+        if (!string.IsNullOrWhiteSpace(dto.FullName) &&
+            dto.FullName != profile.FullName)
         {
-            emp.FullName = dto.FullName;
+            profile.FullName = dto.FullName;
             changed = true;
         }
 
-        if (dto.Email is not null && dto.Email != emp.Email)
+        if (!string.IsNullOrWhiteSpace(dto.Email) &&
+            !string.Equals(dto.Email, profile.Email, StringComparison.OrdinalIgnoreCase))
         {
-            emp.Email = dto.Email;
+            // профиль
+            profile.Email = dto.Email;
+
+            // AspNetUsers
+            user.Email = dto.Email;
+            user.UserName = dto.Email;
+            user.NormalizedEmail = _userManager.NormalizeEmail(dto.Email);
+            user.NormalizedUserName = user.NormalizedEmail;
+
+            var idRes = await _userManager.UpdateAsync(user);
+            if (!idRes.Succeeded)
+            {
+                errors.AddRange(idRes.Errors.Select(e => e.Description));
+                return new UpdateResult(false, errors);
+            }
             changed = true;
         }
 
         if (!changed)
         {
-            errors.Add("Could not update employee");
-            return new UpdateResult(false, errors);
+            return new UpdateResult(false, ["NOTHING_TO_UPDATE"]);
         }
 
         await _idccContext.SaveChangesAsync();
-        return new UpdateResult(true, Array.Empty<string>().ToList());
+        return new UpdateResult(true, new());
     }
 }

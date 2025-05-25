@@ -12,7 +12,7 @@ public interface IInviteService
 public class InviteService : IInviteService
 {
     private readonly IdccContext _idccContext;
-    private readonly IEmailService _emailService; // абстракция для отправки писем
+    private readonly IEmailService _emailService;
 
     public InviteService(IdccContext idccContext, IEmailService emailService)
     {
@@ -27,7 +27,7 @@ public class InviteService : IInviteService
         await _idccContext.SaveChangesAsync();
 
         var mailingSetting = await _idccContext.MailingSettings
-            .FirstOrDefaultAsync(x => x.MailingCode == "INVITE");
+            .FirstOrDefaultAsync(x => x.MailingCode == "Invite");
 
         if (mailingSetting?.IsEnabled != true)
         {

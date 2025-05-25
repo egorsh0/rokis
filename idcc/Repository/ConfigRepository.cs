@@ -8,10 +8,12 @@ namespace idcc.Repository;
 public class ConfigRepository : IConfigRepository
 {
     private readonly IdccContext _context;
+    private readonly ILogger<ConfigRepository> _log;
 
-    public ConfigRepository(IdccContext context)
+    public ConfigRepository(IdccContext context, ILogger<ConfigRepository> log)
     {
         _context = context;
+        _log  = log;
     }
     
     public async Task<List<AnswerTimeDto>> GetAnswerTimesAsync()
@@ -81,5 +83,31 @@ public class ConfigRepository : IConfigRepository
         var mailingRules = await _context.MailingSettings.Select(mailingRule => new MailingDto(mailingRule.MailingCode, mailingRule.IsEnabled, mailingRule.Subject, mailingRule.Body))
                 .ToListAsync();
         return [..mailingRules];
+    }
+    
+    public async Task<MailingDto?> GetMailingAsync(string code)
+    {
+        if (string.IsNullOrWhiteSpace(code))
+        {
+            return null;
+        }
+
+        // Поиск шаблона (без учёта регистра) + IsEnabled = true
+        var entity = await _context.MailingSettings
+            .AsNoTracking()
+            .FirstOrDefaultAsync(m =>
+                m.MailingCode == code && m.IsEnabled);
+
+        if (entity is not null)
+        {
+            return new MailingDto(
+                entity.MailingCode,
+                entity.IsEnabled,
+                entity.Subject,
+                entity.Body);
+        }
+        _log.LogWarning("Mailing template {Code} not found or disabled", code);
+        return null;
+
     }
 }
