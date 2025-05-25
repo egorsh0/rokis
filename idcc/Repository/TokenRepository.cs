@@ -11,12 +11,12 @@ namespace idcc.Repository;
 public class TokenRepository : ITokenRepository
 {
     private readonly IdccContext _idccContext;
-    private readonly UserManager<ApplicationUser> _um;
+    private readonly UserManager<ApplicationUser> _userManager;
 
-    public TokenRepository(IdccContext idccContext, UserManager<ApplicationUser> um)
+    public TokenRepository(IdccContext idccContext, UserManager<ApplicationUser> userManager)
     {
         _idccContext = idccContext;
-        _um = um;
+        _userManager = userManager;
     }
 
     public async Task<IEnumerable<TokenDto>> GetTokensForCompanyAsync(string companyUserId)
@@ -25,7 +25,7 @@ public class TokenRepository : ITokenRepository
             // токены, купленные этой компанией
             .Where(t => t.Order!.UserId == companyUserId
                 && t.Order.Status == OrderStatus.Paid
-                && t.Status      != TokenStatus.Pending)
+                && t.Status != TokenStatus.Pending)
     
             // соединяемся с профилями, чтобы получить ФИО
             .GroupJoin(                                                   // 1) Employee
@@ -67,16 +67,16 @@ public class TokenRepository : ITokenRepository
     
                 // BoundFullName / Email
                 v.EmployeeProfile != null ? v.EmployeeProfile.FullName :
-                v.PersonProfile   != null ? v.PersonProfile.FullName   : null,
+                v.PersonProfile != null ? v.PersonProfile.FullName : null,
     
                 v.EmployeeProfile != null ? v.EmployeeProfile.Email :
-                v.PersonProfile   != null ? v.PersonProfile.Email   : null,
+                v.PersonProfile != null ? v.PersonProfile.Email : null,
     
                 // UsedDate  (если статус Used и есть завершённая сессия)
                 v.t.Status == TokenStatus.Used ? v.LastSession!.EndTime : null,
     
                 // CertificateUrl (тоже только для Used)
-                v.t.Status == TokenStatus.Used ? v.t.CertificateUrl    : null
+                v.t.Status == TokenStatus.Used ? v.t.CertificateUrl : null
             ))
             .ToListAsync();
     }
@@ -91,7 +91,7 @@ public class TokenRepository : ITokenRepository
         var token = await _idccContext.Tokens
             .Include(t => t.Order)
             .FirstOrDefaultAsync(t =>
-                t.Id     == tokenId &&
+                t.Id == tokenId &&
                 t.Status == TokenStatus.Unused &&
                 t.Order!.UserId == companyUserId);
 
@@ -101,14 +101,14 @@ public class TokenRepository : ITokenRepository
         }
 
         // 2. ищем пользователя‑сотрудника по email
-        var empUser = await _um.FindByEmailAsync(employeeEmail);
+        var empUser = await _userManager.FindByEmailAsync(employeeEmail);
         if (empUser is null)
         {
             return false;
         }
 
         // 3. убеждаемся, что пользователь в роли "Employee"
-        if (!await _um.IsInRoleAsync(empUser, "Employee"))
+        if (!await _userManager.IsInRoleAsync(empUser, "Employee"))
         {
             return false;
         }
@@ -128,7 +128,7 @@ public class TokenRepository : ITokenRepository
 
         // 5. привязываем токен к сотруднику
         token.EmployeeUserId = empUser.Id;
-        token.Status         = TokenStatus.Bound;
+        token.Status = TokenStatus.Bound;
 
         await _idccContext.SaveChangesAsync();
         return true;
@@ -142,7 +142,7 @@ public class TokenRepository : ITokenRepository
             .FirstOrDefaultAsync(ep => ep.UserId == employeeUserId);
 
         var fullName = profile?.FullName ?? string.Empty;
-        var email    = profile?.Email    ?? string.Empty;
+        var email = profile?.Email ?? string.Empty;
 
         // 2.  Берём токены, привязанные к этому сотруднику
         var tokens = await _idccContext.Tokens
@@ -151,7 +151,7 @@ public class TokenRepository : ITokenRepository
             .Where(t => t.EmployeeUserId == employeeUserId)
             .Where(t => t.Order!.UserId == employeeUserId
                         && t.Order.Status  == OrderStatus.Paid
-                        && t.Status      != TokenStatus.Pending)
+                        && t.Status != TokenStatus.Pending)
             .Select(t => new
             {
                 Token = t,
@@ -187,12 +187,12 @@ public class TokenRepository : ITokenRepository
             return false;
         }
 
-        var person = await _um.FindByEmailAsync(personEmail);
+        var person = await _userManager.FindByEmailAsync(personEmail);
         if (person == null)
         {
             return false;
         }
-        if(!await _um.IsInRoleAsync(person,"Person")) return false;
+        if(!await _userManager.IsInRoleAsync(person,"Person")) return false;
 
         token.PersonUserId = person.Id;
         await _idccContext.SaveChangesAsync();
@@ -207,7 +207,7 @@ public class TokenRepository : ITokenRepository
             .FirstOrDefaultAsync(pp => pp.UserId == personUserId);
 
         var fullName = profile?.FullName ?? string.Empty;
-        var email    = profile?.Email    ?? string.Empty;
+        var email = profile?.Email ?? string.Empty;
 
         // 2.  Токены, привязанные к этому человеку
         var tokens = await _idccContext.Tokens
@@ -216,7 +216,7 @@ public class TokenRepository : ITokenRepository
             .Where(t => t.PersonUserId == personUserId)
             .Where(t => t.Order!.UserId == personUserId
                         && t.Order.Status  == OrderStatus.Paid
-                        && t.Status      != TokenStatus.Pending)
+                        && t.Status != TokenStatus.Pending)
             .Select(t => new
             {
                 Token = t,

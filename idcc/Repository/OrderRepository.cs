@@ -44,9 +44,11 @@ public class OrderRepository : IOrderRepository
         order.PaymentId = paymentId;
 
         // токены становятся доступными
-        foreach (var tok in order.Tokens)
+        foreach (var tok in order.Tokens.Where(t => t.Status == TokenStatus.Pending))
         {
-            tok.Status = TokenStatus.Unused;
+            tok.Status = order.Role == "Person"
+                ? TokenStatus.Bound   // физ. лицо: сразу привязан
+                : TokenStatus.Unused; // компания: ждёт привязки
         }
 
         await _idccContext.SaveChangesAsync();
@@ -100,6 +102,7 @@ public class OrderRepository : IOrderRepository
                     UnitPrice   = price,
                     Status = TokenStatus.Pending,
                     PurchaseDate = DateTime.UtcNow,
+                    PersonUserId = role == "Person" ? userId : null,
                     Order       = order
                 });
             }

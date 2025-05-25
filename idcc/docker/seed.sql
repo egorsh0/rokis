@@ -839,9 +839,3 @@ INSERT INTO "Topics" ("Name", "Description", "DirectionId") VALUES ('Модел�
 INSERT INTO "Topics" ("Name", "Description", "DirectionId") VALUES ('Технические аспекты и интеграции', 'Технические аспекты и интеграции', 2);
 INSERT INTO "Topics" ("Name", "Description", "DirectionId") VALUES ('Методологии разработки и участие в процессах', 'Методологии разработки и участие в процессах', 2);
 INSERT INTO "Topics" ("Name", "Description", "DirectionId") VALUES ('Работа со стейкхолдерами', 'Работа со стейкхолдерами', 2);
-
-/*  
-Конфигурация MailingSettings 
-*/
-
-INSERT INTO "MailingSettings" ("Id", "MailingCode", "IsEnabled", "Subject", "Body") VALUES (1, 'ResetPassword', true, 'Сброс пароля', 'Здравствуйте! Чтобы задать новый пароль, перейдите по ссылке: {link}');

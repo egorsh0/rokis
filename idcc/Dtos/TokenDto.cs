@@ -19,6 +19,7 @@ namespace idcc.Dtos;
 /// <param name="UnitPrice">Цена за токен <u>в момент покупки</u>, с учётом валюты системы.</param>
 /// <param name="Status">Текущий статус токена: <c>Pending</c>, <c>Unused</c>, <c>Bound</c>, <c>Used</c>.</param>
 /// <param name="PurchaseDate">Дата / время (UTC), когда токен был создан в заказе.</param>
+/// <param name="Score">Баллы за тестирование по данному токену.</param>
 /// <param name="BoundFullName">
 /// ФИО пользователя, к которому привязан токен.<br/>
 /// <c>null</c> — токен ещё не привязан.
