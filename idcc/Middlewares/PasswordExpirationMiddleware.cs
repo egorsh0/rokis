@@ -1,5 +1,4 @@
 ﻿using System.Security.Claims;
-using idcc.Dtos;
 using idcc.Models;
 using Microsoft.AspNetCore.Identity;
 
@@ -27,9 +26,7 @@ public class PasswordExpirationMiddleware
                 
                 if (user != null)
                 {
-                    var localTime = DateTime.SpecifyKind(user.PasswordLastChanged, DateTimeKind.Local).ToUniversalTime();
-
-                    var delta = DateTime.UtcNow - localTime;
+                    var delta = DateTimeOffset.UtcNow - user.PasswordLastChanged;
                     if (delta > _expirationPeriod)
                     {
                         context.Response.StatusCode = StatusCodes.Status403Forbidden;

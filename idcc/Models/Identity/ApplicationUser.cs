@@ -8,5 +8,5 @@ public class ApplicationUser : IdentityUser
     [MaxLength(255)]
     public string DisplayName  { get; set; } = string.Empty;
     
-    public DateTime PasswordLastChanged { get; set; } = DateTime.UtcNow;
+    public DateTimeOffset PasswordLastChanged { get; set; } = DateTime.UtcNow;
 }
