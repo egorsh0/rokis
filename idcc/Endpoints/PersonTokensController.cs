@@ -22,26 +22,6 @@ public class PersonTokensController : ControllerBase
     }
 
     // ═══════════════════════════════════════════════════════
-    // POST /purchase
-    // ═══════════════════════════════════════════════════════
-    /// <summary>Покупка токенов физическим лицом.</summary>
-    /// <remarks>
-    /// <b>Сценарий:</b> пользователь выбирает направление + количество.
-    /// </remarks>
-    /// <response code="200">Созданный заказ (OrderDto).</response>
-    /// <response code="400">Пустой список позиций.</response>
-    [HttpPost("purchase")]
-    [Consumes("application/json")]
-    [ProducesResponseType(typeof(OrderDto), StatusCodes.Status200OK)]
-    [ProducesResponseType(typeof(string),   StatusCodes.Status400BadRequest)]
-    public async Task<IActionResult> Purchase([FromBody]CreateOrderDto dto)
-    {
-        var userId = User.FindFirstValue(ClaimTypes.NameIdentifier)!;
-        var order = await _tokenRepository.PurchaseAsync(userId, "Person", dto.Items);
-        return Ok(order);
-    }
-
-    // ═══════════════════════════════════════════════════════
     // GET /api/person/tokens
     // ═══════════════════════════════════════════════════════
     /// <summary>Список токенов, принадлежащих физическому лицу.</summary>

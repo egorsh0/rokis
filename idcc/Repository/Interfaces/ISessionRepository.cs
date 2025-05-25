@@ -17,5 +17,5 @@ public interface ISessionRepository
     
     Task<Session?> GetFinishSessionAsync(Guid tokenId);
     
-    Task SessionScoreAsync(int id, double score);
+    Task SessionScoreAsync(int sessionId, double score);
 }

@@ -165,6 +165,9 @@ public static class Configuration
         // Репозиторий работы с токенами
         builder.Services.AddScoped<ITokenRepository, TokenRepository>();
         
+        // Репозиторий работы с заказами
+        builder.Services.AddScoped<IOrderRepository, OrderRepository>();
+        
         // Репозиторий сессий
         builder.Services.AddScoped<ISessionRepository, SessionRepository>();
         

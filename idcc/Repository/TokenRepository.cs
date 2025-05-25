@@ -19,83 +19,13 @@ public class TokenRepository : ITokenRepository
         _um = um;
     }
 
-    public async Task<OrderDto> PurchaseAsync(string userId,
-        string role,
-        List<PurchaseTokensDto> items)
-    {
-        // 1. Подсчитываем общее количество токенов
-        var totalQty = items.Sum(i => i.Quantity);
-
-        // 2. Ищем скидку
-        var rule = await _idccContext.DiscountRules
-            .OrderBy(r => r.MinQuantity)
-            .FirstOrDefaultAsync(r =>
-                totalQty >= r.MinQuantity &&
-                (r.MaxQuantity == null || totalQty <= r.MaxQuantity));
-
-        var discountRate = rule?.DiscountRate ?? 0m;
-
-        // 3. Создаём заказ
-        var order = new Order
-        {
-            UserId = userId,
-            Role   = role,
-            Quantity        = totalQty,
-            DiscountRate    = discountRate,
-            UnitPrice       = 0,      // посчитаем ниже
-            TotalPrice      = 0,
-            DiscountedTotal = 0
-        };
-        _idccContext.Orders.Add(order);
-
-        decimal grandTotal = 0;
-
-        // 4. Для каждого направления генерируем токены
-        foreach (var itm in items)
-        {
-            var dir = await _idccContext.Directions.FindAsync(itm.DirectionId)
-                      ?? throw new Exception("Direction not found");
-
-            var price = dir.BasePrice;
-            for (var i = 0; i < itm.Quantity; i++)
-            {
-                _idccContext.Tokens.Add(new Token
-                {
-                    DirectionId = dir.Id,
-                    UnitPrice   = price,
-                    Order       = order
-                });
-            }
-
-            grandTotal += price * itm.Quantity;
-        }
-
-        order.UnitPrice       = grandTotal / totalQty;
-        order.TotalPrice      = grandTotal;
-        order.DiscountedTotal = grandTotal * (1 - discountRate);
-
-        await _idccContext.SaveChangesAsync();
-        return new OrderDto(
-            order.Id,
-            order.Quantity,
-            order.UnitPrice,
-            order.TotalPrice,
-            order.DiscountRate,
-            order.DiscountedTotal,
-            order.Tokens.Select(t => new TokenDto(
-                t.Id,
-                t.DirectionId,
-                t.Direction.Name,
-                t.UnitPrice,
-                t.Status,
-                null, null, null, null)));
-    }
-
     public async Task<IEnumerable<TokenDto>> GetTokensForCompanyAsync(string companyUserId)
     {
         return await _idccContext.Tokens
             // токены, купленные этой компанией
-            .Where(t => t.Order!.UserId == companyUserId)
+            .Where(t => t.Order!.UserId == companyUserId
+                && t.Order.Status == OrderStatus.Paid
+                && t.Status      != TokenStatus.Pending)
     
             // соединяемся с профилями, чтобы получить ФИО
             .GroupJoin(                                                   // 1) Employee
@@ -132,6 +62,8 @@ public class TokenRepository : ITokenRepository
                 v.t.Direction.Name,
                 v.t.UnitPrice,
                 v.t.Status,
+                v.t.PurchaseDate,
+                v.t.Score,
     
                 // BoundFullName / Email
                 v.EmployeeProfile != null ? v.EmployeeProfile.FullName :
@@ -217,6 +149,9 @@ public class TokenRepository : ITokenRepository
             .AsNoTracking()
             .Include(t => t.Direction)
             .Where(t => t.EmployeeUserId == employeeUserId)
+            .Where(t => t.Order!.UserId == employeeUserId
+                        && t.Order.Status  == OrderStatus.Paid
+                        && t.Status      != TokenStatus.Pending)
             .Select(t => new
             {
                 Token = t,
@@ -234,6 +169,8 @@ public class TokenRepository : ITokenRepository
             v.Token.Direction.Name,
             v.Token.UnitPrice,
             v.Token.Status,
+            v.Token.PurchaseDate,
+            v.Token.Score,
             fullName,
             email,
             v.Token.Status == TokenStatus.Used ? v.LastSession?.EndTime : null,
@@ -277,6 +214,9 @@ public class TokenRepository : ITokenRepository
             .AsNoTracking()
             .Include(t => t.Direction)
             .Where(t => t.PersonUserId == personUserId)
+            .Where(t => t.Order!.UserId == personUserId
+                        && t.Order.Status  == OrderStatus.Paid
+                        && t.Status      != TokenStatus.Pending)
             .Select(t => new
             {
                 Token = t,
@@ -294,6 +234,8 @@ public class TokenRepository : ITokenRepository
             v.Token.Direction.Name,
             v.Token.UnitPrice,
             v.Token.Status,
+            v.Token.PurchaseDate,
+            v.Token.Score,
             fullName,
             email,
             v.Token.Status == TokenStatus.Used ? v.LastSession?.EndTime : null,

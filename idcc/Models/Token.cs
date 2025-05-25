@@ -10,12 +10,14 @@ public class Token
     public int DirectionId { get; set; }
     public virtual Direction Direction { get; set; } = null!;
 
-    public TokenStatus Status { get; set; } = TokenStatus.Unused;
+    public TokenStatus Status { get; set; } = TokenStatus.Pending;
 
     /// <summary>Цена за единицу</summary>
     [Column(TypeName = "decimal(18,2)")]
     public decimal UnitPrice { get; set; } // копируем цену из Direction.BasePrice
 
+    public DateTime     PurchaseDate { get; set; }
+    
     /// <summary>Ссылка на заказ</summary>
     public int? OrderId { get; set; }
     public virtual Order? Order { get; set; }
@@ -28,6 +30,9 @@ public class Token
     public string? PersonUserId { get; set; }
     public virtual ApplicationUser? Person { get; set; }
 
-    /// <summary>Ссылка на PDF-сертификат (для использованных)</summary>
+    /// <summary>Балл, полученный по токену (null — ещё не проходил).</summary>
+    public double? Score { get; set; }
+    
+    /// <summary>URL сертификата, если сессия завершена и отчёт сгенерирован.</summary>
     public string? CertificateUrl { get; set; }
 }

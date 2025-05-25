@@ -83,7 +83,6 @@ public static class ReportEndpont
                 image   : imgBytes);
             
             // ---------- 6.  Возврат клиенту ----------
-            /* -------- 6. Ответ клиенту --------*/
             var dto = new ReportGeneratedDto(report, imgBytes is null
                 ? null
                 : Convert.ToBase64String(imgBytes));

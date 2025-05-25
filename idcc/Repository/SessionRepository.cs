@@ -4,7 +4,6 @@ using idcc.Infrastructures;
 using idcc.Models;
 using idcc.Repository.Interfaces;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.EntityFrameworkCore.Query;
 
 namespace idcc.Repository;
 
@@ -120,13 +119,21 @@ public class SessionRepository : ISessionRepository
         return await _context.Sessions.Where(s => s.TokenId == tokenId && s.Score >= 0).OrderByDescending(s => s.EndTime).FirstOrDefaultAsync();
     }
 
-    public async Task SessionScoreAsync(int id, double score)
+    public async Task SessionScoreAsync(int sessionId, double score)
     {
-        var session = await _context.Sessions.FindAsync(id);
-        if (session is not null)
+        // 1. Подгружаем сессию сразу с Token’ом
+        var session = await _context.Sessions
+            .Include(s => s.Token)
+            .FirstOrDefaultAsync(s => s.Id == sessionId);
+
+        if (session is null)
         {
-            session.Score = score;
+            return;
         }
+
+        session.Score        = score;
+        session.Token.Score = score;
+
         await _context.SaveChangesAsync();
     }
     
