@@ -61,7 +61,7 @@ public record TokenDto(
 /// </param>
 public record BindTokenDto(
     Guid TokenId,
-    [property: Required, EmailAddress] string EmployeeEmail);
+    [EmailAddress] string EmployeeEmail);
 
 
 /// <summary>Привязка ранее использованного токена к своему профилю.</summary>
@@ -72,7 +72,7 @@ public record BindTokenDto(
 /// </param>
 public record BindUsedTokenDto(
     Guid TokenId,
-    [property: Required, EmailAddress] string UserEmail);
+    [EmailAddress] string UserEmail);
 
 
 /// <summary>Короткое представление токена.</summary>
@@ -83,7 +83,7 @@ public record BindUsedTokenDto(
 /// Текущий статус: <c>Pending</c>, <c>Unused</c>, <c>Bound</c>, <c>Used</c>.
 /// </param>
 public record TokenShortDto(
-    [property: Required] Guid Id,
+    [Required] Guid Id,
     int    DirectionId,
     string DirectionName,
     TokenStatus Status);

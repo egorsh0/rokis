@@ -108,6 +108,12 @@ public class ConfigRepository : IConfigRepository
         }
         _log.LogWarning("Mailing template {Code} not found or disabled", code);
         return null;
-
+    }
+    
+    public async Task<List<TopicDto>> GetTopicsAsync()
+    {
+        var topics = await _context.Topics.Select(topic => new TopicDto(topic.Name, topic.Description, topic.Direction.Id))
+            .ToListAsync();
+        return [..topics];
     }
 }

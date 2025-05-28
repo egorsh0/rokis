@@ -80,3 +80,11 @@ public record WeightDto(string Grade, double Min, double Max);
 /// <param name="Subject">Тема письма.</param>
 /// <param name="Body">Тело письма (HTML/Plain).</param>
 public record MailingDto(string MailingCode, bool IsEnabled, string Subject, string Body);
+
+/// <summary>
+/// Список тем по направлениям
+/// </summary>
+/// <param name="Name">Имя темы.</param>
+/// <param name="Description">Краткое описание темы.</param>
+/// <param name="DirectionId">Идентификатор направления.</param>
+public record TopicDto(string Name, string Description, int DirectionId);

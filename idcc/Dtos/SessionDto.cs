@@ -2,7 +2,7 @@
 
 namespace idcc.Dtos;
 
-public record StartSessionDto([property: Required] Guid TokenId);
+public record StartSessionDto([Required] Guid TokenId);
 public record SessionResultDto(int? Id, Guid TokenId, bool Succeeded, string? ErrorMessage);
 
 public record SessionDto(

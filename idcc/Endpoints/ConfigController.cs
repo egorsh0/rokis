@@ -154,4 +154,17 @@ public class ConfigController : ControllerBase
         return await _hybridCache.GetOrCreateAsync<List<MailingDto>>(cachekey, async _ =>
             await _configRepository.GetMailingRulesAsync());
     }
+    
+    /*────────── 11. Topics ──────────*/
+    /// <summary>Список тем тестирования.</summary>
+    [HttpGet("topics")]
+    [ProducesResponseType(typeof(IEnumerable<TopicDto>), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status500InternalServerError)]
+    public async Task<List<TopicDto>> GetTopicsAsync()
+    {
+        _logger.LogInformation("GetTopicsAsync");
+        var cachekey = $"{nameof(ConfigController)}.{nameof(GetTopicsAsync)}";
+        return await _hybridCache.GetOrCreateAsync<List<TopicDto>>(cachekey, async _ =>
+            await _configRepository.GetTopicsAsync());
+    }
 }

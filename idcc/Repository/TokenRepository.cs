@@ -149,8 +149,7 @@ public class TokenRepository : ITokenRepository
             .AsNoTracking()
             .Include(t => t.Direction)
             .Where(t => t.EmployeeUserId == employeeUserId)
-            .Where(t => t.Order!.UserId == employeeUserId
-                        && t.Order.Status  == OrderStatus.Paid
+            .Where(t => t.Order!.Status  == OrderStatus.Paid
                         && t.Status != TokenStatus.Pending)
             .Select(t => new
             {

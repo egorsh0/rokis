@@ -17,4 +17,5 @@ public interface IConfigRepository
     Task<List<DiscountRuleDto>> GetDiscountsRuleAsync();
     Task<List<MailingDto>> GetMailingRulesAsync();
     Task<MailingDto?> GetMailingAsync(string code);
+    Task<List<TopicDto>> GetTopicsAsync();
 }
