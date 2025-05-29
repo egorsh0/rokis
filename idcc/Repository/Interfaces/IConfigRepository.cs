@@ -18,4 +18,6 @@ public interface IConfigRepository
     Task<List<MailingDto>> GetMailingRulesAsync();
     Task<MailingDto?> GetMailingAsync(string code);
     Task<List<TopicDto>> GetTopicsAsync();
+    Task<List<TimeDto>> GetTimesAsync();
+    Task<TimeDto?> GetTimesAsync(string code);
 }

@@ -43,6 +43,9 @@ public record GradeRelationDto(string Start, string End);
 /// <summary>Процентные значения для настроек системы.</summary>
 public record PersentDto(string Code, string Description, double Value);
 
+/// <summary>Временные настройки системы.</summary>
+public record TimeDto(string Code, string Description, double Value);
+
 /// <summary>
 /// Направления, по которым продаются токены (QA, Dev, SA…).<br/>
 /// Содержит базовую цену одного токена.

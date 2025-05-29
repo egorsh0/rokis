@@ -116,4 +116,33 @@ public class ConfigRepository : IConfigRepository
             .ToListAsync();
         return [..topics];
     }
+
+    public async Task<List<TimeDto>> GetTimesAsync()
+    {
+        var times = await _context.Times.Select(time => new TimeDto(time.Code, time.Description, time.Value))
+            .ToListAsync();
+        return [..times];
+    }
+    
+    public async Task<TimeDto?> GetTimesAsync(string code)
+    {
+        if (string.IsNullOrWhiteSpace(code))
+        {
+            return null;
+        }
+        var entity = await _context.Times
+            .AsNoTracking()
+            .FirstOrDefaultAsync(m =>
+                m.Code == code);
+        
+        if (entity is not null)
+        {
+            return new TimeDto(
+                entity.Code,
+                entity.Description,
+                entity.Value);
+        }
+        _log.LogWarning("Time template {Code} not found or disabled", code);
+        return null;
+    }
 }

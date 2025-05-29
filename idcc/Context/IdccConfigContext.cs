@@ -55,4 +55,9 @@ public partial class IdccContext
     /// Контекст для таблицы "Количества вопросов для ..."
     /// </summary>
     public DbSet<Count> Counts { get; set; }
+    
+    /// <summary>
+    /// Контекст для таблицы "Время выполнения"
+    /// </summary>
+    public DbSet<Time> Times { get; set; }
 }

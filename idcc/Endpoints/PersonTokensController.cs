@@ -14,11 +14,9 @@ namespace idcc.Endpoints;
 public class PersonTokensController : ControllerBase
 {
     private readonly ITokenRepository _tokenRepository;
-    private readonly ISessionRepository _sessionRepository;
-    public PersonTokensController(ITokenRepository tokenRepository, ISessionRepository sessionRepository)
+    public PersonTokensController(ITokenRepository tokenRepository)
     {
         _tokenRepository = tokenRepository;
-        _sessionRepository = sessionRepository;
     }
 
     // ═══════════════════════════════════════════════════════
@@ -56,43 +54,5 @@ public class PersonTokensController : ControllerBase
         }
         var ok = await _tokenRepository.BindUsedTokenToPersonAsync(dto.TokenId,dto.UserEmail);
         return ok ? Ok() : BadRequest(new ResponseDto("Cannot bind used token"));
-    }
-
-    // ═══════════════════════════════════════════════════════
-    // POST /session/start
-    // ═══════════════════════════════════════════════════════
-    /// <summary>Запуск сессии тестирования для токена.</summary>
-    /// <response code="200">Сессия создана (SessionDto).</response>
-    /// <response code="400">Токен не принадлежит пользователю / неверный статус.</response>
-    [HttpPost("session/start")]
-    [Consumes("application/json")]
-    [ProducesResponseType(typeof(SessionDto), StatusCodes.Status200OK)]
-    [ProducesResponseType(typeof(string),    StatusCodes.Status400BadRequest)]
-    public async Task<IActionResult> StartSession([FromBody]StartSessionDto dto)
-    {
-        if (dto.TokenId == Guid.Empty)
-        {
-            return BadRequest(new ResponseDto("TokenId is required"));
-        }
-        var userId = User.FindFirstValue(ClaimTypes.NameIdentifier)!;
-        var session = await _sessionRepository.StartSessionAsync(userId,false, dto.TokenId);
-        if (session.Succeeded)
-        {
-            return Ok(session);
-        }
-
-        return BadRequest(session);
-    }
-
-    // ═══════════════════════════════════════════════════════
-    // GET /sessions
-    // ═══════════════════════════════════════════════════════
-    /// <summary>История всех сессий физического лица.</summary>
-    [HttpGet("sessions")]
-    [ProducesResponseType(typeof(IEnumerable<SessionDto>), StatusCodes.Status200OK)]
-    public async Task<IActionResult> Sessions(){
-        var userId = User.FindFirstValue(ClaimTypes.NameIdentifier)!;
-        var sessions = await _sessionRepository.GetSessionsForUserAsync(userId,false);
-        return Ok(sessions);
     }
 }

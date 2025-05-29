@@ -55,7 +55,7 @@ public class QuestionController : ControllerBase
     [ProducesResponseType(StatusCodes.Status202Accepted)]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType(typeof(string),      StatusCodes.Status400BadRequest)]
-    
+    [ProducesResponseType(typeof(string), StatusCodes.Status423Locked)]
     public async Task<IActionResult> GetRandom([FromQuery] int? sessionId,
                                                [FromQuery] Guid tokenId)
     {

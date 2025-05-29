@@ -167,4 +167,17 @@ public class ConfigController : ControllerBase
         return await _hybridCache.GetOrCreateAsync<List<TopicDto>>(cachekey, async _ =>
             await _configRepository.GetTopicsAsync());
     }
+    
+    /*────────── 12. Times ──────────*/
+    /// <summary>Временные настройки системы.</summary>
+    [HttpGet("times")]
+    [ProducesResponseType(typeof(IEnumerable<TimeDto>), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status500InternalServerError)]
+    public async Task<List<TimeDto>> GetTimesAsync()
+    {
+        _logger.LogInformation("GetTimesAsync");
+        var cachekey = $"{nameof(ConfigController)}.{nameof(GetTimesAsync)}";
+        return await _hybridCache.GetOrCreateAsync<List<TimeDto>>(cachekey, async _ =>
+            await _configRepository.GetTimesAsync());
+    }
 }

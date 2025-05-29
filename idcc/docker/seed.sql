@@ -824,6 +824,13 @@ INSERT INTO "DiscountRules" ("Id", "MinQuantity", "MaxQuantity", "DiscountRate")
 INSERT INTO "MailingSettings" ("Id", "MailingCode", "IsEnabled", "Subject", "Body") VALUES (1, 'ResetPassword', true, 'Сброс пароля', 'Здравствуйте! Чтобы задать новый пароль, перейдите по ссылке: {link}');
 
 /*  
+Конфигурация Times 
+*/
+
+INSERT INTO "Times" ("Id", "Code", "Description", "Value") VALUES (1, 'SessionDuration', 'Длительность сессии (мин.)', 90);
+
+
+/*  
 Конфигурация Topics 
 */
 

@@ -18,15 +18,13 @@ public class SessionRepository : ISessionRepository
     
     public async Task<SessionResultDto> StartSessionAsync(string userId, bool isEmployee, Guid tokenId)
     {
-        var token = await _context.Tokens.FindAsync(tokenId);
-        if (token == null)
-        {
-            return new SessionResultDto(null, tokenId, false, "Token not found");
-        }
+        var token = await _context.Tokens
+            .Include(t=>t.Order)
+            .FirstOrDefaultAsync(t => t.Id == tokenId);
 
-        if (token.Status != TokenStatus.Bound)
+        if (token is null || token.Status != TokenStatus.Bound)
         {
-            return new SessionResultDto(null, tokenId, false, "Token not bound");
+            return new SessionResultDto(null, tokenId, false, "TOKEN_NOT_BOUND");
         }
 
         switch (isEmployee)
@@ -36,12 +34,20 @@ public class SessionRepository : ISessionRepository
             case false when token.PersonUserId != userId:
                 return new SessionResultDto(null, tokenId, false, "Forbidden");
         }
+        
+        // Проверяем, есть ли уже активная сессия на токен
+        var existing = await _context.Sessions
+            .FirstOrDefaultAsync(s => s.TokenId == tokenId && s.EndTime == null);
+        if (existing != null)
+        {
+            return new SessionResultDto(existing.Id, existing.TokenId, true, null);
+        } 
 
         var session = new Session {
             TokenId = tokenId,
             StartTime = DateTime.UtcNow,
             EmployeeUserId = isEmployee ? userId : null,
-            PersonUserId = isEmployee ? null : userId
+            PersonUserId   = !isEmployee ? userId : null
         };
         _context.Sessions.Add(session);
         await CreateSessionUserTopics(session);
@@ -131,7 +137,7 @@ public class SessionRepository : ISessionRepository
             return;
         }
 
-        session.Score        = score;
+        session.Score = score;
         session.Token.Score = score;
 
         await _context.SaveChangesAsync();

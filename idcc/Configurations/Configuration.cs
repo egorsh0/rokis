@@ -10,6 +10,7 @@ using idcc.Infrastructures;
 using idcc.Infrastructures.Interfaces;
 using idcc.Middlewares;
 using idcc.Models;
+using idcc.Providers;
 using idcc.Repository;
 using idcc.Repository.Interfaces;
 using idcc.Service;
@@ -188,6 +189,10 @@ public static class Configuration
         builder.Services.AddScoped<IIdccApplication, IdccApplication>();
         builder.Services.AddScoped<IIdccReport, IdccReport>();
 
+        // Фоновый сервис проверки открытых сессий.
+        builder.Services.AddSingleton<IDurationProvider, SessionDurationProvider>();
+        builder.Services.AddHostedService<SessionTimeoutWorker>();
+        
         // 4. Подключаем контроллеры + Swagger
         builder.Services.AddControllers();
         builder.Services.AddEndpointsApiExplorer();
