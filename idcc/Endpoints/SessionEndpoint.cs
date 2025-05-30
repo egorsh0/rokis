@@ -1,4 +1,5 @@
-﻿using System.Security.Claims;
+﻿using System.ComponentModel.DataAnnotations;
+using System.Security.Claims;
 using idcc.Dtos;
 using idcc.Infrastructures;
 using idcc.Providers;
@@ -54,12 +55,10 @@ public class SessionController : ControllerBase
     // ═══════════════════════════════════════════════════════
     // POST /session/stop
     // ═══════════════════════════════════════════════════════
-    /// <summary>Досрочно (или штатно) завершает сессию тестирования.</summary>
+    /// <summary>Завершает сессию тестирования.</summary>
     /// <remarks>
     /// <para>
-    /// • <paramref name="sessionId"/> — идентификатор сессии.<br/>
-    /// • <paramref name="faster"/> = <see langword="true"/> означает принудительное
-    /// завершение, даже если вопросы не исчерпаны.
+    /// • <paramref name="tokenId"/> — идентификатор токена для сессии.<br/>
     /// </para>
     /// </remarks>
     /// <response code="200">Сессия успешно завершена.</response>
@@ -72,15 +71,11 @@ public class SessionController : ControllerBase
     /// </response>
     [HttpPost("stop")]
     [Consumes("application/json")]
-    [ProducesResponseType(typeof(SessionResultDto), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ResponseDto), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(string),    StatusCodes.Status400BadRequest)]
-    public async Task<IActionResult> StopSession(int sessionId, bool faster)
+    public async Task<IActionResult> StopSession([Required] Guid tokenId)
     {
-        if (sessionId <= 0)
-        {
-            return BadRequest("sessionId must be > 0");
-        }
-        var session = await _sessionRepository.GetSessionAsync(sessionId);
+        var session = await _sessionRepository.GetSessionAsync(tokenId);
         if (session is null)
         {
             return BadRequest(new ResponseDto(ErrorMessages.SESSION_IS_NOT_EXIST));
@@ -90,8 +85,8 @@ public class SessionController : ControllerBase
         {
             return BadRequest(new ResponseDto(ErrorMessages.SESSION_IS_FINISHED));
         }
-        var isFinished = await _sessionRepository.EndSessionAsync(sessionId, faster);
-        return isFinished ? Ok() : BadRequest(new ResponseDto(ErrorMessages.SESSION_IS_NOT_FINISHED));
+        var dto = await _sessionRepository.EndSessionAsync(tokenId);
+        return dto.isSuccess ? Ok(new ResponseDto(dto.Message)) : BadRequest(new ResponseDto(dto.Message));
     }
 
     // ═══════════════════════════════════════════════════════

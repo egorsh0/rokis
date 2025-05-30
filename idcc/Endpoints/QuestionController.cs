@@ -43,12 +43,8 @@ public class QuestionController : ControllerBase
     /// • <c>Cессия не найдена</c><br/>
     /// • <c>Сессия не завершена</c>
     /// </remarks>
-    /// <param name="sessionId">
-    /// ID активной сессии. Если отсутствует — берётся фактическая сессия по <paramref name="tokenId"/>.
-    /// </param>
     /// <param name="tokenId">
-    /// GUID токена. Используется, когда <paramref name="sessionId"/> не указан.
-    /// </param>
+    /// GUID токена.</param>
     /// <returns>Вопрос с вариантами ответов или код 204/400.</returns>
     [HttpGet]
     [ProducesResponseType(typeof(QuestionDto),  StatusCodes.Status200OK)]
@@ -56,12 +52,9 @@ public class QuestionController : ControllerBase
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType(typeof(string),      StatusCodes.Status400BadRequest)]
     [ProducesResponseType(typeof(string), StatusCodes.Status423Locked)]
-    public async Task<IActionResult> GetRandom([FromQuery] int? sessionId,
-                                               [FromQuery] Guid tokenId)
+    public async Task<IActionResult> GetRandom([FromQuery] Guid tokenId)
     {
-        var session = sessionId.HasValue
-            ? await _sessionRepository.GetSessionAsync(sessionId.Value)
-            : await _sessionRepository.GetActualSessionAsync(tokenId);
+        var session = await _sessionRepository.GetActualSessionAsync(tokenId);
 
         if (session == null)
         {
@@ -75,7 +68,7 @@ public class QuestionController : ControllerBase
 
         if (!await _topicRepository.HasOpenTopic(session))
         {
-            await _sessionRepository.EndSessionAsync(session.Id, false);
+            await _sessionRepository.EndSessionAsync(tokenId);
             return NoContent();
         }
 
@@ -107,22 +100,18 @@ public class QuestionController : ControllerBase
     /// • <c>Cессия не найдена</c><br/>
     /// • <c>Сессия не завершена</c>
     /// </remarks>
-    /// <param name="sessionId">ID сессии (опц.).</param>
-    /// <param name="tokenId">GUID токена (обязателен, если нет sessionId).</param>
+    /// <param name="tokenId">GUID токена.</param>
     /// <param name="dateInterval">Время ответа; <c>hh:mm:ss</c>.</param>
     /// <param name="question">ID вопроса и список выбранных answerId.</param>
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(string), StatusCodes.Status400BadRequest)]
     [HttpPost("answers")]
     public async Task<IActionResult> SendAnswers(
-        [FromQuery] int? sessionId,
         [FromQuery] Guid tokenId,
         [FromQuery] TimeSpan dateInterval,
         [FromBody]  QuestionShortDto question)
     {
-        var session = sessionId.HasValue
-            ? await _sessionRepository.GetSessionAsync(sessionId.Value)
-            : await _sessionRepository.GetActualSessionAsync(tokenId);
+        var session = await _sessionRepository.GetActualSessionAsync(tokenId);
 
         if (session == null)
         {
@@ -146,6 +135,6 @@ public class QuestionController : ControllerBase
         }
 
         res = await _idccApplication.CalculateTopicWeightAsync(session);
-        return res != null ? BadRequest(res) : Ok();
+        return res != null ? BadRequest(new ResponseDto(res)) : Ok(new ResponseDto("The answer is sent"));
     }
 }

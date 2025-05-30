@@ -7,11 +7,11 @@ public interface ISessionRepository
 {
     Task<SessionResultDto> StartSessionAsync(string userId, bool isEmployee, Guid tokenId);
 
-    Task<bool> EndSessionAsync(int id, bool faster);
+    Task<StopSessionDto> EndSessionAsync(Guid tokenId);
     
     Task<IEnumerable<SessionDto>> GetSessionsForUserAsync(string userId, bool isEmployee);
 
-    Task<Session?> GetSessionAsync(int id);
+    Task<Session?> GetSessionAsync(Guid tokenId);
     
     Task<Session?> GetActualSessionAsync(Guid tokenId);
     

@@ -55,29 +55,24 @@ public class SessionRepository : ISessionRepository
         return new SessionResultDto(session.Id, session.TokenId, true, null);
     }
 
-    public async Task<bool> EndSessionAsync(int id, bool faster)
+    public async Task<StopSessionDto> EndSessionAsync(Guid tokenId)
     {
-        var session = await _context.Sessions.FindAsync(id);
+        var session = await _context.Sessions
+            .FirstOrDefaultAsync(s => s.TokenId == tokenId && s.EndTime == null);
+        
         if (session is null)
         {
-            return false;
+            return new StopSessionDto(false, "Open session was not found");
         }
         session.EndTime = DateTime.Now;
-        if (faster)
+        var userTopics = await _context.UserTopics.Where(t => t.Session.Id == session.Id && t.IsFinished == false).ToListAsync();
+        foreach (var userTopic in userTopics)
         {
-            session.Score = -1;
-        }
-        else
-        {
-            var userTopics = await _context.UserTopics.Where(t => t.Session == session && t.IsFinished == false).ToListAsync();
-            foreach (var userTopic in userTopics)
-            {
-                userTopic.IsFinished = true;
-            }
+            userTopic.IsFinished = true;
         }
         
         await _context.SaveChangesAsync();
-        return true;
+        return new StopSessionDto(true, $"{tokenId} token session completed");
     }
     
     public async Task<IEnumerable<SessionDto>> GetSessionsForUserAsync(
@@ -110,9 +105,9 @@ public class SessionRepository : ISessionRepository
     }
 
 
-    public async Task<Session?> GetSessionAsync(int id)
+    public async Task<Session?> GetSessionAsync(Guid tokenId)
     {
-        return await _context.Sessions.FindAsync(id);
+        return await _context.Sessions.SingleOrDefaultAsync(s => s.TokenId == tokenId);
     }
 
     public async Task<Session?> GetActualSessionAsync(Guid tokenId)

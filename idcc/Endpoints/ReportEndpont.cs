@@ -24,17 +24,14 @@ public static class ReportEndpont
             /// • По завершении сохраняет результат в БД и кеш не затрагивает.
             /// </para>
             /// </remarks>
-            /// <param name="sessionId">Идентификатор сессии (опц.).</param>
             /// <param name="tokenId">GUID токена (обязателен, если нет <c>sessionId</c>).</param>
             /// <param name="full">Принудительно пересоздать отчёт, даже если сессия завершена.</param>
             /// <response code="200">Объект отчёта (и base64-картинка, если есть).</response>
             /// <response code="400">Логическая ошибка.</response>  
-            async (int? sessionId, Guid tokenId, bool? full, ISessionRepository sessionRepository, IDataRepository dataRepository, IGraphGenerate graphGenerate,  IConfigRepository configRepository, IReportRepository reportRepository, IIdccReport idccReport) =>
+            async (Guid tokenId, bool? full, ISessionRepository sessionRepository, IDataRepository dataRepository, IGraphGenerate graphGenerate,  IConfigRepository configRepository, IReportRepository reportRepository, IIdccReport idccReport) =>
         {
             // ---------- 1.  Находим сессию ----------
-            Session? session = sessionId.HasValue
-                ? await sessionRepository.GetSessionAsync(sessionId.Value)
-                : await sessionRepository.GetFinishSessionAsync(tokenId);
+            Session? session = await sessionRepository.GetFinishSessionAsync(tokenId);
 
             if (session is null)
             {
