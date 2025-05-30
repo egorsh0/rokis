@@ -8,5 +8,5 @@ public interface IOrderRepository
     
     Task<OrderDto> CreateOrderAsync(string userId, string role, List<PurchaseTokensDto> items);
     
-    Task<IEnumerable<OrderListItemDto>> GetOrdersAsync(string userId);
+    Task<IEnumerable<OrderWithItemsDto>> GetOrdersAsync(string userId);
 }

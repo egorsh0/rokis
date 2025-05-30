@@ -20,7 +20,7 @@ public record PayOrderDto(int OrderId, string PaymentId);
 /// </summary>
 /// <remarks>
 /// * Заказ из нескольких позиций может включать токены разных направлений,
-///   поэтому поле <see cref="Directions"/> — коллекция строк.<br/>
+///   поэтому поле <see cref="Items"/> — коллекция направлений.<br/>
 /// * <see cref="Status"/> — бизнес-статус заказа  
 ///   (<c>Unpaid</c> — оформлен, но не оплачен; <c>Paid</c> — оплачен).<br/>
 /// * После оплаты токены с этого заказа переходят из <c>Pending</c>
@@ -31,13 +31,13 @@ public record PayOrderDto(int OrderId, string PaymentId);
 /// Дата/время оформления заказа (UTC).  
 /// Если платёж уже прошёл — обычно совпадает с <c>PaidAt</c>.
 /// </param>
-/// <param name="Directions">
+/// <param name="Items">
 /// Список направлений, содержащихся в заказе  
-/// (например <c>["QA","Dev"]</c>).  
+/// (например <c>["QA","Dev"]</c>) с информацией по токенм.  
 /// Порядок не гарантирован, дубликаты исключены.
 /// </param>
-/// <param name="Quantity">Общее количество купленных токенов.</param>
-/// <param name="Amount">
+/// <param name="TotalQuantity">Общее количество купленных токенов.</param>
+/// <param name="TotalAmount">
 /// Итоговая сумма с учётом скидки, в валюте системы (например, RUB).  
 /// Соответствует полю <c>DiscountedTotal</c> в сущности <c>Order</c>.
 /// </param>
@@ -46,10 +46,19 @@ public record PayOrderDto(int OrderId, string PaymentId);
 /// • <c>Unpaid</c> — заказ создан, ожидает оплаты;  
 /// • <c>Paid</c>   — оплачен, токены активны.
 /// </param>
-public record OrderListItemDto(
-    int              OrderId,
-    DateTime         PurchaseDate,
-    List<string>     Directions,
-    int              Quantity,
-    decimal          Amount,
-    OrderStatus      Status);
+public record OrderWithItemsDto(
+    int                     OrderId,
+    DateTime                PurchaseDate,
+    int                     TotalQuantity,
+    decimal                 TotalAmount,
+    OrderStatus             Status,
+    List<OrderDirectionQtyDto> Items);
+    
+/// <summary>Количество токенов конкретного направления в заказе.</summary>
+/// <param name="DirectionId">Уникальный идентификатор специальности.</param>
+/// <param name="DirectionName">Имя специальности.</param>
+/// <param name="Quantity">Количество токенов.</param>
+public record OrderDirectionQtyDto(
+    int    DirectionId,
+    string DirectionName,
+    int    Quantity);

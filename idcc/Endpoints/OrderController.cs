@@ -67,7 +67,7 @@ public class OrderController : ControllerBase
     /// </remarks>
     /// <response code="200">Массив заказов.</response>
     [HttpGet]
-    [ProducesResponseType(typeof(IEnumerable<OrderListItemDto>), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(IEnumerable<OrderWithItemsDto>), StatusCodes.Status200OK)]
     public async Task<IActionResult> GetOrders()
     {
         var userId = User.FindFirstValue(ClaimTypes.NameIdentifier)!;
