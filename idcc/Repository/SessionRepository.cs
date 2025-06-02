@@ -49,6 +49,7 @@ public class SessionRepository : ISessionRepository
             EmployeeUserId = isEmployee ? userId : null,
             PersonUserId   = !isEmployee ? userId : null
         };
+        token.Status = TokenStatus.Used;
         _context.Sessions.Add(session);
         await CreateSessionUserTopics(session);
         await _context.SaveChangesAsync();
@@ -107,7 +108,8 @@ public class SessionRepository : ISessionRepository
 
     public async Task<Session?> GetSessionAsync(Guid tokenId)
     {
-        return await _context.Sessions.SingleOrDefaultAsync(s => s.TokenId == tokenId);
+        var sessions = await _context.Sessions.Where(s => s.TokenId == tokenId).ToListAsync();
+        return sessions.SingleOrDefault();
     }
 
     public async Task<Session?> GetActualSessionAsync(Guid tokenId)
