@@ -40,6 +40,10 @@ public class ScoreCalculate : IScoreCalculate
     internal Func<List<double>, double, double> TopicScore { get; } =
         (scores, weight) =>
         {
+            if (!scores.Any())
+            {
+                return 0;
+            }
             var score = scores.Average();
             
             return weight * score;
