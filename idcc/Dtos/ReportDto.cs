@@ -9,8 +9,7 @@ public record ReportDto(
     DateTime EndSession,
     TimeSpan TestingTime,
     FinalScoreDto? FinalScoreDto,
-    List<FinalTopicData>? FinalTopicDatas,
-    byte[]? TopicReport);
+    List<FinalTopicData>? FinalTopicDatas);
 
 public record ReportShortDto(
     Guid    TokenId,

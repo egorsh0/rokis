@@ -26,18 +26,8 @@ public class ReportRepository : IReportRepository
         await _ctx.SaveChangesAsync();
     }
     
-    public Task<Report?> GetByTokenAsync(Guid tokenId) =>
-        _ctx.Reports
+    public async Task<Report?> GetByTokenAsync(Guid tokenId) =>
+        await _ctx.Reports
             .Include(r => r.Grade)
-            .FirstOrDefaultAsync(r => r.TokenId == tokenId);
-
-    public async Task<Report?> GetBySessionAsync(int sessionId)
-    {
-        var tokenId = await _ctx.Sessions
-            .Where(s => s.Id == sessionId)
-            .Select(s => (Guid?)s.TokenId)
-            .FirstOrDefaultAsync();
-
-        return tokenId is null ? null : await GetByTokenAsync(tokenId.Value);
-    }
+            .SingleOrDefaultAsync(r => r.TokenId == tokenId);
 }

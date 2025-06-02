@@ -43,7 +43,7 @@ public class IdccReport : IIdccReport
         _logger.LogInformation($"Финальный score для тем сгенерирован");
 
         var report = new ReportDto(session.TokenId, session.StartTime, session.EndTime!.Value,
-            session.EndTime.Value - session.StartTime, finalScoreDto, finalTopicDatas, null);
+            session.EndTime.Value - session.StartTime, finalScoreDto, finalTopicDatas);
         return report;
     }
 

@@ -1,4 +1,5 @@
-﻿using idcc.Application.Interfaces;
+﻿using System.ComponentModel.DataAnnotations;
+using idcc.Application.Interfaces;
 using idcc.Dtos;
 using idcc.Infrastructures;
 using idcc.Infrastructures.Interfaces;
@@ -28,7 +29,7 @@ public static class ReportEndpont
             /// <param name="full">Принудительно пересоздать отчёт, даже если сессия завершена.</param>
             /// <response code="200">Объект отчёта (и base64-картинка, если есть).</response>
             /// <response code="400">Логическая ошибка.</response>  
-            async (Guid tokenId, bool? full, ISessionRepository sessionRepository, IDataRepository dataRepository, IGraphGenerate graphGenerate,  IConfigRepository configRepository, IReportRepository reportRepository, IIdccReport idccReport) =>
+            async ([Required]Guid tokenId, bool? full, ISessionRepository sessionRepository, IDataRepository dataRepository, IGraphGenerate graphGenerate,  IConfigRepository configRepository, IReportRepository reportRepository, IIdccReport idccReport) =>
         {
             // ---------- 1.  Находим сессию ----------
             Session? session = await sessionRepository.GetFinishSessionAsync(tokenId);
@@ -96,28 +97,16 @@ public static class ReportEndpont
                 /// <response code="200">Короткая форма отчёта.</response>
                 /// <response code="400">Отчёт не найден / не указаны параметры.</response>
                 async (
-                int?                 sessionId,
-                Guid?                tokenId,
-                HybridCache       cache,
-                IReportRepository    reportRepository) =>
+                [Required]Guid tokenId,
+                HybridCache cache,
+                IReportRepository reportRepository) =>
         {
-            if (sessionId is null && tokenId is null)
-            {
-                return Results.BadRequest(new ResponseDto("Specify sessionId or tokenId"));
-            }
-
             // ── формируем ключ ─────────────────────────────────────
-            //  * если передан tokenId → "Report:Token:<guid>"
-            //  * если передан sessionId → "Report:Session:<id>"
-            var cacheKey = tokenId is not null
-                ? $"Report:Token:{tokenId}"
-                : $"Report:Session:{sessionId}";
+            var cacheKey = $"Report:Token:{tokenId}";
             // ── пробуем достать из кэша или создать ─────────────────
             var dto = await cache.GetOrCreateAsync<ReportShortDto?>(cacheKey, async _ =>
             {
-                var rr = tokenId is not null
-                    ? await reportRepository.GetByTokenAsync(tokenId.Value)
-                    : await reportRepository.GetBySessionAsync(sessionId!.Value);
+                var rr = await reportRepository.GetByTokenAsync(tokenId);
 
                 return rr is null ? null : new ReportShortDto(
                     rr.TokenId,

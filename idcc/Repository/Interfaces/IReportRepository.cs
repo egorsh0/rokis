@@ -8,5 +8,4 @@ public interface IReportRepository
     Task SaveReportAsync(Guid tokenId, double score, int gradeId, byte[]? image);
     
     Task<Report?> GetByTokenAsync(Guid tokenId);
-    Task<Report?> GetBySessionAsync(int sessionId);
 }
