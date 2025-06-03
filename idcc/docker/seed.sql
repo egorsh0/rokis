@@ -774,6 +774,9 @@ INSERT INTO "Persents" ("Id", "Code", "Description", "Value") VALUES (5, 'GraphS
 
 INSERT INTO "Directions" ("Id", "Name", "Code", "Description", "BasePrice") VALUES (1, 'QA', 'QA', 'Quality assurance', 1000);
 INSERT INTO "Directions" ("Id", "Name", "Code", "Description", "BasePrice") VALUES (2, 'SA', 'SA', 'System analises', 2000);
+INSERT INTO "Directions" ("Id", "Name", "Code", "Description", "BasePrice") VALUES (3, 'DevOps', 'DevOps', 'Development and Operations', 2000);
+INSERT INTO "Directions" ("Id", "Name", "Code", "Description", "BasePrice") VALUES (4, 'ML', 'ML', 'ML Engineer', 2000);
+
 
 /*  
 Конфигурация GradeLevels 
@@ -846,3 +849,22 @@ INSERT INTO "Topics" ("Name", "Description", "DirectionId") VALUES ('Модел�
 INSERT INTO "Topics" ("Name", "Description", "DirectionId") VALUES ('Технические аспекты и интеграции', 'Технические аспекты и интеграции', 2);
 INSERT INTO "Topics" ("Name", "Description", "DirectionId") VALUES ('Методологии разработки и участие в процессах', 'Методологии разработки и участие в процессах', 2);
 INSERT INTO "Topics" ("Name", "Description", "DirectionId") VALUES ('Работа со стейкхолдерами', 'Работа со стейкхолдерами', 2);
+
+
+INSERT INTO "Topics" ("Name", "Description", "DirectionId") VALUES ('CI/CD и Delivery-стратегии','CI/CD и Delivery-стратегии',3);
+INSERT INTO "Topics" ("Name", "Description", "DirectionId") VALUES ('Контейнеризация (Docker, Compose)','Контейнеризация (Docker, Compose)',3);
+INSERT INTO "Topics" ("Name", "Description", "DirectionId") VALUES ('Kubernetes и оркестрация','Kubernetes и оркестрация',3);
+INSERT INTO "Topics" ("Name", "Description", "DirectionId") VALUES ('IaC (Terraform, Ansible, Pulumi)','IaC (Terraform, Ansible, Pulumi)',3);
+INSERT INTO "Topics" ("Name", "Description", "DirectionId") VALUES ('Linux, Shell и процессы','Linux, Shell и процессы',3);
+INSERT INTO "Topics" ("Name", "Description", "DirectionId") VALUES ('Мониторинг, алерты и Observability','Мониторинг, алерты и Observability',3);
+INSERT INTO "Topics" ("Name", "Description", "DirectionId") VALUES ('Логирование и трейсинг (EFK, Loki, OTel)','Логирование и трейсинг (EFK, Loki, OTel)',3);
+INSERT INTO "Topics" ("Name", "Description", "DirectionId") VALUES ('Security & IAM (Vault, TLS, SSH)','Security & IAM (Vault, TLS, SSH)',3);
+INSERT INTO "Topics" ("Name", "Description", "DirectionId") VALUES ('Cloud-инфраструктура (AWS, GCP, Azure)','Cloud-инфраструктура (AWS, GCP, Azure)',3);
+
+
+INSERT INTO "Topics" ("Name", "Description", "DirectionId") VALUES ('Базовые алгоритмы и задачи машинного обучения','Базовые алгоритмы и задачи машинного обучения',4);
+INSERT INTO "Topics" ("Name", "Description", "DirectionId") VALUES ('Метрики и оценка моделей','Метрики и оценка моделей',4);
+INSERT INTO "Topics" ("Name", "Description", "DirectionId") VALUES ('Работа с данными и препроцессинг','Работа с данными и препроцессинг',4);
+INSERT INTO "Topics" ("Name", "Description", "DirectionId") VALUES ('Оверфиттинг, андерфиттинг и качество модели','Оверфиттинг, андерфиттинг и качество модели',4);
+INSERT INTO "Topics" ("Name", "Description", "DirectionId") VALUES ('Базовые принципы продакшена моделей (MLOps intro)','Базовые принципы продакшена моделей (MLOps intro)',4);
+INSERT INTO "Topics" ("Name", "Description", "DirectionId") VALUES ('Основы explainability и интерпретации','Основы explainability и интерпретации',4);
