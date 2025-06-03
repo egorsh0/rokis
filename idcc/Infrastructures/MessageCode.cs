@@ -77,6 +77,8 @@ public enum MessageCode
     COMPANY_HAS_NOT_EMPLOYEE,
     [Description("Token successfully bound")]
     BIND_IS_FINISHED,
+    [Description("Token successfully unbound")]
+    UNBIND_IS_FINISHED,
     
     [Description("Passwords do not match")]
     PASSWORD_DO_NOT_MATCH,

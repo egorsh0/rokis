@@ -133,6 +133,59 @@ public class TokenRepository : ITokenRepository
         await _idccContext.SaveChangesAsync();
         return MessageCode.BIND_IS_FINISHED;
     }
+    
+    public async Task<MessageCode> UnBindTokenToEmployeeAsync(
+        Guid   tokenId,
+        string employeeEmail,
+        string companyUserId)
+    {
+        // 1. ищем пользователя‑сотрудника по email
+        var empUser = await _userManager.FindByEmailAsync(employeeEmail);
+        if (empUser is null)
+        {
+            return MessageCode.EMPLOYEE_NOT_FOUND;
+        }
+
+        // 2. убеждаемся, что пользователь в роли "Employee"
+        if (!await _userManager.IsInRoleAsync(empUser, "Employee"))
+        {
+            return MessageCode.ROLE_NOT_CORRECT;
+        }
+        
+        // 3. проверяем принадлежность сотрудника компании
+        var empProfile = await _idccContext.EmployeeProfiles
+            .FirstOrDefaultAsync(ep =>
+                ep.UserId == empUser.Id &&
+                ep.Company != null &&
+                ep.Company.UserId == companyUserId);
+        
+        if (empProfile is null)
+        {
+            // сотрудник не числится в этой компании
+            return MessageCode.COMPANY_HAS_NOT_EMPLOYEE;
+        }
+        
+        // 4. токен принадлежит этой компании, привязан к сотруднику и ещё не использован
+        var token = await _idccContext.Tokens
+            .Include(t => t.Order)
+            .FirstOrDefaultAsync(t =>
+                t.Id == tokenId &&
+                t.Status == TokenStatus.Bound &&
+                t.EmployeeUserId == empUser.Id &&
+                t.Order!.UserId == companyUserId);
+
+        if (token is null)
+        {
+            return MessageCode.TOKEN_NOT_FOUND;
+        }
+        
+        // 5. Отвязываем токен
+        token.EmployeeUserId = null;
+        token.Status = TokenStatus.Unused;
+
+        await _idccContext.SaveChangesAsync();
+        return MessageCode.UNBIND_IS_FINISHED;
+    }
 
     public async Task<IEnumerable<TokenDto>> GetTokensForEmployeeAsync(string employeeUserId)
     {

@@ -59,4 +59,32 @@ public class CompanyTokensController : ControllerBase
         }
         return Ok(new ResponseDto(code, code.GetDescription()));
     }
+    
+    // ═══════════════════════════════════════════════════
+    //  POST /unbind
+    // ═══════════════════════════════════════════════════
+    /// <summary>Отвязывает неиспользованный токен от сотрудника.</summary>
+    /// <remarks>
+    /// <para>
+    /// Токен должен быть в статусе <c>Bound</c>, сотрудник — существовать и
+    /// принадлежать текущей компании. После отвязывания статус токена становится <c>Unused</c>.
+    /// </para>
+    /// </remarks>
+    /// <param name="dto">Id токена и email сотрудника.</param>
+    /// <response code="200">Успешно отвязано.</response>
+    /// <response code="400">Токен не найден / сотрудник чужой / уже привязан.</response>
+    [HttpPost("unbind")]
+    [Consumes("application/json")]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(string), StatusCodes.Status400BadRequest)]
+    public async Task<IActionResult> UnBind([FromBody] BindTokenDto dto)
+    {
+        var userId = User.FindFirstValue(ClaimTypes.NameIdentifier)!;
+        var code = await _tokenRepository.UnBindTokenToEmployeeAsync(dto.TokenId, dto.EmployeeEmail, userId);
+        if (code != MessageCode.UNBIND_IS_FINISHED)
+        {
+            return BadRequest(new ResponseDto(code, code.GetDescription()));
+        }
+        return Ok(new ResponseDto(code, code.GetDescription()));
+    }
 }
