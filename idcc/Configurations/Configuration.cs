@@ -187,6 +187,11 @@ public static class Configuration
 
         builder.Services.AddScoped<IReportRepository, ReportRepository>();
         builder.Services.AddScoped<IIdccApplication, IdccApplication>();
+        
+        // Сервис для расчета метрик
+        builder.Services.AddScoped<IMetricService, MetricService>();
+        
+        // Расчет отчета
         builder.Services.AddScoped<IIdccReport, IdccReport>();
 
         // Фоновый сервис проверки открытых сессий.

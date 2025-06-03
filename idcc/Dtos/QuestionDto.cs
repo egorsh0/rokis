@@ -30,3 +30,5 @@ public record QuestionDataDto
     public Question Question;
     public List<Answer> Answers { get; set; } = new();
 }
+
+public record QuestionResultDto(double Difficulty, bool IsCorrect, double TimeSeconds);

@@ -4,6 +4,7 @@ using idcc.Infrastructures;
 using idcc.Infrastructures.Interfaces;
 using idcc.Models;
 using idcc.Repository.Interfaces;
+using idcc.Service;
 
 namespace idcc.Application;
 
@@ -13,6 +14,7 @@ public class IdccReport : IIdccReport
     private IUserTopicRepository _userTopicRepository;
     private IUserAnswerRepository _userAnswerRepository;
     private IScoreCalculate _scoreCalculate;
+    private IMetricService _metricService;
 
     private ILogger<IdccReport> _logger;
 
@@ -21,12 +23,14 @@ public class IdccReport : IIdccReport
         IUserTopicRepository userTopicRepository,
         IUserAnswerRepository userAnswerRepository,
         IScoreCalculate scoreCalculate,
+        IMetricService metricService,
         ILogger<IdccReport> logger)
     {
         _dataRepository = dataRepository;
         _userTopicRepository = userTopicRepository;
         _userAnswerRepository = userAnswerRepository;
         _scoreCalculate = scoreCalculate;
+        _metricService = metricService;
         _logger = logger;
     }
     
@@ -41,9 +45,13 @@ public class IdccReport : IIdccReport
         _logger.LogInformation("Генерация score для тем");
         var finalTopicDatas = await CalculateFinalTopicDataAsync(session);
         _logger.LogInformation($"Финальный score для тем сгенерирован");
-
+        
+        var questions = await _userAnswerRepository.GetQuestionResults(session);
+        var cognitiveStabilityIndex = _metricService.CalculateCognitiveStability(questions);
+        var thinkingPattern = _metricService.DetectThinkingPattern(questions, cognitiveStabilityIndex);
+        
         var report = new ReportDto(session.TokenId, session.StartTime, session.EndTime!.Value,
-            session.EndTime.Value - session.StartTime, finalScoreDto, finalTopicDatas);
+            session.EndTime.Value - session.StartTime, cognitiveStabilityIndex, thinkingPattern, finalScoreDto, finalTopicDatas);
         return report;
     }
 

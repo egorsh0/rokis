@@ -1,4 +1,5 @@
 ﻿using idcc.Context;
+using idcc.Dtos;
 using idcc.Models;
 using idcc.Repository.Interfaces;
 using Microsoft.EntityFrameworkCore;
@@ -32,6 +33,14 @@ public class UserAnswerRepository : IUserAnswerRepository
     public async Task<List<UserAnswer>> GetAllUserAnswers(Session session)
     {
         return await _context.UserAnswers.Where(a => a.Session == session).ToListAsync();
+    }
+    
+    public async Task<List<QuestionResultDto>> GetQuestionResults(Session session)
+    {
+        var userAnswers = await _context.UserAnswers.Where(a => a.Session == session)
+            .Include(userAnswer => userAnswer.Question).ToListAsync();
+
+        return userAnswers.Select(userAnswer => new QuestionResultDto(userAnswer.Question.Weight, userAnswer.Score > 0, userAnswer.TimeSpent)).ToList();
     }
 
     public async Task<bool> CanRaiseAsync(Session session, int count)

@@ -1,4 +1,5 @@
-﻿using idcc.Models;
+﻿using idcc.Dtos;
+using idcc.Models;
 
 namespace idcc.Repository.Interfaces;
 
@@ -8,6 +9,7 @@ public interface IUserAnswerRepository
         double score, DateTime answerTime);
     
     Task<List<UserAnswer>> GetAllUserAnswers(Session session);
+    Task<List<QuestionResultDto>> GetQuestionResults(Session session);
 
     Task<bool> CanRaiseAsync(Session session, int count);
 }

@@ -6,6 +6,7 @@ using idcc.Infrastructures;
 using idcc.Infrastructures.Interfaces;
 using idcc.Models;
 using idcc.Repository.Interfaces;
+using idcc.Service;
 using Microsoft.Extensions.Caching.Hybrid;
 
 namespace idcc.Endpoints;
@@ -102,19 +103,40 @@ public static class ReportEndpont
                 async (
                 [Required]Guid tokenId,
                 HybridCache cache,
+                ISessionRepository sessionRepository, 
+                IUserAnswerRepository userAnswerRepository,
+                IMetricService metricService,
                 IReportRepository reportRepository) =>
         {
+            // ---------- 1.  Находим сессию ----------
+            var session = await sessionRepository.GetFinishSessionAsync(tokenId);
+
+            if (session is null)
+            {
+                return Results.BadRequest(new ResponseDto(MessageCode.SESSION_IS_NOT_EXIST, MessageCode.SESSION_IS_NOT_EXIST.GetDescription()));
+            }
+
+            if (session.EndTime is not null && session.Score > 0)
+            {
+                return Results.BadRequest(new ResponseDto(MessageCode.SESSION_IS_FINISHED, MessageCode.SESSION_IS_FINISHED.GetDescription()));
+            }
+            
             // ── формируем ключ ─────────────────────────────────────
             var cacheKey = $"Report:Token:{tokenId}";
             // ── пробуем достать из кэша или создать ─────────────────
             var dto = await cache.GetOrCreateAsync<ReportShortDto?>(cacheKey, async _ =>
             {
+                var questions = await userAnswerRepository.GetQuestionResults(session);
+                var cognitiveStabilityIndex = metricService.CalculateCognitiveStability(questions);
+                var thinkingPattern = metricService.DetectThinkingPattern(questions, cognitiveStabilityIndex);
                 var rr = await reportRepository.GetByTokenAsync(tokenId);
 
                 return rr is null ? null : new ReportShortDto(
                     rr.TokenId,
                     rr.Score,
                     rr.Grade.Name,
+                    cognitiveStabilityIndex,
+                    thinkingPattern,
                     rr.Image is null ? null : Convert.ToBase64String(rr.Image));
             });
 

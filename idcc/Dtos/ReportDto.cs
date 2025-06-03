@@ -1,4 +1,6 @@
-﻿namespace idcc.Dtos;
+﻿using idcc.Infrastructures;
+
+namespace idcc.Dtos;
 
 /// <summary>
 /// Итоговый отчет.
@@ -8,6 +10,8 @@ public record ReportDto(
     DateTime StartSession,
     DateTime EndSession,
     TimeSpan TestingTime,
+    double CognitiveStabilityIndex,
+    ThinkingPattern ThinkingPattern,
     FinalScoreDto? FinalScoreDto,
     List<FinalTopicData>? FinalTopicDatas);
 
@@ -15,6 +19,8 @@ public record ReportShortDto(
     Guid    TokenId,
     double  Score,
     string  Grade,
+    double CognitiveStabilityIndex,
+    ThinkingPattern ThinkingPattern,
     string? ImageBase64); 
 
 /// <summary>
