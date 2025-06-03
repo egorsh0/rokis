@@ -1,5 +1,6 @@
 ﻿using idcc.Application.Interfaces;
 using idcc.Dtos;
+using idcc.Extensions;
 using idcc.Infrastructures;
 using idcc.Repository.Interfaces;
 using Microsoft.AspNetCore.Authorization;
@@ -58,12 +59,12 @@ public class QuestionController : ControllerBase
 
         if (session == null)
         {
-            return BadRequest(new ResponseDto(ErrorMessages.SESSION_IS_NOT_EXIST));
+            return BadRequest(new ResponseDto(MessageCode.SESSION_IS_NOT_EXIST, MessageCode.SESSION_IS_NOT_EXIST.GetDescription()));
         }
 
         if (session.EndTime != null)
         {
-            return BadRequest(new ResponseDto(ErrorMessages.SESSION_IS_FINISHED));
+            return BadRequest(new ResponseDto(MessageCode.SESSION_IS_FINISHED, MessageCode.SESSION_IS_FINISHED.GetDescription()));
         }
 
         if (!await _topicRepository.HasOpenTopic(session))
@@ -75,7 +76,7 @@ public class QuestionController : ControllerBase
         var userTopic = await _topicRepository.GetRandomTopicAsync(session);
         if (userTopic == null)
         {
-            return BadRequest(new ResponseDto(ErrorMessages.GET_RANDOM_TOPIC));
+            return BadRequest(new ResponseDto(MessageCode.GET_RANDOM_TOPIC, MessageCode.GET_RANDOM_TOPIC.GetDescription()));
         }
 
         var question = await _questionRepository.GetQuestionAsync(userTopic);
@@ -115,12 +116,12 @@ public class QuestionController : ControllerBase
 
         if (session == null)
         {
-            return BadRequest(new ResponseDto(ErrorMessages.SESSION_IS_NOT_EXIST));
+            return BadRequest(new ResponseDto(MessageCode.SESSION_IS_NOT_EXIST, MessageCode.SESSION_IS_NOT_EXIST.GetDescription()));
         }
 
         if (session.EndTime != null)
         {
-            return BadRequest(new ResponseDto(ErrorMessages.SESSION_IS_FINISHED));
+            return BadRequest(new ResponseDto(MessageCode.SESSION_IS_FINISHED, MessageCode.SESSION_IS_FINISHED.GetDescription()));
         }
 
         var res = await _idccApplication.CalculateScoreAsync(
@@ -129,12 +130,12 @@ public class QuestionController : ControllerBase
                       question.Id,
                       question.Answers.Select(a => a.Id).ToList());
 
-        if (res != null)
+        if (res.error != null)
         {
-            return BadRequest(new ResponseDto(res));
+            return BadRequest(new ResponseDto(res.code, res.error));
         }
 
         res = await _idccApplication.CalculateTopicWeightAsync(session);
-        return res != null ? BadRequest(new ResponseDto(res)) : Ok(new ResponseDto("The answer is sent"));
+        return res.error != null ? BadRequest(new ResponseDto(res.code, res.error)) : Ok(new ResponseDto(res.code,"The answer is sent"));
     }
 }

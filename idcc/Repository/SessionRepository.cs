@@ -1,5 +1,6 @@
 ﻿using idcc.Context;
 using idcc.Dtos;
+using idcc.Extensions;
 using idcc.Infrastructures;
 using idcc.Models;
 using idcc.Repository.Interfaces;
@@ -24,7 +25,7 @@ public class SessionRepository : ISessionRepository
 
         if (token is null || token.Status != TokenStatus.Bound)
         {
-            return new SessionResultDto(null, tokenId, false, "TOKEN_NOT_BOUND");
+            return new SessionResultDto(null, tokenId, false, MessageCode.TOKEN_NOT_BOUND, MessageCode.TOKEN_NOT_BOUND.GetDescription());
         }
 
         switch (isEmployee)
@@ -32,7 +33,7 @@ public class SessionRepository : ISessionRepository
             // Проверим, что текущий userId совпадает с тем, кому он привязан
             case true when token.EmployeeUserId != userId:
             case false when token.PersonUserId != userId:
-                return new SessionResultDto(null, tokenId, false, "Forbidden");
+                return new SessionResultDto(null, tokenId, false, MessageCode.TOKEN_IS_FORBIDDEN, MessageCode.TOKEN_IS_FORBIDDEN.GetDescription());
         }
         
         // Проверяем, есть ли уже активная сессия на токен
@@ -40,7 +41,7 @@ public class SessionRepository : ISessionRepository
             .FirstOrDefaultAsync(s => s.TokenId == tokenId && s.EndTime == null);
         if (existing != null)
         {
-            return new SessionResultDto(existing.Id, existing.TokenId, true, null);
+            return new SessionResultDto(existing.Id, existing.TokenId, true, MessageCode.SESSION_HAS_ACTIVE,null);
         } 
 
         var session = new Session {
@@ -53,7 +54,7 @@ public class SessionRepository : ISessionRepository
         _context.Sessions.Add(session);
         await CreateSessionUserTopics(session);
         await _context.SaveChangesAsync();
-        return new SessionResultDto(session.Id, session.TokenId, true, null);
+        return new SessionResultDto(session.Id, session.TokenId, true, MessageCode.SESSION_IS_STARTED, null);
     }
 
     public async Task<StopSessionDto> EndSessionAsync(Guid tokenId)
@@ -63,7 +64,7 @@ public class SessionRepository : ISessionRepository
         
         if (session is null)
         {
-            return new StopSessionDto(false, "Open session was not found");
+            return new StopSessionDto(false, MessageCode.SESSION_IS_NOT_EXIST, MessageCode.SESSION_IS_NOT_EXIST.GetDescription());
         }
         session.EndTime = DateTime.Now;
         var userTopics = await _context.UserTopics.Where(t => t.Session.Id == session.Id && t.IsFinished == false).ToListAsync();
@@ -73,7 +74,7 @@ public class SessionRepository : ISessionRepository
         }
         
         await _context.SaveChangesAsync();
-        return new StopSessionDto(true, $"{tokenId} token session completed");
+        return new StopSessionDto(true, MessageCode.SESSION_IS_FINISHED, $"{tokenId} token session completed");
     }
     
     public async Task<IEnumerable<SessionDto>> GetSessionsForUserAsync(

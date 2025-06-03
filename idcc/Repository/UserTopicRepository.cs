@@ -16,7 +16,7 @@ public class UserTopicRepository : IUserTopicRepository
 
     public async Task<bool> HasOpenTopic(Session session)
     {
-        return await _context.UserTopics.AnyAsync(_ => _.IsFinished == false && _.Session == session);
+        return await _context.UserTopics.AnyAsync(t => t.IsFinished == false && t.Session == session);
     }
 
     public async Task<UserTopic?> GetRandomTopicAsync(Session session)
@@ -28,7 +28,7 @@ public class UserTopicRepository : IUserTopicRepository
             {
                 return userTopics.First();
             }
-            var userTopic = userTopics.Where(t => t.WasPrevious == false).MinBy(o => Guid.NewGuid());
+            var userTopic = userTopics.Where(t => t.WasPrevious == false).MinBy(_ => Guid.NewGuid());
             return userTopic;
         }
 
@@ -37,25 +37,25 @@ public class UserTopicRepository : IUserTopicRepository
     
     public async Task<UserTopic?> GetActualTopicAsync(Session session)
     {
-        var userTopic = await _context.UserTopics.Where(_ => _.IsFinished == false && _.Actual == true && _.Session == session).FirstOrDefaultAsync();
+        var userTopic = await _context.UserTopics.Where(t => t.IsFinished == false && t.Actual == true && t.Session == session).FirstOrDefaultAsync();
         return userTopic;
     }
 
     public async Task<UserTopic?> GetTopicAsync(int id)
     {
-        var userTopic = await _context.UserTopics.Where(_ => _.Id == id).FirstOrDefaultAsync();
+        var userTopic = await _context.UserTopics.Where(t => t.Id == id).FirstOrDefaultAsync();
         return userTopic;
     }
 
     public async Task<List<UserTopic>> GetAllTopicsAsync(Session session)
     {
-        var userTopics = await _context.UserTopics.Where(_ => _.Session == session).ToListAsync();
+        var userTopics = await _context.UserTopics.Where(t => t.Session == session).ToListAsync();
         return userTopics;
     }
 
     public async Task UpdateTopicInfoAsync(int id, bool actual, bool previous, Grade? grade, double? weight = null)
     {
-        var userTopic = await _context.UserTopics.Where(_ => _.Id == id).FirstOrDefaultAsync();
+        var userTopic = await _context.UserTopics.Where(t => t.Id == id).FirstOrDefaultAsync();
         if (userTopic is not null)
         {
             userTopic.Actual = actual;
@@ -75,7 +75,7 @@ public class UserTopicRepository : IUserTopicRepository
 
     public async Task ReduceTopicQuestionCountAsync(int id)
     {
-        var userTopic = await _context.UserTopics.Where(_ => _.Id == id).FirstOrDefaultAsync();
+        var userTopic = await _context.UserTopics.Where(t => t.Id == id).FirstOrDefaultAsync();
         if (userTopic is not null)
         {
             var count = userTopic.Count;
@@ -86,7 +86,7 @@ public class UserTopicRepository : IUserTopicRepository
 
     public async Task RefreshActualTopicInfoAsync(int id, Session session)
     {
-        var userTopics = await _context.UserTopics.Where(_ => _.Session == session).ToListAsync();
+        var userTopics = await _context.UserTopics.Where(t => t.Session == session).ToListAsync();
         foreach (var userTopic in userTopics)
         {
             if (userTopic.Id == id)
@@ -106,7 +106,7 @@ public class UserTopicRepository : IUserTopicRepository
 
     public async Task CloseTopicAsync(int id)
     {
-        var userTopic = await _context.UserTopics.Where(_ => _.Id == id).FirstOrDefaultAsync();
+        var userTopic = await _context.UserTopics.Where(t => t.Id == id).FirstOrDefaultAsync();
         if (userTopic is not null)
         {
             userTopic.IsFinished = true;
@@ -116,15 +116,15 @@ public class UserTopicRepository : IUserTopicRepository
 
     public async Task<int?> CountQuestionAsync(int id, double max)
     {
-        var userTopic = await _context.UserTopics.Where(_ => _.Id == id).FirstOrDefaultAsync();
+        var userTopic = await _context.UserTopics.Where(t => t.Id == id).FirstOrDefaultAsync();
         if (userTopic is null)
         {
             return null;
         }
 
         var actualWeight = userTopic.Weight;
-        var count = await _context.Questions.CountAsync(_ =>
-            _.Topic == userTopic.Topic && _.Weight > actualWeight && _.Weight < max);
+        var count = await _context.Questions.CountAsync(q =>
+            q.Topic == userTopic.Topic && q.Weight > actualWeight && q.Weight < max);
         return count;
     }
 }

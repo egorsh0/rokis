@@ -2,6 +2,8 @@
 using System.Security.Claims;
 using System.Text;
 using idcc.Dtos;
+using idcc.Extensions;
+using idcc.Infrastructures;
 using idcc.Models;
 using idcc.Repository.Interfaces;
 using idcc.Service;
@@ -64,15 +66,15 @@ public class RegisterController : ControllerBase
             var result = await _registerRepository.RegisterCompanyAsync(dto);
             if (!result.Succeeded)
             {
-                return Conflict(new { result.Errors });
+                return Conflict(new ResponseDto(result.MessageCode, string.Join(Environment.NewLine, result.Errors)));
             }
             _logger.LogInformation("Registered company userId={UserId}, INN={INN}", result.UserId, dto.INN);
-            return Ok(new ResponseDto("Company registered successfully"));
+            return Ok(new ResponseDto(result.MessageCode, "Company registered successfully"));
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error registering company");
-            return StatusCode(500, new ResponseDto("Internal server error"));
+            return StatusCode(500, new ResponseDto(MessageCode.InternalServerError,"Internal server error"));
         }
     }
 
@@ -98,15 +100,15 @@ public class RegisterController : ControllerBase
             var result = await _registerRepository.RegisterEmployeeAsync(dto);
             if (!result.Succeeded)
             {
-                return Conflict(new { result.Errors });
+                return Conflict(new ResponseDto(result.MessageCode, string.Join(Environment.NewLine, result.Errors)));
             }
             _logger.LogInformation("Registered employee userId={UserId}", result.UserId);
-            return Ok(new ResponseDto("Employee registered successfully"));
+            return Ok(new ResponseDto(result.MessageCode,"Employee registered successfully"));
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error registering employee");
-            return StatusCode(500, new ResponseDto("Internal server error"));
+            return StatusCode(500, new ResponseDto(MessageCode.InternalServerError,"Internal server error"));
         }
     }
 
@@ -130,15 +132,15 @@ public class RegisterController : ControllerBase
             var result = await _registerRepository.RegisterPersonAsync(dto);
             if (!result.Succeeded)
             {
-                return Conflict(new { result.Errors });
+                return Conflict(new ResponseDto(result.MessageCode, string.Join(Environment.NewLine, result.Errors)));
             }
             _logger.LogInformation("Registered person userId={UserId}", result.UserId);
-            return Ok(new ResponseDto("Person registered successfully"));
+            return Ok(new ResponseDto(result.MessageCode,"Person registered successfully"));
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error registering person");
-            return StatusCode(500, new ResponseDto("Internal server error"));
+            return StatusCode(500, new ResponseDto(MessageCode.InternalServerError,"Internal server error"));
         }
     }
 
@@ -156,17 +158,17 @@ public class RegisterController : ControllerBase
         try
         {
             var user = await _registerRepository.LoginAsync(dto);
-            if (user == null)
+            if (user.applicationUser == null)
             {
-                return Unauthorized(new ResponseDto("Invalid credentials"));
+                return Unauthorized(new ResponseDto(user.code,"Invalid credentials"));
             }
-            var token = await GenerateJwtTokenAsync(user);
+            var token = await GenerateJwtTokenAsync(user.applicationUser);
             return Ok(token);
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error login employee");
-            return StatusCode(500, new ResponseDto("Internal server error"));
+            return StatusCode(500, new ResponseDto(MessageCode.InternalServerError,"Internal server error"));
         }
     }
     
@@ -188,7 +190,7 @@ public class RegisterController : ControllerBase
             var user = await _registerRepository.FindUserAsync(userId);
             if (user == null)
             {
-                return Unauthorized(new ResponseDto("Invalid credentials"));
+                return Unauthorized(new ResponseDto(MessageCode.USER_NOT_FOUND, "Invalid credentials"));
             }
             var token = await GenerateJwtTokenAsync(user);
             return Ok(token);
@@ -196,7 +198,7 @@ public class RegisterController : ControllerBase
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error login employee");
-            return StatusCode(500, new ResponseDto("Internal server error"));
+            return StatusCode(500, new ResponseDto(MessageCode.InternalServerError,"Internal server error"));
         }
     }
     
@@ -212,7 +214,7 @@ public class RegisterController : ControllerBase
         var user = await _userManager.FindByEmailAsync(dto.Email);
         if (user is null)
         {
-            return NotFound("User not found");
+            return NotFound(new ResponseDto(MessageCode.USER_NOT_FOUND, MessageCode.USER_NOT_FOUND.GetDescription()));
         }
 
         var token = await _userManager.GeneratePasswordResetTokenAsync(user);
@@ -224,13 +226,13 @@ public class RegisterController : ControllerBase
         var template = await configRepository.GetMailingAsync("ResetPassword");
         if (template is null)
         {
-            return BadRequest(new ResponseDto("Mailing template ResetPassword disabled or missing"));
+            return BadRequest(new ResponseDto(MessageCode.MAILING_TEMPLATE_IS_NULL,"Mailing template ResetPassword disabled or missing"));
         }
         
         var body = template.Body.Replace("{link}", link, StringComparison.InvariantCulture);
         
         await emailService.SendEmailAsync(user.Email!, template.Subject, body);
-        return Ok(new ResponseDto("Password reset email sent"));
+        return Ok(new ResponseDto(MessageCode.EMAIL_IS_SEND, "Password reset email sent"));
     }
     
     /// <summary>Задать новый пароль по полученной ссылке.</summary>
@@ -241,21 +243,21 @@ public class RegisterController : ControllerBase
     {
         if (dto.NewPassword != dto.ConfirmPassword)
         {
-            return BadRequest(new ResponseDto("Passwords do not match"));
+            return BadRequest(new ResponseDto(MessageCode.PASSWORD_DO_NOT_MATCH, "Passwords do not match"));
         }
 
         var user = await _userManager.FindByIdAsync(dto.UserId);
         if (user is null)
         {
-            return BadRequest(new ResponseDto("Invalid user"));
+            return BadRequest(new ResponseDto(MessageCode.USER_NOT_FOUND, "Invalid user"));
         }
 
         var decoded = Encoding.UTF8.GetString(WebEncoders.Base64UrlDecode(dto.Token));
         var result  = await _userManager.ResetPasswordAsync(user, decoded, dto.NewPassword);
 
         return result.Succeeded
-            ? Ok(new ResponseDto("Password reset successfully"))
-            : BadRequest(new ResponseDto(string.Join("; ", result.Errors.Select(e => e.Description))));
+            ? Ok(new ResponseDto(MessageCode.PASSWORD_RESET_SUCCESSFUL,MessageCode.PASSWORD_RESET_SUCCESSFUL.GetDescription()))
+            : BadRequest(new ResponseDto(MessageCode.PASSWORD_RESET_FAILED, string.Join(Environment.NewLine, result.Errors.Select(e => e.Description))));
     }
     
     /// <summary>Текущий авторизованный пользователь.</summary>

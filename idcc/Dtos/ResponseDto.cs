@@ -1,3 +1,5 @@
-﻿namespace idcc.Dtos;
+﻿using idcc.Infrastructures;
 
-public record ResponseDto(string Message);
+namespace idcc.Dtos;
+
+public record ResponseDto(MessageCode Code, string Message);

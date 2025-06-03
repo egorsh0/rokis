@@ -1,5 +1,7 @@
 ﻿using idcc.Context;
 using idcc.Dtos;
+using idcc.Extensions;
+using idcc.Infrastructures;
 using idcc.Models;
 using idcc.Models.Profile;
 using idcc.Repository.Interfaces;
@@ -26,7 +28,7 @@ public class EmployeeRepository : IEmployeeRepository
     
     public async Task<UpdateResult> UpdateEmployeeAsync(string userId, UpdateEmployeeDto dto)
     {
-        var errors = new List<string>();
+        var errors = new List<(MessageCode code, string message)>();
         
         // ── 1.  Профиль сотрудника ─────────────────────────────
         var profile = await _idccContext.EmployeeProfiles
@@ -34,14 +36,14 @@ public class EmployeeRepository : IEmployeeRepository
 
         if (profile is null)
         {
-            return new UpdateResult(false, ["EMPLOYEE_NOT_FOUND"]);
+            return new UpdateResult(false, [(MessageCode.EMPLOYEE_NOT_FOUND, MessageCode.EMPLOYEE_NOT_FOUND.GetDescription())]);
         }
         
         // ── 2.  Пользователь Identity ──────────────────────────
         var user = await _userManager.FindByIdAsync(userId);
         if (user is null)
         {
-            return new UpdateResult(false, ["EMPLOYEE_NOT_FOUND"]);
+            return new UpdateResult(false, [(MessageCode.EMPLOYEE_NOT_FOUND, MessageCode.EMPLOYEE_NOT_FOUND.GetDescription())]);
         }
         
         // ── 3.  Проверка email, если он меняется ───────────────
@@ -51,7 +53,7 @@ public class EmployeeRepository : IEmployeeRepository
             var existing = await _userManager.FindByEmailAsync(dto.Email);
             if (existing is not null && existing.Id != userId)
             {
-                errors.Add("EMAIL_ALREADY_EXISTS");
+                errors.Add((MessageCode.EMAIL_ALREADY_EXISTS, MessageCode.EMAIL_ALREADY_EXISTS.GetDescription()));
             }
         }
 
@@ -84,7 +86,7 @@ public class EmployeeRepository : IEmployeeRepository
             var idRes = await _userManager.UpdateAsync(user);
             if (!idRes.Succeeded)
             {
-                errors.AddRange(idRes.Errors.Select(e => e.Description));
+                errors.Add((MessageCode.UPDATE_HAS_ERRORS, string.Join(Environment.NewLine, idRes.Errors.Select(e => e.Description))));
                 return new UpdateResult(false, errors);
             }
             changed = true;
@@ -92,7 +94,7 @@ public class EmployeeRepository : IEmployeeRepository
 
         if (!changed)
         {
-            return new UpdateResult(false, ["NOTHING_TO_UPDATE"]);
+            return new UpdateResult(false, [(MessageCode.NOTHING_TO_UPDATE, MessageCode.NOTHING_TO_UPDATE.GetDescription())]);
         }
 
         await _idccContext.SaveChangesAsync();

@@ -1,5 +1,7 @@
 ﻿using System.Security.Claims;
 using idcc.Dtos;
+using idcc.Extensions;
+using idcc.Infrastructures;
 using idcc.Repository.Interfaces;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -50,11 +52,11 @@ public class CompanyTokensController : ControllerBase
     public async Task<IActionResult> Bind([FromBody] BindTokenDto dto)
     {
         var userId = User.FindFirstValue(ClaimTypes.NameIdentifier)!;
-        var ok = await _tokenRepository.BindTokenToEmployeeAsync(dto.TokenId, dto.EmployeeEmail, userId);
-        if (!ok)
+        var code = await _tokenRepository.BindTokenToEmployeeAsync(dto.TokenId, dto.EmployeeEmail, userId);
+        if (code != MessageCode.BIND_IS_FINISHED)
         {
-            return BadRequest(new ResponseDto("Cannot bind (token or employee invalid)"));
+            return BadRequest(new ResponseDto(code, code.GetDescription()));
         }
-        return Ok(new ResponseDto("Token successfully bound"));
+        return Ok(new ResponseDto(code, code.GetDescription()));
     }
 }

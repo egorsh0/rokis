@@ -23,10 +23,6 @@ public class AdministatorController : ControllerBase
     [Route("question/create")]
     public async Task<IResult> Create([FromBody] List<QuestionAdminDto> questions)
     {
-        if (!questions.Any())
-        {
-            return Results.BadRequest(ErrorMessages.QUESTIONS_IS_EMPTY);
-        }
         var notAddedQuestions = await _questionRepository.CreateAsync(questions);
 
         return Results.Ok(notAddedQuestions);

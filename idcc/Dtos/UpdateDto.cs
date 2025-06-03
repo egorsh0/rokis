@@ -1,4 +1,5 @@
 ﻿using System.ComponentModel.DataAnnotations;
+using idcc.Infrastructures;
 
 namespace idcc.Dtos;
 
@@ -17,7 +18,7 @@ public record UpdatePersonDto(
     string? FullName,
     [EmailAddress] string? Email);
 
-public record UpdateResult(bool Succeeded, List<string> Errors);
+public record UpdateResult(bool Succeeded, List<(MessageCode code, string message)> Errors);
     
 /// <summary>Запрос на смену пароля.</summary>
 public class ChangePasswordDto : IValidatableObject

@@ -31,12 +31,12 @@ public class UserAnswerRepository : IUserAnswerRepository
 
     public async Task<List<UserAnswer>> GetAllUserAnswers(Session session)
     {
-        return await _context.UserAnswers.Where(_ => _.Session == session).ToListAsync();
+        return await _context.UserAnswers.Where(a => a.Session == session).ToListAsync();
     }
 
     public async Task<bool> CanRaiseAsync(Session session, int count)
     {
-        var userAnswers = await _context.UserAnswers.Where(_ => _.Session == session).OrderByDescending(_ => _.AnswerTime).ToListAsync();
+        var userAnswers = await _context.UserAnswers.Where(a => a.Session == session).OrderByDescending(x => x.AnswerTime).ToListAsync();
         var correctCount = count;
         foreach (var userAnswer in userAnswers)
         {

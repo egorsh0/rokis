@@ -1,10 +1,11 @@
 ﻿using System.ComponentModel.DataAnnotations;
+using idcc.Infrastructures;
 
 namespace idcc.Dtos;
 
 public record StartSessionDto([Required] Guid TokenId);
-public record StopSessionDto(bool isSuccess, string Message);
-public record SessionResultDto(int? Id, Guid TokenId, bool Succeeded, string? ErrorMessage)
+public record StopSessionDto(bool isSuccess, MessageCode Code, string Message);
+public record SessionResultDto(int? Id, Guid TokenId, bool Succeeded, MessageCode Code, string? ErrorMessage)
 {
     public TimeSpan? DurationTime { get; set; }
 }

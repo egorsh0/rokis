@@ -18,20 +18,20 @@ public class QuestionRepository : IQuestionRepository
     
     public async Task<QuestionDto?> GetQuestionAsync(UserTopic userTopic)
     {
-        var weight = await _context.Weights.SingleOrDefaultAsync(_ => _.Grade == userTopic.Grade);
+        var weight = await _context.Weights.SingleOrDefaultAsync(w => w.Grade == userTopic.Grade);
         if (weight is null)
         {
             return null;
         }
         
-        var question = await _context.Questions.Where(_ => _.Topic == userTopic.Topic && _.Weight >= userTopic.Weight && _.Weight <= weight.Max).OrderBy(o => Guid.NewGuid()).FirstOrDefaultAsync();
+        var question = await _context.Questions.Where(q => q.Topic == userTopic.Topic && q.Weight >= userTopic.Weight && q.Weight <= weight.Max).OrderBy(o => Guid.NewGuid()).FirstOrDefaultAsync();
         if (question is null)
         {
             return null;
         }
         
         // TODO проверить на отсутствие ответов к вопросу
-        var answers = await _context.Answers.Where(_ => _.Question == question).Select(a => new AnswerDto()
+        var answers = await _context.Answers.Where(a => a.Question == question).Select(a => new AnswerDto()
         {
             Id = a.Id,
             Content = a.Content
@@ -50,13 +50,13 @@ public class QuestionRepository : IQuestionRepository
 
     public async Task<Question?> GetQuestionAsync(int id)
     {
-        var question =  await _context.Questions.Where(_ => _.Id == id).FirstOrDefaultAsync();
+        var question =  await _context.Questions.Where(q => q.Id == id).FirstOrDefaultAsync();
         return question ?? null;
     }
     
     public async Task<List<Answer>> GetAnswersAsync(Question question)
     {
-        var answers = await _context.Answers.Where(_ => _.Question == question).ToListAsync();
+        var answers = await _context.Answers.Where(a => a.Question == question).ToListAsync();
         return answers;
     }
 
@@ -95,7 +95,7 @@ public class QuestionRepository : IQuestionRepository
 
                     await _context.SaveChangesAsync();
                 }
-                catch (Exception ex)
+                catch (Exception)
                 {
                     notAdded.Add(question.Content);
                 }

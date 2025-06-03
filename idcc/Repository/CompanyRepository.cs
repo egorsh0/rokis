@@ -1,5 +1,7 @@
 ﻿using idcc.Context;
 using idcc.Dtos;
+using idcc.Extensions;
+using idcc.Infrastructures;
 using idcc.Models;
 using idcc.Models.Profile;
 using idcc.Repository.Interfaces;
@@ -22,14 +24,14 @@ public class CompanyRepository : ICompanyRepository
     /// <summary>
     /// Привязать существующего сотрудника по email к компании (companyUserId).
     /// </summary>
-    public async Task<bool> AttachEmployeeToCompanyAsync(string companyUserId, string employeeEmail)
+    public async Task<(bool, MessageCode)> AttachEmployeeToCompanyAsync(string companyUserId, string employeeEmail)
     {
         // 1. Ищем профиль компании
         var companyProfile = await _idccContext.CompanyProfiles
             .FirstOrDefaultAsync(cp => cp.UserId == companyUserId);
         if (companyProfile == null)
         {
-            return false; // нет такой компании
+            return (false, MessageCode.COMPANY_NOT_FOUND);
         }
 
         // 2. Ищем профиль сотрудника по email
@@ -37,7 +39,7 @@ public class CompanyRepository : ICompanyRepository
             .FirstOrDefaultAsync(ep => ep.Email == employeeEmail);
         if (employeeProfile == null)
         {
-            return false; // нет такого сотрудника
+            return (false, MessageCode.EMPLOYEE_NOT_FOUND);
         }
 
         // 3. Привязываем (устанавливаем CompanyProfileId)
@@ -46,7 +48,7 @@ public class CompanyRepository : ICompanyRepository
         _idccContext.EmployeeProfiles.Update(employeeProfile);
         await _idccContext.SaveChangesAsync();
 
-        return true;
+        return (true, MessageCode.EMPLOYEE_ATTACHED);
     }
 
     /// <summary>
@@ -64,19 +66,19 @@ public class CompanyRepository : ICompanyRepository
     
     public async Task<UpdateResult> UpdateCompanyAsync(string userId, UpdateCompanyDto dto)
     {
-        var errors = new List<string>();
+        var errors = new List<(MessageCode code, string message)>();
         
         // 0. Загружаем профиль + пользователя один раз
         var profile = await _idccContext.CompanyProfiles.FirstOrDefaultAsync(cp => cp.UserId == userId);
         if (profile is null)
         {
-            return new UpdateResult(false, ["COMPANY_NOT_FOUND"]);
+            return new UpdateResult(false, [(MessageCode.COMPANY_NOT_FOUND, MessageCode.COMPANY_NOT_FOUND.GetDescription())]);
         }
         
         var user = await _userManager.FindByIdAsync(userId);
         if (user is null)
         {
-            return new UpdateResult(false, ["COMPANY_NOT_FOUND"]);
+            return new UpdateResult(false, [(MessageCode.COMPANY_NOT_FOUND, MessageCode.COMPANY_NOT_FOUND.GetDescription())]);
         }
         
         // 1. Проверка Email (только если меняется)
@@ -86,7 +88,7 @@ public class CompanyRepository : ICompanyRepository
             var exists = await _userManager.FindByEmailAsync(dto.Email);
             if (exists is not null && exists.Id != userId)
             {
-                errors.Add("EMAIL_ALREADY_EXISTS");
+                errors.Add((MessageCode.EMAIL_ALREADY_EXISTS, MessageCode.EMAIL_ALREADY_EXISTS.GetDescription()));
             }
         }
 
@@ -98,7 +100,7 @@ public class CompanyRepository : ICompanyRepository
 
             if (innBusy)
             {
-                errors.Add("INN_ALREADY_EXISTS");
+                errors.Add((MessageCode.INN_ALREADY_EXISTS, MessageCode.INN_ALREADY_EXISTS.GetDescription()));
             }
         }
 
@@ -144,7 +146,7 @@ public class CompanyRepository : ICompanyRepository
             var idRes = await _userManager.UpdateAsync(user);
             if (!idRes.Succeeded)
             {
-                errors.AddRange(idRes.Errors.Select(e => e.Description));
+                errors.Add((MessageCode.UPDATE_HAS_ERRORS ,string.Join(Environment.NewLine, idRes.Errors.Select(e => e.Description))));
                 return new UpdateResult(false, errors);
             }
             changed = true;
@@ -158,7 +160,7 @@ public class CompanyRepository : ICompanyRepository
 
         if (!changed)
         {
-            return new UpdateResult(false, ["NOTHING_TO_UPDATE"]);
+            return new UpdateResult(false, [(MessageCode.NOTHING_TO_UPDATE, MessageCode.NOTHING_TO_UPDATE.GetDescription())]);
         }
 
         await _idccContext.SaveChangesAsync();

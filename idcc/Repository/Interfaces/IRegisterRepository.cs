@@ -1,4 +1,5 @@
 ﻿using idcc.Dtos;
+using idcc.Infrastructures;
 using idcc.Models;
 
 namespace idcc.Repository.Interfaces;
@@ -13,7 +14,7 @@ public interface IRegisterRepository
     Task<AuthResult> RegisterAdministratorAsync(RegisterAdministratorPayload dto);
 
     // Логин
-    Task<ApplicationUser?> LoginAsync(LoginPayload dto);
+    Task<(MessageCode code, ApplicationUser? applicationUser)> LoginAsync(LoginPayload dto);
     
     Task<ApplicationUser?> FindUserAsync(string userId);
 }

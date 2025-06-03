@@ -1,4 +1,5 @@
 ﻿using idcc.Application.Interfaces;
+using idcc.Extensions;
 using idcc.Infrastructures;
 using idcc.Infrastructures.Interfaces;
 using idcc.Models;
@@ -44,12 +45,14 @@ public class IdccApplication : IIdccApplication
         _gradeCalculate = gradeCalculate;
     }
 
-    public async Task<string?> CalculateScoreAsync(Session session, int interval, int questionId, List<int> answerIds)
+    public async Task<(MessageCode code, string? error)> CalculateScoreAsync(Session session, int interval, int questionId, List<int> answerIds)
     {
         // ───────────────── 1.  Получаем вопрос ─────────────────
         var question = await _questionRepository.GetQuestionAsync(questionId);
         if (question is null)
-            return ErrorMessages.QUESTION_IS_NULL;
+        {
+            return (MessageCode.QUESTION_IS_NOT_EXIST, MessageCode.QUESTION_IS_NOT_EXIST.GetDescription());
+        }
 
         _weight = question.Weight;
         
@@ -59,13 +62,13 @@ public class IdccApplication : IIdccApplication
             _logger.LogInformation($"Список ответов для сессии {session.Id} и вопроса {questionId} пуст.");
             _isCorrectAnswer = false;
             await _userAnswerRepository.CreateUserAnswerAsync(session, question, interval, 0, DateTime.Now);
-            return null;
+            return (MessageCode.ANSWER_IS_SEND, null);
         }
         
         // ───────────────── 3.  Одиночный VS множественный ──────
         if (!question.IsMultipleChoice && answerIds.Count > 1)
         {
-            return ErrorMessages.QUESTION_IS_NOT_MULTIPLY;
+            return (MessageCode.QUESTION_IS_MULTIPLY, MessageCode.QUESTION_IS_MULTIPLY.GetDescription());
         }
         
         
@@ -80,20 +83,20 @@ public class IdccApplication : IIdccApplication
         {
             // можете сформировать свою ошибку; пример:
             _logger.LogWarning($"Вопрос {questionId}: некорректные id ответов [{string.Join(",", invalid)}]");
-            return ErrorMessages.ANSWER_ID_NOT_FOUND;   // создайте константу / функцию
+            return (MessageCode.ANSWER_ID_NOT_FOUND, MessageCode.ANSWER_ID_NOT_FOUND.GetDescription());   // создайте константу / функцию
         }
 
         // ───────────────── 5.  Коэффициент времени K ────────────
         var actualTopic = await _userTopicRepository.GetActualTopicAsync(session);
         if (actualTopic is null)
         {
-            return ErrorMessages.ACTUAL_TOPIC_IS_NULL;
+            return (MessageCode.TOPIC_IS_NULL, MessageCode.TOPIC_IS_NULL.GetDescription());
         }
 
         var times = await _dataRepository.GetGradeTimeInfoAsync(actualTopic.Grade.Id);
         if (times is null)
         {
-            return ErrorMessages.GRADE_TIMES_IS_NULL(actualTopic.Grade.Name);
+            return (MessageCode.GRADE_TIMES_IS_NULL, ErrorMessages.GRADE_TIMES_IS_NULL(actualTopic.Grade.Name));
         }
 
         var k = _timeCalculate.K(interval, times.Value.average, times.Value.min, times.Value.max);
@@ -110,21 +113,21 @@ public class IdccApplication : IIdccApplication
         _logger.LogInformation($"Сессия:{session.Id}; Вопрос:{questionId}; K:{k}; Score:{score}");
 
         await _userAnswerRepository.CreateUserAnswerAsync(session, question, interval, score, DateTime.Now);
-        return null;
+        return (MessageCode.CALCULATE_IS_FINISHED, null);
     }
 
-    public async Task<string?> CalculateTopicWeightAsync(Session session)
+    public async Task<(MessageCode code, string? error)> CalculateTopicWeightAsync(Session session)
     {
         var actualTopic = await _userTopicRepository.GetActualTopicAsync(session);
         if (actualTopic is null)
         {
-            return ErrorMessages.ACTUAL_TOPIC_IS_NULL;
+            return (MessageCode.TOPIC_IS_NULL, MessageCode.TOPIC_IS_NULL.GetDescription());
         }
         
         var gradeWeights = await _dataRepository.GetGradeWeightInfoAsync(actualTopic.Grade.Id);
         if (gradeWeights is null)
         {
-            return ErrorMessages.GRADE_WEIGHT_IS_NULL(actualTopic.Grade.Name);
+            return (MessageCode.GRADE_WEIGHT_IS_NULL, ErrorMessages.GRADE_WEIGHT_IS_NULL(actualTopic.Grade.Name));
         }
 
         var gainWeightPersent = await _dataRepository.GetPercentOrDefaultAsync("GainWeight", 0.2);
@@ -151,7 +154,7 @@ public class IdccApplication : IIdccApplication
         {
             _logger.LogInformation($"Сессия: {session.Id}; Топик: {actualTopic.Id}; Статус: Закрыт.");
             await _userTopicRepository.CloseTopicAsync(actualTopic.Id);
-            return null;
+            return (MessageCode.TOPIC_IS_CLOSED,null);
         }
 
         if (grade == actualTopic.Grade)
@@ -165,13 +168,13 @@ public class IdccApplication : IIdccApplication
             {
                 await _userTopicRepository.CloseTopicAsync(actualTopic.Id);
             }
-            return null;
+            return (MessageCode.CALCULATE_IS_FINISHED, null);
         }
 
         var weight = await _dataRepository.GetGradeWeightInfoAsync(grade.Id);
         if (weight is null)
         {
-            return ErrorMessages.GRADE_WEIGHT_IS_NULL(grade.Name);
+            return (MessageCode.GRADE_WEIGHT_IS_NULL, ErrorMessages.GRADE_WEIGHT_IS_NULL(grade.Name));
         }
         var raiseLevel = await _dataRepository.GetPercentOrDefaultAsync("RaiseLevel", 0.3);
 
@@ -183,7 +186,7 @@ public class IdccApplication : IIdccApplication
         
         await ReduceTopicQuestionCountAndCloseTopic(session, actualTopic.Id);
 
-        return null;
+        return (MessageCode.ANSWER_IS_SEND, null);
     }
 
     private async Task ReduceTopicQuestionCountAndCloseTopic(Session session, int id)

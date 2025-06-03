@@ -1,5 +1,7 @@
 ﻿using System.Security.Claims;
 using idcc.Dtos;
+using idcc.Extensions;
+using idcc.Infrastructures;
 using idcc.Models;
 using idcc.Repository.Interfaces;
 using Microsoft.AspNetCore.Authorization;
@@ -43,7 +45,7 @@ public class EmployeeController : ControllerBase
 
         if (emp == null)
         {
-            return NotFound(new ResponseDto("Employee not found"));
+            return NotFound(new ResponseDto(MessageCode.EMPLOYEE_NOT_FOUND, MessageCode.EMPLOYEE_NOT_FOUND.GetDescription()));
         }
 
         var dto = new EmployeeProfileDto(
@@ -80,7 +82,7 @@ public class EmployeeController : ControllerBase
     {
         var uid = User.FindFirstValue(ClaimTypes.NameIdentifier)!;
         var updateResult  = await _employeeRepository.UpdateEmployeeAsync(uid, dto);
-        return updateResult.Succeeded ? Ok(new ResponseDto("The data is changed")) : BadRequest(new ResponseDto(string.Join(Environment.NewLine, updateResult.Errors)));
+        return updateResult.Succeeded ? Ok(new ResponseDto(MessageCode.UPDATE_IS_FINISHED,MessageCode.UPDATE_IS_FINISHED.GetDescription())) : BadRequest(new ResponseDto(MessageCode.UPDATE_HAS_ERRORS,string.Join(Environment.NewLine, updateResult.Errors)));
     }
     
     // POST /api/employee/change-password

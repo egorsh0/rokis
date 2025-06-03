@@ -71,7 +71,7 @@ public record BindTokenDto(
 /// Должен совпадать с Email залогинившегося пользователя.
 /// </param>
 public record BindUsedTokenDto(
-    Guid TokenId,
+    [Required] Guid TokenId,
     [EmailAddress] string UserEmail);
 
 

@@ -12,7 +12,7 @@ public class OrderRepository : IOrderRepository
     private readonly IdccContext _idccContext;
     public OrderRepository(IdccContext idccContext) => _idccContext = idccContext;
 
-    public async Task<bool> MarkOrderPaidAsync(int orderId, string paymentId)
+    public async Task<MessageCode> MarkOrderPaidAsync(int orderId, string paymentId)
     {
         var order = await _idccContext.Orders
             .Include(o => o.Tokens)
@@ -21,7 +21,7 @@ public class OrderRepository : IOrderRepository
         // ── 1.  заказ не существует
         if (order is null)
         {
-            return false;
+            return MessageCode.ORDER_NOT_FOUND;
         }
 
         switch (order.Status)
@@ -29,12 +29,12 @@ public class OrderRepository : IOrderRepository
             // ── 2.  заказ уже оплачен этим же paymentId  → OK (идемпотентность)
             case OrderStatus.Paid when order.PaymentId == paymentId:
             {
-                return true;
+                return MessageCode.ORDER_PAID;
             }
             // ── 3.  заказ был оплачен другим paymentId  → считаем конфликт
             case OrderStatus.Paid when order.PaymentId != paymentId:
             {
-                return false;
+                return MessageCode.ORDER_PAID;
             }
         }
 
@@ -52,7 +52,7 @@ public class OrderRepository : IOrderRepository
         }
 
         await _idccContext.SaveChangesAsync();
-        return true;
+        return MessageCode.ORDER_IS_MARKED;
     }
     
     public async Task<OrderDto> CreateOrderAsync(string userId,

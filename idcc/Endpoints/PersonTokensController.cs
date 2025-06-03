@@ -1,6 +1,7 @@
 ﻿using System.Security.Claims;
 using idcc.Dtos;
-using idcc.Repository;
+using idcc.Extensions;
+using idcc.Infrastructures;
 using idcc.Repository.Interfaces;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -48,11 +49,7 @@ public class PersonTokensController : ControllerBase
     [ProducesResponseType(typeof(string), StatusCodes.Status400BadRequest)]
     public async Task<IActionResult> BindUsed([FromBody]BindUsedTokenDto dto)
     {
-        if (dto.TokenId == Guid.Empty)
-        {
-            return BadRequest(new ResponseDto("TokenId is required"));
-        }
-        var ok = await _tokenRepository.BindUsedTokenToPersonAsync(dto.TokenId,dto.UserEmail);
-        return ok ? Ok() : BadRequest(new ResponseDto("Cannot bind used token"));
+        var code = await _tokenRepository.BindUsedTokenToPersonAsync(dto.TokenId,dto.UserEmail);
+        return code == MessageCode.BIND_IS_FINISHED ? Ok(new ResponseDto(MessageCode.BIND_IS_FINISHED, MessageCode.BIND_IS_FINISHED.GetDescription())) : BadRequest(new ResponseDto(code, code.GetDescription()));
     }
 }

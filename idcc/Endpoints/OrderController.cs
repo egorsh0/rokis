@@ -1,5 +1,7 @@
 ﻿using System.Security.Claims;
 using idcc.Dtos;
+using idcc.Extensions;
+using idcc.Infrastructures;
 using idcc.Repository.Interfaces;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -37,7 +39,7 @@ public class OrderController : ControllerBase
     {
         if (dto.Items.Count == 0)
         {
-            return BadRequest(new ResponseDto("Items array must not be empty"));
+            return BadRequest(new ResponseDto(MessageCode.ORDER_SHOULD_HAS_ITEMS, MessageCode.ORDER_SHOULD_HAS_ITEMS.GetDescription()));
         }
 
         var userId = User.FindFirstValue(ClaimTypes.NameIdentifier)!;
@@ -56,8 +58,8 @@ public class OrderController : ControllerBase
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<IActionResult> MarkPaid([FromBody] PayOrderDto dto)
     {
-        var ok = await _orderRepository.MarkOrderPaidAsync(dto.OrderId, dto.PaymentId);
-        return ok ? Ok(new ResponseDto("The order was paid")) : NotFound("Order not found or already paid");
+        var code = await _orderRepository.MarkOrderPaidAsync(dto.OrderId, dto.PaymentId);
+        return code == MessageCode.ORDER_IS_MARKED ? Ok(new ResponseDto(code, code.GetDescription())) : NotFound(new ResponseDto(code, code.GetDescription()));
     }
     
     /// <summary>Список оформленных заказов текущего пользователя.</summary>

@@ -1,10 +1,11 @@
 ﻿using idcc.Dtos;
+using idcc.Infrastructures;
 
 namespace idcc.Repository.Interfaces;
 
 public interface IOrderRepository
 {
-    Task<bool> MarkOrderPaidAsync(int orderId, string paymentId);
+    Task<MessageCode> MarkOrderPaidAsync(int orderId, string paymentId);
     
     Task<OrderDto> CreateOrderAsync(string userId, string role, List<PurchaseTokensDto> items);
     

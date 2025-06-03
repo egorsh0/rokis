@@ -82,7 +82,7 @@ public class TokenRepository : ITokenRepository
     }
 
 
-    public async Task<bool> BindTokenToEmployeeAsync(
+    public async Task<MessageCode> BindTokenToEmployeeAsync(
         Guid   tokenId,
         string employeeEmail,
         string companyUserId)
@@ -97,20 +97,20 @@ public class TokenRepository : ITokenRepository
 
         if (token is null)
         {
-            return false;
+            return MessageCode.TOKEN_NOT_FOUND;
         }
 
         // 2. ищем пользователя‑сотрудника по email
         var empUser = await _userManager.FindByEmailAsync(employeeEmail);
         if (empUser is null)
         {
-            return false;
+            return MessageCode.EMPLOYEE_NOT_FOUND;
         }
 
         // 3. убеждаемся, что пользователь в роли "Employee"
         if (!await _userManager.IsInRoleAsync(empUser, "Employee"))
         {
-            return false;
+            return MessageCode.ROLE_NOT_CORRECT;
         }
 
         // 4. проверяем принадлежность сотрудника компании
@@ -123,7 +123,7 @@ public class TokenRepository : ITokenRepository
         if (empProfile is null)
         {
             // сотрудник не числится в этой компании
-            return false;
+            return MessageCode.COMPANY_HAS_NOT_EMPLOYEE;
         }
 
         // 5. привязываем токен к сотруднику
@@ -131,7 +131,7 @@ public class TokenRepository : ITokenRepository
         token.Status = TokenStatus.Bound;
 
         await _idccContext.SaveChangesAsync();
-        return true;
+        return MessageCode.BIND_IS_FINISHED;
     }
 
     public async Task<IEnumerable<TokenDto>> GetTokensForEmployeeAsync(string employeeUserId)
@@ -177,25 +177,29 @@ public class TokenRepository : ITokenRepository
     }
 
 
-    public async Task<bool> BindUsedTokenToPersonAsync(Guid tokenId, string personEmail)
+    public async Task<MessageCode> BindUsedTokenToPersonAsync(Guid tokenId, string personEmail)
     {
         var token = await _idccContext.Tokens
             .FirstOrDefaultAsync(t=>t.Id == tokenId && t.Status == TokenStatus.Used && t.PersonUserId == null);
         if (token == null)
         {
-            return false;
+            return MessageCode.TOKEN_NOT_FOUND;
         }
 
         var person = await _userManager.FindByEmailAsync(personEmail);
         if (person == null)
         {
-            return false;
+            return MessageCode.PERSON_NOT_FOUND;
         }
-        if(!await _userManager.IsInRoleAsync(person,"Person")) return false;
+
+        if (!await _userManager.IsInRoleAsync(person, "Person"))
+        {
+            return MessageCode.ROLE_NOT_CORRECT;
+        }
 
         token.PersonUserId = person.Id;
         await _idccContext.SaveChangesAsync();
-        return true;
+        return MessageCode.BIND_IS_FINISHED;
     }
 
     public async Task<IEnumerable<TokenDto>> GetTokensForPersonAsync(string personUserId)

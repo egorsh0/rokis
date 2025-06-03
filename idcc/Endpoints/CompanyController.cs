@@ -1,6 +1,8 @@
 ﻿using System.ComponentModel.DataAnnotations;
 using System.Security.Claims;
 using idcc.Dtos;
+using idcc.Extensions;
+using idcc.Infrastructures;
 using idcc.Models;
 using idcc.Repository.Interfaces;
 using Microsoft.AspNetCore.Authorization;
@@ -51,13 +53,13 @@ public class CompanyController : ControllerBase
         var companyUserId = User.FindFirstValue(ClaimTypes.NameIdentifier);
 
         var result = await _companyRepository.AttachEmployeeToCompanyAsync(companyUserId!, employeeEmail);
-        if (!result)
+        if (!result.result)
         {
-            return NotFound(new ResponseDto("Either company or employee not found"));
+            return NotFound(new ResponseDto(result.code, result.code.GetDescription()));
         }
 
         _logger.LogInformation("Attached employee {Email} to company {CompanyUserId}", employeeEmail, companyUserId);
-        return Ok(new ResponseDto("Employee attached successfully"));
+        return Ok(new ResponseDto(result.code, result.code.GetDescription()));
     }
 
     // ═══════════════════════════════════════════════════════
@@ -75,7 +77,7 @@ public class CompanyController : ControllerBase
         var company = await _companyRepository.GetCompanyWithEmployeesAsync(companyUserId!);
         if (company == null)
         {
-            return NotFound(new ResponseDto("Company not found"));
+            return NotFound(new ResponseDto(MessageCode.COMPANY_NOT_FOUND, MessageCode.COMPANY_NOT_FOUND.GetDescription()));
         }
 
         var dto = new CompanyProfileDto(
@@ -104,7 +106,7 @@ public class CompanyController : ControllerBase
     {
         var uid = User.FindFirstValue(ClaimTypes.NameIdentifier)!;
         var updateResult  = await _companyRepository.UpdateCompanyAsync(uid, dto);
-        return updateResult.Succeeded ? Ok(new ResponseDto("The data is changed")) : BadRequest(new ResponseDto(string.Join(Environment.NewLine, updateResult.Errors)));
+        return updateResult.Succeeded ? Ok(new ResponseDto(MessageCode.UPDATE_IS_FINISHED,MessageCode.UPDATE_IS_FINISHED.GetDescription())) : BadRequest(new ResponseDto(MessageCode.UPDATE_HAS_ERRORS,string.Join(Environment.NewLine, updateResult.Errors)));
     }
     
     // POST /api/company/change-password
@@ -123,6 +125,6 @@ public class CompanyController : ControllerBase
 
         return res.Succeeded
             ? NoContent()
-            : BadRequest(string.Join("; ", res.Errors.Select(e => e.Description)));
+            : BadRequest(new ResponseDto(MessageCode.PASSWORD_RESET_SUCCESSFUL, string.Join(Environment.NewLine, res.Errors.Select(e => e.Description))));
     }
 }

@@ -1,6 +1,7 @@
 ﻿using System.ComponentModel.DataAnnotations;
 using System.Security.Claims;
 using idcc.Dtos;
+using idcc.Extensions;
 using idcc.Infrastructures;
 using idcc.Providers;
 using idcc.Repository.Interfaces;
@@ -34,10 +35,6 @@ public class SessionController : ControllerBase
     [ProducesResponseType(typeof(string),    StatusCodes.Status400BadRequest)]
     public async Task<IActionResult> StartSession([FromBody]StartSessionDto dto)
     {
-        if (dto.TokenId == Guid.Empty)
-        {
-            return BadRequest(new ResponseDto("TokenId is required"));
-        }
         var userId = User.FindFirstValue(ClaimTypes.NameIdentifier)!;
         var role   = User.IsInRole("Employee") ? "Employee" : "Person";
         var isEmployee = role == "Employee";
@@ -78,15 +75,15 @@ public class SessionController : ControllerBase
         var session = await _sessionRepository.GetSessionAsync(tokenId);
         if (session is null)
         {
-            return BadRequest(new ResponseDto(ErrorMessages.SESSION_IS_NOT_EXIST));
+            return BadRequest(new ResponseDto(MessageCode.SESSION_IS_NOT_EXIST, MessageCode.SESSION_IS_NOT_EXIST.GetDescription()));
         }
             
         if (session.EndTime is not null)
         {
-            return BadRequest(new ResponseDto(ErrorMessages.SESSION_IS_FINISHED));
+            return BadRequest(new ResponseDto(MessageCode.SESSION_IS_FINISHED, MessageCode.SESSION_IS_FINISHED.GetDescription()));
         }
         var dto = await _sessionRepository.EndSessionAsync(tokenId);
-        return dto.isSuccess ? Ok(new ResponseDto(dto.Message)) : BadRequest(new ResponseDto(dto.Message));
+        return dto.isSuccess ? Ok(new ResponseDto(dto.Code, dto.Message)) : BadRequest(new ResponseDto(dto.Code, dto.Message));
     }
 
     // ═══════════════════════════════════════════════════════
