@@ -35,7 +35,7 @@ public class QuestionRepository : IQuestionRepository
         {
             Id = a.Id,
             Content = a.Content
-        }).ToListAsync();
+        }).OrderBy(o => Guid.NewGuid()).ToListAsync();
 
         var dto = new QuestionDto()
         {
