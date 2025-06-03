@@ -863,10 +863,9 @@ INSERT INTO "Topics" ("Name", "Description", "DirectionId") VALUES ('Cloud-ин�
 INSERT INTO "Topics" ("Name", "Description", "DirectionId") VALUES ('Сетевые основы и взаимодействие','Сетевые основы и взаимодействие',3);
 
 
-INSERT INTO "Topics" ("Name", "Description", "DirectionId") VALUES ('Базовые алгоритмы','Базовые алгоритмы',4);
+INSERT INTO "Topics" ("Name", "Description", "DirectionId") VALUES ('Базовые алгоритмы и задачи машинного обучения','Базовые алгоритмы и задачи машинного обучения',4);
 INSERT INTO "Topics" ("Name", "Description", "DirectionId") VALUES ('Метрики и оценка моделей','Метрики и оценка моделей',4);
 INSERT INTO "Topics" ("Name", "Description", "DirectionId") VALUES ('Работа с данными и препроцессинг','Работа с данными и препроцессинг',4);
 INSERT INTO "Topics" ("Name", "Description", "DirectionId") VALUES ('Оверфиттинг, андерфиттинг и качество модели','Оверфиттинг, андерфиттинг и качество модели',4);
 INSERT INTO "Topics" ("Name", "Description", "DirectionId") VALUES ('Базовые принципы продакшена моделей (MLOps intro)','Базовые принципы продакшена моделей (MLOps intro)',4);
 INSERT INTO "Topics" ("Name", "Description", "DirectionId") VALUES ('Основы explainability и интерпретации','Основы explainability и интерпретации',4);
-INSERT INTO "Topics" ("Name", "Description", "DirectionId") VALUES ('Основы объяснимости моделей','Основы объяснимости моделей',4);
