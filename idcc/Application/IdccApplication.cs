@@ -71,17 +71,15 @@ public class IdccApplication : IIdccApplication
             return (MessageCode.QUESTION_IS_MULTIPLY, MessageCode.QUESTION_IS_MULTIPLY.GetDescription());
         }
         
-        
         // ───────────────── 4.  Подтягиваем варианты ответа ─────
         var answers = await _questionRepository.GetAnswersAsync(question);
 
-        // ---------- НОВАЯ ПРОВЕРКА: все ли id присутствуют ----------
+        // ---------- все ли id присутствуют ----------
         var validIds = answers.Select(a => a.Id).ToHashSet();
         var invalid  = answerIds.Where(id => !validIds.Contains(id)).ToList();
 
         if (invalid.Any())
         {
-            // можете сформировать свою ошибку; пример:
             _logger.LogWarning($"Вопрос {questionId}: некорректные id ответов [{string.Join(",", invalid)}]");
             return (MessageCode.ANSWER_ID_NOT_FOUND, MessageCode.ANSWER_ID_NOT_FOUND.GetDescription());   // создайте константу / функцию
         }
