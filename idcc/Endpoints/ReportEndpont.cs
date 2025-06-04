@@ -46,6 +46,11 @@ public static class ReportEndpont
                 return Results.BadRequest(new ResponseDto(MessageCode.SESSION_IS_FINISHED, MessageCode.SESSION_IS_FINISHED.GetDescription()));
             }
             
+            if (session.EndTime is null)
+            {
+                return Results.BadRequest(new ResponseDto(MessageCode.SESSION_HAS_ACTIVE, MessageCode.SESSION_HAS_ACTIVE.GetDescription()));
+            }
+            
             // ---------- 1.1  Проверяем: отчёт уже существует? ----------
             if (await reportRepository.ExistsForTokenAsync(session.TokenId))
             {
@@ -109,16 +114,16 @@ public static class ReportEndpont
                 IReportRepository reportRepository) =>
         {
             // ---------- 1.  Находим сессию ----------
-            var session = await sessionRepository.GetFinishSessionAsync(tokenId);
+            var session = await sessionRepository.GetSessionAsync(tokenId);
 
             if (session is null)
             {
                 return Results.BadRequest(new ResponseDto(MessageCode.SESSION_IS_NOT_EXIST, MessageCode.SESSION_IS_NOT_EXIST.GetDescription()));
             }
 
-            if (session.EndTime is not null && session.Score > 0)
+            if (session.EndTime is null)
             {
-                return Results.BadRequest(new ResponseDto(MessageCode.SESSION_IS_FINISHED, MessageCode.SESSION_IS_FINISHED.GetDescription()));
+                return Results.BadRequest(new ResponseDto(MessageCode.SESSION_HAS_ACTIVE, MessageCode.SESSION_HAS_ACTIVE.GetDescription()));
             }
             
             // ── формируем ключ ─────────────────────────────────────
