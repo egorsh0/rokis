@@ -68,7 +68,7 @@ public class IdccReport : IIdccReport
         var sum = 0.0;
         foreach (var userTopic in userTopics)
         {
-            var scores = userAnswers.Where(userAnswer => userAnswer.Question.Topic == userTopic.Topic).Select(answer => answer.Score).ToList();
+            var scores = userAnswers.Where(userAnswer => userAnswer.Question.Topic.Id == userTopic.Topic.Id).Select(answer => answer.Score).ToList();
             var weight = userTopic.Weight;
             var topicScore = _scoreCalculate.GetTopicScore(scores, weight);
             sum += topicScore;
@@ -92,7 +92,7 @@ public class IdccReport : IIdccReport
         var finalTopicDatas = new List<FinalTopicData>();
         foreach (var userTopic in userTopics)
         {
-            var questionAnswers = userAnswers.Where(a => a.Question.Topic == userTopic.Topic).ToList();
+            var questionAnswers = userAnswers.Where(a => a.Question.Topic.Id == userTopic.Topic.Id).ToList();
             var scores = questionAnswers.Select(a => a.Score).ToList();
             var weight = userTopic.Weight;
             var topicScore = _scoreCalculate.GetTopicScore(scores, weight);

@@ -1,4 +1,5 @@
 ﻿using idcc.Context;
+using idcc.Dtos;
 using idcc.Models;
 using idcc.Repository.Interfaces;
 using Microsoft.EntityFrameworkCore;
@@ -58,10 +59,31 @@ public class DataRepository : IDataRepository
         return count?.Value ?? value;
     }
 
-    public async Task<(Grade? prev, Grade? next)> GetRelationAsync(Grade current)
+    public async Task<(GradeDto? prev, GradeDto? next)> GetRelationAsync(GradeDto current)
     {
-        var next = await _context.GradeRelations.Where(r => r.Start == current).Select(x => x.End).FirstOrDefaultAsync();
-        var prev = await _context.GradeRelations.Where(r => r.End == current).Select(x => x.Start).FirstOrDefaultAsync();
-        return (prev, next);
+        var next = await _context.GradeRelations
+            .Where(r => r.Start != null && r.Start.Id == current.Id)
+            .Select(x => x.End)
+            .FirstOrDefaultAsync();
+
+        var prev = await _context.GradeRelations
+            .Where(r => r.End != null && r.End.Id == current.Id)
+            .Select(x => x.Start)
+            .FirstOrDefaultAsync();
+
+        GradeDto? nextDto = null;
+        GradeDto? prevDto = null;
+
+        if (next != null)
+        {
+            nextDto = new GradeDto(next.Id, next.Name, next.Description, next.Description);
+        }
+
+        if (prev != null)
+        {
+            prevDto = new GradeDto(prev.Id, prev.Name, prev.Description, prev.Description);
+        }
+
+        return (prevDto, nextDto);
     }
 }

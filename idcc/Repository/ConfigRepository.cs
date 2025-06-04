@@ -112,7 +112,7 @@ public class ConfigRepository : IConfigRepository
     
     public async Task<List<TopicDto>> GetTopicsAsync()
     {
-        var topics = await _context.Topics.Select(topic => new TopicDto(topic.Name, topic.Description, topic.Direction.Id))
+        var topics = await _context.Topics.Select(topic => new TopicDto(topic.Id, topic.Name, topic.Description, topic.Direction.Id))
             .ToListAsync();
         return [..topics];
     }

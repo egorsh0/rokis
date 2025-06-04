@@ -67,27 +67,39 @@ public class QuestionController : ControllerBase
             return BadRequest(new ResponseDto(MessageCode.SESSION_IS_FINISHED, MessageCode.SESSION_IS_FINISHED.GetDescription()));
         }
 
-        if (!await _topicRepository.HasOpenTopic(session))
+        QuestionDto? questionDto = null;
+        UserTopicDto? userTopicDto = null;
+        var cancelTokenSource = new CancellationTokenSource();
+        while (!cancelTokenSource.Token.IsCancellationRequested)
         {
-            await _sessionRepository.EndSessionAsync(tokenId);
-            return NoContent();
-        }
+            if (!await _topicRepository.HasOpenTopic(session))
+            {
+                await _sessionRepository.EndSessionAsync(tokenId);
+                return NoContent();
+            }
 
-        var userTopic = await _topicRepository.GetRandomTopicAsync(session);
-        if (userTopic == null)
-        {
-            return BadRequest(new ResponseDto(MessageCode.GET_RANDOM_TOPIC, MessageCode.GET_RANDOM_TOPIC.GetDescription()));
-        }
+            userTopicDto = await _topicRepository.GetRandomTopicAsync(session);
+            if (userTopicDto == null)
+            {
+                return BadRequest(new ResponseDto(MessageCode.GET_RANDOM_TOPIC, MessageCode.GET_RANDOM_TOPIC.GetDescription()));
+            }
 
-        var question = await _questionRepository.GetQuestionAsync(userTopic);
-        if (question == null)
-        {
-            await _topicRepository.CloseTopicAsync(userTopic.Id);
+            questionDto = await _questionRepository.GetQuestionAsync(userTopicDto);
+            if (questionDto != null)
+            {
+                await cancelTokenSource.CancelAsync();
+                continue;
+            }
+            await _topicRepository.CloseTopicAsync(userTopicDto.Id);
             return Accepted();
         }
 
-        await _topicRepository.RefreshActualTopicInfoAsync(userTopic.Id, session);
-        return Ok(question);
+        if (userTopicDto == null)
+        {
+            return BadRequest(new ResponseDto(MessageCode.TOPIC_IS_NULL, MessageCode.TOPIC_IS_NULL.GetDescription()));
+        }
+        await _topicRepository.RefreshActualTopicInfoAsync(userTopicDto.Id, session);
+        return Ok(questionDto);
     }
 
     // ════════════════════════════════════════════════════════════════

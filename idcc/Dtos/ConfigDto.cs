@@ -90,4 +90,4 @@ public record MailingDto(string MailingCode, bool IsEnabled, string Subject, str
 /// <param name="Name">Имя темы.</param>
 /// <param name="Description">Краткое описание темы.</param>
 /// <param name="DirectionId">Идентификатор направления.</param>
-public record TopicDto(string Name, string Description, int DirectionId);
+public record TopicDto(int Id, string Name, string Description, int DirectionId);

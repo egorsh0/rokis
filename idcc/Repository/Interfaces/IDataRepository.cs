@@ -1,4 +1,5 @@
-﻿using idcc.Models;
+﻿using idcc.Dtos;
+using idcc.Models;
 
 namespace idcc.Repository.Interfaces;
 
@@ -12,5 +13,5 @@ public interface IDataRepository
     Task<double> GetPercentOrDefaultAsync(string code, double value);
     Task<int> GetCountOrDefaultAsync(string code, int value);
 
-    Task<(Grade? prev, Grade? next)> GetRelationAsync(Grade current);
+    Task<(GradeDto? prev, GradeDto? next)> GetRelationAsync(GradeDto current);
 }

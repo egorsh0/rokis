@@ -88,6 +88,7 @@ public enum MessageCode
     
     [Description("It was not possible to get a random topic")]
     GET_RANDOM_TOPIC,
+    [Description("It was not possible to get a topic")]
     TOPIC_IS_NULL,
     [Description("The topic is closed")]
     TOPIC_IS_CLOSED,

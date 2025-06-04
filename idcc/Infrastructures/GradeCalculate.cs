@@ -1,11 +1,11 @@
-﻿using idcc.Infrastructures.Interfaces;
-using idcc.Models;
+﻿using idcc.Dtos;
+using idcc.Infrastructures.Interfaces;
 
 namespace idcc.Infrastructures;
 
 public class GradeCalculate : IGradeCalculate
 {
-    public Grade? Calculate(Grade current, double min, Grade? prev, Grade? next, double weight, bool canRaise)
+    public GradeDto? Calculate(GradeDto current, double min, GradeDto? prev, GradeDto? next, double weight, bool canRaise)
     {
         switch (canRaise)
         {

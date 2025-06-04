@@ -16,22 +16,27 @@ public class QuestionRepository : IQuestionRepository
         _context = context;
     }
     
-    public async Task<QuestionDto?> GetQuestionAsync(UserTopic userTopic)
+    public async Task<QuestionDto?> GetQuestionAsync(UserTopicDto? userTopic)
     {
-        var weight = await _context.Weights.SingleOrDefaultAsync(w => w.Grade == userTopic.Grade);
+        if (userTopic == null)
+        {
+            return null;
+        }
+        
+        var weight = await _context.Weights.SingleOrDefaultAsync(w => w.Grade.Id == userTopic.Grade.Id);
         if (weight is null)
         {
             return null;
         }
 
         var answeredQuestions = await _context.UserAnswers
-            .Where(a => a.Session == userTopic.Session)
+            .Where(a => a.Session.Id == userTopic.SessionId)
             .Select(a => a.Question.Id)
             .ToListAsync();
         
         var question = await _context.Questions
             .Where(q => !answeredQuestions.Contains(q.Id))
-            .Where(q => q.Topic == userTopic.Topic && q.Weight >= userTopic.Weight && q.Weight <= weight.Max)
+            .Where(q => q.Topic.Id == userTopic.Topic.Id && q.Weight >= userTopic.Weight && q.Weight <= weight.Max)
             .OrderBy(o => Guid.NewGuid())
             .FirstOrDefaultAsync();
         if (question is null)
@@ -43,6 +48,7 @@ public class QuestionRepository : IQuestionRepository
         var answers = await _context.Answers.Where(a => a.Question == question).Select(a => new AnswerDto()
         {
             Id = a.Id,
+            IsCorrect = a.IsCorrect,
             Content = a.Content
         }).OrderBy(o => Guid.NewGuid()).ToListAsync();
 
