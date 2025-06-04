@@ -33,7 +33,7 @@ public class MetricService : IMetricService
         var totalFluctuation = 0.0;
         var comparisonCount = 0;
 
-        for (var i = 0; i < difficulties.Count; i++)
+        for (var i = 0; i < difficulties.Count - 1; i++)
         {
             var a = results[i];
             var b = results[i + 1];
