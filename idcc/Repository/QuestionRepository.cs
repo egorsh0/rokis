@@ -23,8 +23,17 @@ public class QuestionRepository : IQuestionRepository
         {
             return null;
         }
+
+        var answeredQuestions = await _context.UserAnswers
+            .Where(a => a.Session == userTopic.Session)
+            .Select(a => a.Question.Id)
+            .ToListAsync();
         
-        var question = await _context.Questions.Where(q => q.Topic == userTopic.Topic && q.Weight >= userTopic.Weight && q.Weight <= weight.Max).OrderBy(o => Guid.NewGuid()).FirstOrDefaultAsync();
+        var question = await _context.Questions
+            .Where(q => !answeredQuestions.Contains(q.Id))
+            .Where(q => q.Topic == userTopic.Topic && q.Weight >= userTopic.Weight && q.Weight <= weight.Max)
+            .OrderBy(o => Guid.NewGuid())
+            .FirstOrDefaultAsync();
         if (question is null)
         {
             return null;
