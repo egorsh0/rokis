@@ -25,15 +25,15 @@ services:
         max-size: "200k"
         max-file: "10"
         
-  postgres-exporter:
-    image: prometheuscommunity/postgres-exporter
-    environment:
-      DATA_SOURCE_NAME: "postgresql://postgres:787898@db:5432/idcc?sslmode=disable"
-    depends_on:
-      - db
-    ports:
-      - "9187:9187"
-    networks: [ internal ]
+  # postgres-exporter:
+  #   image: prometheuscommunity/postgres-exporter
+  #   environment:
+  #     DATA_SOURCE_NAME: "postgresql://postgres:787898@db:5432/idcc?sslmode=disable"
+  #   depends_on:
+  #     - db
+  #   ports:
+  #     - "9187:9187"
+  #   networks: [ internal ]
   
   # ───── Redis ────────────────────────────────────────────────────────────────
   cache:
@@ -47,15 +47,15 @@ services:
         max-size: "200k"
         max-file: "10"
         
-  redis-exporter:
-    image: oliver006/redis_exporter
-    environment:
-      REDIS_ADDR: redis://cache:6379
-    depends_on:
-      - cache
-    ports:
-      - "9121:9121"
-    networks: [ internal ]
+  # redis-exporter:
+  #   image: oliver006/redis_exporter
+  #   environment:
+  #     REDIS_ADDR: redis://cache:6379
+  #   depends_on:
+  #     - cache
+  #   ports:
+  #     - "9121:9121"
+  #   networks: [ internal ]
   
   # ───── API ──────────────────────────────
   idcc:
@@ -74,24 +74,24 @@ services:
         max-file: "10"
 
   # ───── Prometheus ───────────────────────
-  prometheus:
-    image: prom/prometheus
-    restart: always
-    volumes:
-      - ./idcc/monitoring:/etc/prometheus:ro
-    ports:
-      - "9090:9090"
-    networks: [ internal ]
-    
-  # ───── Grafana ──────────────────────────
-  grafana:
-    image: grafana/grafana
-    restart: always
-    ports:
-      - "3000:3000"
-    volumes:
-      - grafana-data:/var/lib/grafana
-    networks: [ internal ]
+ # prometheus:
+ #   image: prom/prometheus
+ #   restart: always
+ #   volumes:
+ #     - ./idcc/monitoring:/etc/prometheus:ro
+ #   ports:
+ #     - "9090:9090"
+ #   networks: [ internal ]
+ #   
+ # # ───── Grafana ──────────────────────────
+ # grafana:
+ #   image: grafana/grafana
+ #   restart: always
+ #   ports:
+ #     - "3000:3000"
+ #   volumes:
+ #     - grafana-data:/var/lib/grafana
+ #   networks: [ internal ]
 volumes:
   db_data:
   grafana-data:
