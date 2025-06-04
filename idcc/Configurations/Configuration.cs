@@ -20,6 +20,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Caching.StackExchangeRedis;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
+using Prometheus;
 using ZiggyCreatures.Caching.Fusion;
 using ZiggyCreatures.Caching.Fusion.Serialization.SystemTextJson;
 
@@ -242,13 +243,20 @@ public static class Configuration
 
         app.UseHttpsRedirection();
         
+        app.UseRouting();
+        
+        // Метрики Prometheus
+        app.UseHttpMetrics();
+        
         // Включаем аутентификацию/авторизацию
         app.UseAuthentication();
         app.UseAuthorization();
         
+        // Пользовательские middleware
         // app.UseMiddleware<IpUserAgentValidationMiddleware>();
         app.UseMiddleware<PasswordExpirationMiddleware>();
         
         app.MapControllers();
+        app.MapMetrics();
     }
 }
