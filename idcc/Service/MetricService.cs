@@ -60,6 +60,10 @@ public class MetricService : IMetricService
 
     public ThinkingPattern DetectThinkingPattern(List<QuestionResultDto> results, double cognitiveStabilityIndex)
     {
+        if (!results.Any())
+        {
+            return ThinkingPattern.None;
+        }
         var avgTime = results.Average(r => r.TimeSeconds); 
         var difficultyChanges = results.Zip(results.Skip(1), (a, b) => 
             Math.Abs(a.Difficulty - b.Difficulty)).ToList();

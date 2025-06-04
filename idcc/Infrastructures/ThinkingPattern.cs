@@ -6,5 +6,6 @@ public enum ThinkingPattern
     Impulsive, 
     Intuitive, 
     BasicExecutor, 
-    Unstable 
+    Unstable,
+    None
 }
