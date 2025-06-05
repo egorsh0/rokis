@@ -23,7 +23,6 @@ public record QuestionDto : QuestionShortDto
 public record AnswerDto : AnswerShortDto
 {
     public string Content { get; set; }
-    public bool IsCorrect { get; set; }
 }
 
 public record QuestionDataDto

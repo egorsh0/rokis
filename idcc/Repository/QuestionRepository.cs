@@ -48,7 +48,6 @@ public class QuestionRepository : IQuestionRepository
         var answers = await _context.Answers.Where(a => a.Question == question).Select(a => new AnswerDto()
         {
             Id = a.Id,
-            IsCorrect = a.IsCorrect,
             Content = a.Content
         }).OrderBy(o => Guid.NewGuid()).ToListAsync();
 
