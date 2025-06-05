@@ -7,28 +7,22 @@ public class TimeCalculate : ITimeCalculate
     public double K(int timeSpant, double average, double min, double max)
     {
         var r = R(timeSpant, average);
-        
-        if (r <= 0.5)
-        {
-            return R_LessOrEqual_05(r);
-        }
 
-        if (r is > 0.5 and <= 1)
+        return r switch
         {
-            return R_GreaterThan_05_LessOrEqual_1(r, max);
-        }
-
-        if (r is > 1 and <= 1.5)
-        {
-            return R_GreaterThan_1_LessOrEqual_1_5();
-        }
-
-        return R_GreaterThan_1_51(r, min);
+            < 0.1 => R_Less_01(),
+            > 0.1 and <= 0.5 => R_LessOrEqual_05(r),
+            > 0.5 and <= 1 => R_GreaterThan_05_LessOrEqual_1(r, max),
+            > 1 and <= 1.5 => R_GreaterThan_1_LessOrEqual_1_5(),
+            _ => R_GreaterThan_1_51(r, min)
+        };
     }
 
     internal Func<double, double, double> R { get; } =
         (timeSpant, average) => timeSpant / average;
 
+    internal Func<double> R_Less_01 { get; } =
+        () => 0.1;
     internal Func<double, double> R_LessOrEqual_05 { get; } =
         (r) => r;
     
