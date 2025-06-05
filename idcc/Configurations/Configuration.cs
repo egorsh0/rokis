@@ -106,8 +106,7 @@ public static class Configuration
                     ValidateLifetime = true,
                     ValidIssuer = "Idcc",
                     ValidAudience = "Idcc",
-                    // При желании можно включить ValidateLifetime = true
-                    // и настроить ClockSkew = TimeSpan.Zero, чтобы не было доп. времени
+                    ClockSkew = TimeSpan.Zero
                 };
                 
                 // ── дополнительная проверка SecurityStamp ─────────────────
@@ -157,6 +156,10 @@ public static class Configuration
         builder.Services.AddScoped<IEmployeeRepository, EmployeeRepository>();
         // Репозиторий физ лица
         builder.Services.AddScoped<IPersonRepository,   PersonRepository>();
+        
+        // Сервис по генерации Jwt
+        builder.Services.AddHttpContextAccessor();
+        builder.Services.AddScoped<ITokenService, TokenService>();
         
         // Репозиторий авторизации
         builder.Services.AddScoped<IRegisterRepository, RegisterRepository>();

@@ -71,6 +71,11 @@ public partial class IdccContext : IdentityDbContext<ApplicationUser>
     }
     
     /// <summary>
+    /// Контекст для таблицы "Токены обновления."
+    /// </summary>
+    public DbSet<RefreshToken> RefreshTokens { get; set; } = null!;
+    
+    /// <summary>
     /// Контекст для таблицы "Администратор"
     /// </summary>
     public DbSet<AdministratorProfile> AdministratorProfiles { get; set; } = null!;

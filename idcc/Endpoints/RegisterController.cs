@@ -1,5 +1,4 @@
-﻿using System.IdentityModel.Tokens.Jwt;
-using System.Security.Claims;
+﻿using System.Security.Claims;
 using System.Text;
 using idcc.Dtos;
 using idcc.Extensions;
@@ -11,7 +10,6 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.WebUtilities;
-using Microsoft.IdentityModel.Tokens;
 
 namespace idcc.Endpoints;
 
@@ -20,6 +18,7 @@ namespace idcc.Endpoints;
 [Route("api/register")]
 public class RegisterController : ControllerBase
 {
+    private readonly ITokenService _tokenService;
     private readonly UserManager<ApplicationUser> _userManager;
     private readonly IRegisterRepository _registerRepository;
     private readonly IConfiguration _configuration;
@@ -27,11 +26,13 @@ public class RegisterController : ControllerBase
 
     
     public RegisterController(
+        ITokenService tokenService,
         UserManager<ApplicationUser> userManager,
         IRegisterRepository registerRepository, 
         IConfiguration configuration,
         ILogger<RegisterController> logger)
     {
+        _tokenService = tokenService;
         _userManager = userManager;
         _registerRepository = registerRepository;
         _configuration = configuration;
@@ -150,26 +151,60 @@ public class RegisterController : ControllerBase
     /// <response code="401">Неверные данные.</response>
     [HttpPost("login")]
     [Consumes("application/json")]
-    [ProducesResponseType(typeof(JwtResponse), StatusCodes.Status200OK)]
-    [ProducesResponseType(typeof(string),      StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(typeof(LoginDto), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(string), StatusCodes.Status401Unauthorized)]
     [ProducesResponseType(StatusCodes.Status500InternalServerError)]
     public async Task<IActionResult> Login([FromBody] LoginPayload dto)
     {
         try
         {
-            var user = await _registerRepository.LoginAsync(dto);
+            var user = await _registerRepository.LoginCheckAsync(dto);
             if (user.applicationUser == null)
             {
                 return Unauthorized(new ResponseDto(user.code,"Invalid credentials"));
             }
-            var token = await GenerateJwtTokenAsync(user.applicationUser);
-            return Ok(token);
+            var login = await _tokenService.CreateTokensAsync(user.applicationUser);
+            return Ok(login);
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error login employee");
             return StatusCode(500, new ResponseDto(MessageCode.InternalServerError,"Internal server error"));
         }
+    }
+    
+    /// <summary>Обновляет просроченный access-token по refresh-cookie.</summary>
+    /// <response code="200">Новая пара токенов в теле + новая cookie.</response>
+    /// <response code="401">Refresh-cookie отсутствует или недействительна.</response>
+    [HttpPost("refresh-token")]
+    [AllowAnonymous]
+    [ProducesResponseType(typeof(LoginDto), 200)]
+    [ProducesResponseType(401)]
+    public async Task<IActionResult> Refresh()
+    {
+        var token = Request.Cookies["refreshToken"];
+        if (string.IsNullOrEmpty(token))
+        {
+            return Unauthorized(new ResponseDto(MessageCode.INVALID_REFRESH_TOKEN,"Refresh token is empty"));
+        }
+
+        var login = await _tokenService.RefreshAsync(token);
+        return login is null ? Unauthorized(new ResponseDto(MessageCode.INVALID_REFRESH_TOKEN,"Invalid credentials for refresh token")) : Ok(login);
+    }
+    
+    [HttpPost("logout")]
+    [Authorize]
+    [ProducesResponseType(204)]
+    public async Task<IActionResult> Logout()
+    {
+        var token = Request.Cookies["refreshToken"];
+        if (!string.IsNullOrEmpty(token))
+        {
+            await _tokenService.RevokeAsync(token);
+        }
+
+        Response.Cookies.Delete("refreshToken");
+        return NoContent();
     }
     
     /// <summary>Обновление токена для текущего пользователя.</summary>
@@ -192,7 +227,7 @@ public class RegisterController : ControllerBase
             {
                 return Unauthorized(new ResponseDto(MessageCode.USER_NOT_FOUND, "Invalid credentials"));
             }
-            var token = await GenerateJwtTokenAsync(user);
+            var token = await _tokenService.CreateTokensAsync(user);
             return Ok(token);
         }
         catch (Exception ex)
@@ -298,46 +333,5 @@ public class RegisterController : ControllerBase
         };
 
         return Ok(result);
-    }
-    
-    private async Task<LoginDto> GenerateJwtTokenAsync(ApplicationUser user)
-    {
-        // ── 1.  обновляем SecurityStamp ────────────────────────────
-        await _userManager.UpdateSecurityStampAsync(user);
-        var newStamp = await _userManager.GetSecurityStampAsync(user);
-        
-        var roles = await _userManager.GetRolesAsync(user);
-
-        // ── 2.  базовые claims ─────────────────────────────────────
-        var claims = new List<Claim>
-        {
-            new(ClaimTypes.NameIdentifier, user.Id),
-            new(ClaimTypes.Email, user.Email ?? ""),
-            //new("IP", HttpContext.Connection.RemoteIpAddress?.ToString() ?? ""),
-            //new("UserAgent", Request.Headers["User-Agent"].ToString()),
-            new("AspNet.Identity.SecurityStamp", newStamp)
-        };
-
-        // Добавим роли в токен:
-        claims.AddRange(roles.Select(r => new Claim(ClaimTypes.Role, r)));
-        
-        // ── 3.  формируем JWT ─────────────────────────────────────
-        var secret = _configuration["Jwt:Secret"];
-        var key = Encoding.UTF8.GetBytes(secret!);
-        var creds = new SigningCredentials(new SymmetricSecurityKey(key), SecurityAlgorithms.HmacSha256);
-
-        var token = new JwtSecurityToken(
-            issuer: "Idcc",
-            audience: "Idcc",
-            claims: claims,
-            expires: DateTime.UtcNow.AddMinutes(15),
-            signingCredentials: creds
-        );
-        
-        var utcTime = DateTime.UtcNow;
-        user.PasswordLastChanged = utcTime;
-        await _userManager.UpdateAsync(user);
-        var login = new LoginDto(new JwtSecurityTokenHandler().WriteToken(token), roles.ToList());
-        return login;
     }
 }

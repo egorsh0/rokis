@@ -9,6 +9,9 @@ public enum MessageCode
     [Description("User not found")]
     USER_NOT_FOUND,
     
+    [Description("Invalid refresh token")]
+    INVALID_REFRESH_TOKEN,
+    
     [Description("Invalid password")]
     INVALID_PASSWORD,
     [Description("Role is not found")]

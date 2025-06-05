@@ -351,7 +351,7 @@ public class RegisterRepository : IRegisterRepository
         };
     }
 
-    public async Task<(MessageCode, ApplicationUser?)> LoginAsync(LoginPayload dto)
+    public async Task<(MessageCode, ApplicationUser?)> LoginCheckAsync(LoginPayload dto)
     {
         var user = await _userManager.FindByEmailAsync(dto.Email);
         if (user == null)

@@ -14,7 +14,7 @@ public interface IRegisterRepository
     Task<AuthResult> RegisterAdministratorAsync(RegisterAdministratorPayload dto);
 
     // Логин
-    Task<(MessageCode code, ApplicationUser? applicationUser)> LoginAsync(LoginPayload dto);
+    Task<(MessageCode code, ApplicationUser? applicationUser)> LoginCheckAsync(LoginPayload dto);
     
     Task<ApplicationUser?> FindUserAsync(string userId);
 }
