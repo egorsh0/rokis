@@ -117,7 +117,8 @@ public class CompanyController : ControllerBase
     {
         if (!ModelState.IsValid)
         {
-            return BadRequest(ModelState);
+            var errors = string.Join(Environment.NewLine, ModelState.Values.SelectMany(v => v.Errors.Select(e => e.ErrorMessage)));
+            return BadRequest(new ResponseDto(MessageCode.CHANGE_PASSWORD_FAILED, errors));
         }
 
         var user = await _userManager.GetUserAsync(User);

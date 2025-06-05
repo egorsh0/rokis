@@ -12,6 +12,8 @@ public enum MessageCode
     [Description("Invalid refresh token")]
     INVALID_REFRESH_TOKEN,
     
+    [Description("Change password failed")]
+    CHANGE_PASSWORD_FAILED,
     [Description("Invalid password")]
     INVALID_PASSWORD,
     [Description("Role is not found")]

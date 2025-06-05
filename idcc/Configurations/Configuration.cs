@@ -204,6 +204,10 @@ public static class Configuration
         
         // 4. Подключаем контроллеры + Swagger
         builder.Services.AddControllers()
+            .ConfigureApiBehaviorOptions(o =>
+            {
+                o.SuppressModelStateInvalidFilter = true;
+            })
             .AddJsonOptions(options =>
             {
                 options.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter());
@@ -260,6 +264,7 @@ public static class Configuration
         app.UseMiddleware<PasswordExpirationMiddleware>();
         
         app.MapControllers();
+        
         app.MapMetrics();
     }
 }
