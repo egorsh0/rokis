@@ -12,6 +12,4 @@ app.RegisterMiddlewares();
 
 app.RegisterPingEndpoints();
 
-app.RegisterReportEndpoints();
-
 app.Run();

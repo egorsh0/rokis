@@ -61,7 +61,10 @@ public static class Configuration
         builder.Services.AddDbContext<IdccContext>(options =>
         {
             options.UseLazyLoadingProxies();
-            options.UseNpgsql(connectionString);
+            options.UseNpgsql(connectionString, npg =>
+            {
+                npg.EnableRetryOnFailure(5);
+            });
         });
         
         // 2. Настраиваем Identity (с параметрами безопасности паролей)
@@ -187,7 +190,8 @@ public static class Configuration
         builder.Services.AddScoped<IScoreCalculate, ScoreCalculate>();
         builder.Services.AddScoped<IGradeCalculate, GradeCalculate>();
         
-        builder.Services.AddScoped<IGraphGenerate, GraphGenerate>();
+        // Сервис отрисовки отчета
+        builder.Services.AddScoped<IGraphService, GraphService>();
 
         builder.Services.AddScoped<IReportRepository, ReportRepository>();
         builder.Services.AddScoped<IIdccApplication, IdccApplication>();
@@ -257,11 +261,11 @@ public static class Configuration
         
         // Включаем аутентификацию/авторизацию
         app.UseAuthentication();
+        app.UseMiddleware<PasswordExpirationMiddleware>();
         app.UseAuthorization();
         
         // Пользовательские middleware
         // app.UseMiddleware<IpUserAgentValidationMiddleware>();
-        app.UseMiddleware<PasswordExpirationMiddleware>();
         
         app.MapControllers();
         

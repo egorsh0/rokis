@@ -762,11 +762,11 @@ INSERT INTO "Grades" ("Id", "Name", "Code", "Description") VALUES (3, 'Senior', 
 Конфигурация Persents 
 */
 
-INSERT INTO "Persents" ("Id", "Code", "Description", "Value") VALUES (1, 'GainWeight', 'Верхняя граница веса', 0.2);
+INSERT INTO "Persents" ("Id", "Code", "Description", "Value") VALUES (1, 'GainWeight', 'Верхняя граница веса', 0.17);
 INSERT INTO "Persents" ("Id", "Code", "Description", "Value") VALUES (2, 'LessWeight', 'Нижняя граница веса', 0.1);
-INSERT INTO "Persents" ("Id", "Code", "Description", "Value") VALUES (3, 'RaiseData', 'Процент повышения уровня', 0.2);
-INSERT INTO "Persents" ("Id", "Code", "Description", "Value") VALUES (4, 'RaiseLevel', 'Процент веса при повышении уровня', 0.3);
-INSERT INTO "Persents" ("Id", "Code", "Description", "Value") VALUES (5, 'GraphSize', 'Масштаб графиков', 25);
+INSERT INTO "Persents" ("Id", "Code", "Description", "Value") VALUES (3, 'RaiseData', 'Процент повышения уровня', 0.15);
+INSERT INTO "Persents" ("Id", "Code", "Description", "Value") VALUES (4, 'RaiseLevel', 'Процент веса при повышении уровня', 0.05);
+INSERT INTO "Persents" ("Id", "Code", "Description", "Value") VALUES (5, 'Reasonable', 'Искуственная граница', 0.45);
 
 /*  
 Конфигурация Direction 
@@ -808,9 +808,9 @@ INSERT INTO "AnswerTimes" ("Id", "GradeId", "Average", "Min", "Max") VALUES (3, 
 Конфигурация Weights 
 */
 
-INSERT INTO "Weights" ("Id", "GradeId", "Min", "Max") VALUES (1, 1, 0.2, 0.4);
+INSERT INTO "Weights" ("Id", "GradeId", "Min", "Max") VALUES (1, 1, 0.01, 0.4);
 INSERT INTO "Weights" ("Id", "GradeId", "Min", "Max") VALUES (2, 2, 0.4, 0.6);
-INSERT INTO "Weights" ("Id", "GradeId", "Min", "Max") VALUES (3, 3, 0.6, 0.8);
+INSERT INTO "Weights" ("Id", "GradeId", "Min", "Max") VALUES (3, 3, 0.6, 1.0);
 
 /*  
 Конфигурация DiscountRules 

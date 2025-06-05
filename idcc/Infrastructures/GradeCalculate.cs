@@ -11,7 +11,7 @@ public class GradeCalculate : IGradeCalculate
         {
             case true when prev is null:
             case true when next is null:
-                return null;
+                return next;
             case true when true:
                 return next;
             case false:
