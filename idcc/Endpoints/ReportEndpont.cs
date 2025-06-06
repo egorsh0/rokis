@@ -1,9 +1,9 @@
 ﻿using System.ComponentModel.DataAnnotations;
 using idcc.Application.Interfaces;
+using idcc.Builders;
 using idcc.Dtos;
 using idcc.Extensions;
 using idcc.Infrastructures;
-using idcc.Models;
 using idcc.Repository.Interfaces;
 using idcc.Service;
 using Microsoft.AspNetCore.Authorization;
@@ -22,35 +22,40 @@ namespace idcc.Endpoints;
 public class ReportController : ControllerBase
 {
     private readonly HybridCache _cache;
-    private readonly ISessionRepository _sessions;
+    private readonly ISessionService _sessionService;
     private readonly IDataRepository _dataRepo;
     private readonly IGraphService _graphs;
     private readonly IConfigRepository _cfgRepo;
     private readonly IReportRepository _reports;
-    private readonly IIdccReport  _reportCore;
     private readonly IUserAnswerRepository _answers;
     private readonly IMetricService _metrics;
+    
+    private readonly IReportService  _reportService;
+    private readonly IChartService _chartService;
 
     public ReportController(
         HybridCache cache,
-        ISessionRepository sessionRepository,
+        ISessionService sessionService,
         IDataRepository dataRepository,
         IGraphService graphService,
         IConfigRepository configRepository,
         IReportRepository reportRepository,
-        IIdccReport idccReport,
         IUserAnswerRepository answerRepository,
-        IMetricService metricService)
+        IMetricService metricService,
+        IReportService reportService,
+        IChartService chartService)
     {
         _cache = cache;
-        _sessions = sessionRepository;
+        _sessionService = sessionService;
         _dataRepo = dataRepository;
         _graphs = graphService;
         _cfgRepo = configRepository;
         _reports = reportRepository;
-        _reportCore = idccReport;
         _answers = answerRepository;
         _metrics = metricService;
+        
+        _reportService = reportService;
+        _chartService = chartService;
     }
 
     // ════════════════════════════════════════════════════════════════
@@ -71,7 +76,7 @@ public class ReportController : ControllerBase
     public async Task<IActionResult> Generate([FromQuery, Required] Guid tokenId)
     {
         // 1. находим финальную сессию
-        Session? session = await _sessions.GetFinishSessionAsync(tokenId);
+        SessionDto? session = await _sessionService.GetFinishSessionAsync(tokenId);
 
         if (session is null)
         {
@@ -99,23 +104,27 @@ public class ReportController : ControllerBase
                 // }
 
                 // 2. генерируем отчёт
-                var report = await _reportCore.GenerateAsync(session);
+                var report = await _reportService.GenerateAsync(session);
                 if (report is null)
                 {
                     return (MessageCode.REPORT_IS_FAILED, null);
                 }
 
                 // 3. обновляем Score в сессии
-                await _sessions.SessionScoreAsync(session.Id, report.FinalScoreDto!.Score);
+                await _sessionService.SessionScoreAsync(session.Id, report.FinalScoreDto!.Score);
 
                 // 4. графики (если нужны)
-                byte[]? img1 = null, img2 = null;
+                byte[]? img1 = null, img2 = null, img3 = null;
                 if (report.FinalTopicDatas is not null)
                 {
+                    var datas = await _reportService.GetAllTopicDataAsync(session);
+                    var normalizers = new TopicNormalizerBuilder().Build(datas);
+                    img1 = _chartService.DrawUserProfile(report.FinalTopicDatas, normalizers, report.FinalScoreDto.Grade, report.ThinkingPattern, report.CognitiveStabilityIndex);
+                    
                     var resize = await _dataRepo.GetPercentOrDefaultAsync("Reasonable", 2);
-                    img1 = _graphs.Generate(report.CognitiveStabilityIndex, report.ThinkingPattern,
+                    img2 = _graphs.Generate(report.CognitiveStabilityIndex, report.ThinkingPattern,
                                             report.FinalScoreDto.Grade, report.FinalTopicDatas, resize);
-                    img2 = _graphs.GenerateRadarChartForFinalTopics(report.FinalTopicDatas,
+                    img3 = _graphs.GenerateRadarChartForFinalTopics(report.FinalTopicDatas,
                                             report.CognitiveStabilityIndex, report.ThinkingPattern,
                                             report.FinalScoreDto.Grade, resize);
                 }
@@ -130,6 +139,7 @@ public class ReportController : ControllerBase
                 var dto = new ReportGeneratedDto(
                     report,
                     img1 is null ? null : Convert.ToBase64String(img1),
+                    img3 is null ? null : Convert.ToBase64String(img3),
                     img2 is null ? null : Convert.ToBase64String(img2));
 
                 // dto кэшируем, code=null
@@ -152,7 +162,7 @@ public class ReportController : ControllerBase
     public async Task<IActionResult> Get([FromQuery, Required] Guid tokenId)
     {
         // 1. проверяем, что сессия завершена
-        var session = await _sessions.GetSessionAsync(tokenId);
+        var session = await _sessionService.GetSessionAsync(tokenId);
         if (session is null)
         {
             return BadRequest(new ResponseDto(MessageCode.SESSION_IS_NOT_EXIST,

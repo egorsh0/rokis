@@ -30,14 +30,15 @@ public class UserAnswerRepository : IUserAnswerRepository
         await _context.SaveChangesAsync();
     }
 
-    public async Task<List<UserAnswer>> GetAllUserAnswers(Session session)
+    public async Task<List<UserAnswer>> GetAllUserAnswers(SessionDto session)
     {
-        return await _context.UserAnswers.Where(a => a.Session == session).ToListAsync();
+        return await _context.UserAnswers.Where(a => a.Session.Id == session.Id).ToListAsync();
     }
     
-    public async Task<List<QuestionResultDto>> GetQuestionResults(Session session)
+    public async Task<List<QuestionResultDto>> GetQuestionResults(SessionDto session)
     {
-        var userAnswers = await _context.UserAnswers.Where(a => a.Session == session)
+        var userAnswers = await _context.UserAnswers.Where(a => 
+                a.Session.Id == session.Id)
             .Include(userAnswer => userAnswer.Question).ToListAsync();
 
         return userAnswers.Select(userAnswer => new QuestionResultDto(userAnswer.Question.Weight, userAnswer.Score > 0, userAnswer.TimeSpent)).ToList();

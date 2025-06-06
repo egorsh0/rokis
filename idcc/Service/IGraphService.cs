@@ -130,9 +130,9 @@ public class GraphService : IGraphService
             IsAntialias = true
         };
 
-        canvas.DrawText($"Индекс стабильности: {cognitiveStabilityIndex} (Устойчивость мышления)", 10, _height - 80, legendPaint);
-        canvas.DrawText($"Тип мышления: {thinkingPattern} ({GetThinkingPatternText(thinkingPattern)})", 10, _height - 50, legendPaint);
-        canvas.DrawText($"Оценка: {grade} ({GetGradeText(grade)})", 10, _height - 20, legendPaint);
+        canvas.DrawText($"Индекс стабильности: {cognitiveStabilityIndex}", 10, _height - 80, legendPaint);
+        canvas.DrawText($"Тип мышления: {GetThinkingPatternText(thinkingPattern)}", 10, _height - 50, legendPaint);
+        canvas.DrawText($"Оценка: {GetGradeText(grade)}", 10, _height - 20, legendPaint);
 
         
         using var image = SKImage.FromBitmap(bitmap);

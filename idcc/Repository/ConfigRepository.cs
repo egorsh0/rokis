@@ -39,7 +39,7 @@ public class ConfigRepository : IConfigRepository
 
     public async Task<List<GradeLevelDto>> GetGradeLevelsAsync()
     {
-        var gradeLevels = await _context.GradeLevels.Select(level => new GradeLevelDto(level.Grade.Name, level.Level))
+        var gradeLevels = await _context.GradeLevels.Select(level => new GradeLevelDto(level.Grade.Name, level.Min, level.Max))
             .ToListAsync();
         return [..gradeLevels];
     }

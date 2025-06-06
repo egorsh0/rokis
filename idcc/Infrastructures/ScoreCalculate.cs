@@ -49,5 +49,3 @@ public class ScoreCalculate : IScoreCalculate
             return weight * score;
         };
 }
- 
-        

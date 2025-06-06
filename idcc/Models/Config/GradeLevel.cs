@@ -9,6 +9,6 @@ public class GradeLevel
     
     public virtual required Grade Grade { get; set; }
     
-    public double Level { get; set; }
-    
+    public double Min { get; set; }
+    public double Max { get; set; }
 }

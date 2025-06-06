@@ -31,7 +31,7 @@ public record FinalScoreDto(double Score, string Grade);
 /// <summary>
 /// Итог по темам.
 /// </summary>
-public record FinalTopicData(string Topic, double Score, int Positive, int Negative);
+public record FinalTopicData(string Topic, double Score, string Grade, int Positive, int Negative);
 
 /// <summary>Ответ «generate»: полный отчёт + (опц.) картинка.</summary>
-public record ReportGeneratedDto(ReportDto Report, string? ImageBase64, string? AnotherImageBase64);
+public record ReportGeneratedDto(ReportDto Report, string? ImageBase64, string? AnotherImageBase64, string? OldImageBase64);

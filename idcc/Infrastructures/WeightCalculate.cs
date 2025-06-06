@@ -4,16 +4,18 @@ namespace idcc.Infrastructures;
 
 public class WeightCalculate : IWeightCalculate
 {
-    public double GetNewWeight(double actual, double current, double max, double gainPercent, double lessPercent, bool isCorrect)
+    public double GetNewWeight(double topicWeight, double questionWeight, double max, double gainPercent, double lessPercent, bool isCorrect)
     {
-        return isCorrect ? GainWeight(actual, current, gainPercent, max) : LessWeight(current, lessPercent);
+        return isCorrect
+            ? GainWeight(topicWeight, questionWeight, gainPercent, max)
+            : LessWeight(topicWeight, lessPercent);
     }
 
     internal Func<double, double, double, double, double> GainWeight { get; } =
-        (actual, current, gainPercent, max) =>
+        (topicWeight, questionWeight, gainPercent, max) =>
         {
-            var tmp = (current + max) / 2;
-            var gainPercentValue = actual + (gainPercent * actual);
+            var tmp = (questionWeight + max) / 2;
+            var gainPercentValue = topicWeight + (gainPercent * topicWeight);
             if (tmp > gainPercentValue)
             {
                 tmp = gainPercentValue;
@@ -23,7 +25,7 @@ public class WeightCalculate : IWeightCalculate
         };
     
     internal Func<double, double, double> LessWeight { get; } =
-        (actual, lessPercent) => actual - (lessPercent * actual);
+        (topicWeight, lessPercent) => topicWeight - (lessPercent * topicWeight);
 }
  
         

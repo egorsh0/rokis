@@ -84,8 +84,8 @@ public class SessionRepository : ISessionRepository
         // базовый запрос
         IQueryable<Session> query = _context.Sessions
             .AsNoTracking()
-            .Include(s => s.Token)                // 1-й Include
-            .ThenInclude(t => t.Direction);   // 2-й Include
+            .Include(s => s.Token)
+            .ThenInclude(t => t.Direction);
 
         // фильтр по пользователю
         query = isEmployee
@@ -105,7 +105,30 @@ public class SessionRepository : ISessionRepository
                     s.Token.Status)))
             .ToListAsync();
     }
-
+    
+    public async Task<IEnumerable<SessionDto>> GetCloseSessionsAsync(int directionId)
+    {
+        IQueryable<Session> query = _context.Sessions
+            .AsNoTracking()
+            .Include(s => s.Token)
+            .ThenInclude(t => t.Direction);
+        
+        query = query.Where(s => 
+            s.EndTime != null && 
+            s.Token.Direction.Id == directionId);
+        
+        return await query.Select(s => new SessionDto(
+                s.Id,
+                s.StartTime,
+                s.EndTime,
+                s.Score,
+                new TokenShortDto(
+                    s.Token.Id,
+                    s.Token.DirectionId,
+                    s.Token.Direction.Name,
+                    s.Token.Status)))
+            .ToListAsync();
+    }
 
     public async Task<Session?> GetSessionAsync(Guid tokenId)
     {

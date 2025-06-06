@@ -71,10 +71,10 @@ public class UserTopicRepository : IUserTopicRepository
             userTopic.Weight, userTopic.IsFinished, userTopic.WasPrevious, userTopic.Actual, userTopic.Count);
     }
 
-    public async Task<List<UserTopicDto>> GetAllTopicsAsync(Session session)
+    public async Task<List<UserTopicDto>> GetAllTopicsAsync(SessionDto session)
     {
         var userTopics = await _context.UserTopics
-            .Where(t => t.Session == session)
+            .Where(t => t.Session.Id == session.Id)
             .Include(userTopic => userTopic.Session)
             .Include(userTopic => userTopic.Topic)
             .ThenInclude(topic => topic.Direction)

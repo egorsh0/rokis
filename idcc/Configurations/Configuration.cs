@@ -178,6 +178,7 @@ public static class Configuration
         
         // Репозиторий сессий
         builder.Services.AddScoped<ISessionRepository, SessionRepository>();
+        builder.Services.AddScoped<ISessionService, SessionService>();
         
         builder.Services.AddScoped<IUserRepository, UserRepository>();
         builder.Services.AddScoped<IQuestionRepository, QuestionRepository>();
@@ -192,6 +193,7 @@ public static class Configuration
         
         // Сервис отрисовки отчета
         builder.Services.AddScoped<IGraphService, GraphService>();
+        builder.Services.AddScoped<IChartService, ChartService>();
 
         builder.Services.AddScoped<IReportRepository, ReportRepository>();
         builder.Services.AddScoped<IIdccApplication, IdccApplication>();
@@ -200,7 +202,7 @@ public static class Configuration
         builder.Services.AddScoped<IMetricService, MetricService>();
         
         // Расчет отчета
-        builder.Services.AddScoped<IIdccReport, IdccReport>();
+        builder.Services.AddScoped<IReportService, ReportService>();
 
         // Фоновый сервис проверки открытых сессий.
         builder.Services.AddSingleton<IDurationProvider, SessionDurationProvider>();

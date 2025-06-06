@@ -30,8 +30,9 @@ public record GradeDto(
 /// Используется при расчёте итогового результата.
 /// </summary>
 /// <param name="Grade">Название грейда.</param>
-/// <param name="Level">Коэффициент уровня (0–1).</param>
-public record GradeLevelDto(string Grade, double Level);
+/// <param name="Min">Коэффициент уровня Min.</param>
+/// <param name="Max">Коэффициент уровня Max.</param>
+public record GradeLevelDto(string Grade, double Min, double Max);
 
 /// <summary>
 /// Диапазоны «начало–конец» для привязки результата к уровню грейда.

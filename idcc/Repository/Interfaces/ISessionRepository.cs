@@ -11,6 +11,8 @@ public interface ISessionRepository
     
     Task<IEnumerable<SessionDto>> GetSessionsForUserAsync(string userId, bool isEmployee);
 
+    Task<IEnumerable<SessionDto>> GetCloseSessionsAsync(int directionId);
+
     Task<Session?> GetSessionAsync(Guid tokenId);
     
     Task<Session?> GetActualSessionAsync(Guid tokenId);

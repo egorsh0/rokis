@@ -39,12 +39,15 @@ public class DataRepository : IDataRepository
     
     public async Task<(double, Grade)> GetGradeLevelAsync(double score)
     {
-        var gradeLevel = await _context.GradeLevels.Select(l => l.Level).ToListAsync();
-        var value = gradeLevel.MinBy(n => Math.Abs(n - score));
-        
-        var grade = await _context.GradeLevels.Where(level => level.Level.Equals(value)).Include(l => l.Grade)
-            .FirstAsync();
-        return (value, grade.Grade);
+        var gradeLevel = await _context.GradeLevels
+            .Where(gl => score >= gl.Min && score < gl.Max)
+            .Include(gl => gl.Grade)
+            .FirstOrDefaultAsync();
+
+        if (gradeLevel == null)
+            throw new Exception($"Не удалось определить грейд для score = {score}");
+
+        return (score, gradeLevel.Grade);
     }
 
     public async Task<double> GetPercentOrDefaultAsync(string code, double value)

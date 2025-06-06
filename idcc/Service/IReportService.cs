@@ -1,31 +1,38 @@
-﻿using idcc.Application.Interfaces;
-using idcc.Dtos;
+﻿using idcc.Dtos;
 using idcc.Infrastructures;
 using idcc.Infrastructures.Interfaces;
-using idcc.Models;
 using idcc.Repository.Interfaces;
 using idcc.Service;
 
-namespace idcc.Application;
+namespace idcc.Application.Interfaces;
 
-public class IdccReport : IIdccReport
+public interface IReportService
 {
-    private IDataRepository _dataRepository;
-    private IUserTopicRepository _userTopicRepository;
-    private IUserAnswerRepository _userAnswerRepository;
-    private IScoreCalculate _scoreCalculate;
-    private IMetricService _metricService;
+    Task<ReportDto?> GenerateAsync(SessionDto session);
+    Task<List<List<FinalTopicData>>> GetAllTopicDataAsync(SessionDto session);
+}
 
-    private ILogger<IdccReport> _logger;
+public class ReportService : IReportService
+{
+    private readonly ISessionRepository _sessionRepository;
+    private readonly IDataRepository _dataRepository;
+    private readonly IUserTopicRepository _userTopicRepository;
+    private readonly IUserAnswerRepository _userAnswerRepository;
+    private readonly IScoreCalculate _scoreCalculate;
+    private readonly IMetricService _metricService;
 
-    public IdccReport(
+    private ILogger<ReportService> _logger;
+
+    public ReportService(
+        ISessionRepository sessionRepository,
         IDataRepository dataRepository,
         IUserTopicRepository userTopicRepository,
         IUserAnswerRepository userAnswerRepository,
         IScoreCalculate scoreCalculate,
         IMetricService metricService,
-        ILogger<IdccReport> logger)
+        ILogger<ReportService> logger)
     {
+        _sessionRepository = sessionRepository;
         _dataRepository = dataRepository;
         _userTopicRepository = userTopicRepository;
         _userAnswerRepository = userAnswerRepository;
@@ -34,7 +41,7 @@ public class IdccReport : IIdccReport
         _logger = logger;
     }
     
-    public async Task<ReportDto?> GenerateAsync(Session session)
+    public async Task<ReportDto?> GenerateAsync(SessionDto session)
     {
         _logger.LogInformation("Создание обьекта отчета");
 
@@ -50,12 +57,46 @@ public class IdccReport : IIdccReport
         var cognitiveStabilityIndex = _metricService.CalculateCognitiveStability(questions);
         var thinkingPattern = _metricService.DetectThinkingPattern(questions, cognitiveStabilityIndex);
         
-        var report = new ReportDto(session.TokenId, session.StartTime, session.EndTime!.Value,
+        var report = new ReportDto(session.Token.Id, session.StartTime, session.EndTime!.Value,
             session.EndTime.Value - session.StartTime, cognitiveStabilityIndex, thinkingPattern, finalScoreDto, finalTopicDatas);
         return report;
     }
+    
+    public async Task<List<List<FinalTopicData>>> GetAllTopicDataAsync(SessionDto session)
+    {
+        var list = new List<List<FinalTopicData>>();
+        
+        var allCloseSessions = await _sessionRepository.GetCloseSessionsAsync(session.Token.DirectionId);
+        foreach (var closeSession in allCloseSessions)
+        {
+            var userTopics = await _userTopicRepository.GetAllTopicsAsync(closeSession);
+            var userAnswers = await _userAnswerRepository.GetAllUserAnswers(session);
 
-    private async Task<FinalScoreDto?> CalculateFinalScoreAsync(Session session)
+            var finalTopicDatas = new List<FinalTopicData>();
+            foreach (var userTopic in userTopics)
+            {
+                var questionAnswers = userAnswers.Where(a => a.Question.Topic.Id == userTopic.Topic.Id).ToList();
+                var scores = questionAnswers.Select(a => a.Score).ToList();
+                var weight = userTopic.Weight;
+                var topicScore = _scoreCalculate.GetTopicScore(scores, weight);
+                var positive = questionAnswers.Count(answer => answer.Score > 0);
+                var negative = questionAnswers.Count(answer => answer.Score == 0);
+
+                var finalTopicData = new FinalTopicData(
+                    userTopic.Topic.Name,
+                    topicScore == 0 ? ValueConst.MinValue : topicScore,
+                    userTopic.Grade.Name,
+                    positive, 
+                    negative);
+                finalTopicDatas.Add(finalTopicData);
+            }
+            list.Add(finalTopicDatas);
+        }
+        
+        return list;
+    }
+
+    private async Task<FinalScoreDto?> CalculateFinalScoreAsync(SessionDto session)
     {
         var userTopics = await _userTopicRepository.GetAllTopicsAsync(session);
         if (userTopics.Count == 0)
@@ -79,7 +120,7 @@ public class IdccReport : IIdccReport
         return new FinalScoreDto(sum, grade.Name);
     }
     
-    private async Task<List<FinalTopicData>?> CalculateFinalTopicDataAsync(Session session)
+    private async Task<List<FinalTopicData>?> CalculateFinalTopicDataAsync(SessionDto session)
     {
         var userTopics = await _userTopicRepository.GetAllTopicsAsync(session);
         if (!userTopics.Any())
@@ -99,8 +140,12 @@ public class IdccReport : IIdccReport
             var positive = questionAnswers.Count(answer => answer.Score > 0);
             var negative = questionAnswers.Count(answer => answer.Score == 0);
 
-            var finalTopicData = new FinalTopicData(userTopic.Topic.Name,
-                topicScore == 0 ? ValueConst.MinValue : topicScore, positive, negative);
+            var finalTopicData = new FinalTopicData(
+                userTopic.Topic.Name,
+                topicScore == 0 ? ValueConst.MinValue : topicScore,
+                userTopic.Grade.Name,
+                positive, 
+                negative);
             finalTopicDatas.Add(finalTopicData);
         }
 
