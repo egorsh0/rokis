@@ -135,23 +135,29 @@ public class OrderRepository : IOrderRepository
     
     public async Task<IEnumerable<OrderWithItemsDto>> GetOrdersAsync(string userId)
     {
-        return await _idccContext.Orders
+        var orders = await _idccContext.Orders
             .Where(o => o.UserId == userId)
             .OrderByDescending(o => o.Id)
-            .Select(o => new OrderWithItemsDto(
-                o.Id,
-                o.Tokens.Min(t => t.PurchaseDate), // дата покупки
-                o.Quantity, // общее кол-во
-                o.DiscountedTotal, // сумма со скидкой
-                o.Status,
-                o.Tokens
-                    .GroupBy(t => new { t.DirectionId, t.Direction.Name })
-                    .Select(g => new OrderDirectionQtyDto(
-                        g.Key.DirectionId,
-                        g.Key.Name,
-                        g.Count()))
-                    .ToList()))
+            .Include(o => o.Tokens)
+            .ThenInclude(t => t.Direction)
             .AsNoTracking()
             .ToListAsync();
+
+        var result = orders.Select(o => new OrderWithItemsDto(
+            o.Id,
+            o.Tokens.Any()
+                ? o.Tokens.Min(t => t.PurchaseDate)
+                : DateTime.MinValue,
+            o.Quantity,
+            o.DiscountedTotal,
+            o.Status,
+            o.Tokens
+                .GroupBy(t => new { id = t.DirectionId, name = t.Direction.Name })
+                .Select(g => new OrderDirectionQtyDto(
+                    g.Key.id,
+                    g.Key.name,
+                    g.Count()))
+                .ToList())).ToList();
+        return result;
     }
 }
