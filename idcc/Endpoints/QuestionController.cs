@@ -1,8 +1,8 @@
-﻿using idcc.Application.Interfaces;
-using idcc.Dtos;
+﻿using idcc.Dtos;
 using idcc.Extensions;
 using idcc.Infrastructures;
 using idcc.Repository.Interfaces;
+using idcc.Service;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
@@ -19,17 +19,17 @@ public class QuestionController : ControllerBase
     private readonly ISessionRepository _sessionRepository;
     private readonly IUserTopicRepository _topicRepository;
     private readonly IQuestionRepository _questionRepository;
-    private readonly IIdccApplication _idccApplication;
+    private readonly IScoreService _scoreService;
 
     public QuestionController(ISessionRepository sessionRepository,
                               IUserTopicRepository topicRepository,
                               IQuestionRepository questionRepository,
-                              IIdccApplication idccApplication)
+                              IScoreService scoreService)
     {
         _sessionRepository = sessionRepository;
         _topicRepository = topicRepository;
         _questionRepository = questionRepository;
-        _idccApplication = idccApplication;
+        _scoreService = scoreService;
     }
 
     // ════════════════════════════════════════════════════════════════
@@ -72,13 +72,13 @@ public class QuestionController : ControllerBase
         var cancelTokenSource = new CancellationTokenSource();
         while (!cancelTokenSource.Token.IsCancellationRequested)
         {
-            if (!await _topicRepository.HasOpenTopic(session))
+            if (!await _topicRepository.HasOpenTopic(session.Id))
             {
                 await _sessionRepository.EndSessionAsync(tokenId);
                 return NoContent();
             }
 
-            userTopicDto = await _topicRepository.GetRandomTopicAsync(session);
+            userTopicDto = await _topicRepository.GetRandomTopicAsync(session.Id);
             if (userTopicDto == null)
             {
                 return BadRequest(new ResponseDto(MessageCode.GET_RANDOM_TOPIC, MessageCode.GET_RANDOM_TOPIC.GetDescription()));
@@ -98,7 +98,7 @@ public class QuestionController : ControllerBase
         {
             return BadRequest(new ResponseDto(MessageCode.TOPIC_IS_NULL, MessageCode.TOPIC_IS_NULL.GetDescription()));
         }
-        await _topicRepository.RefreshActualTopicInfoAsync(userTopicDto.Id, session);
+        await _topicRepository.RefreshActualTopicInfoAsync(userTopicDto.Id, session.Id);
         return Ok(questionDto);
     }
 
@@ -136,7 +136,7 @@ public class QuestionController : ControllerBase
             return BadRequest(new ResponseDto(MessageCode.SESSION_IS_FINISHED, MessageCode.SESSION_IS_FINISHED.GetDescription()));
         }
 
-        var res = await _idccApplication.CalculateScoreAsync(
+        var res = await _scoreService.CalculateScoreAsync(
                       session,
                       (int)dateInterval.TotalSeconds,
                       question.Id,
@@ -147,7 +147,7 @@ public class QuestionController : ControllerBase
             return BadRequest(new ResponseDto(res.code, res.error));
         }
 
-        res = await _idccApplication.CalculateTopicWeightAsync(session);
+        res = await _scoreService.CalculateTopicWeightAsync(session);
         return res.error != null ? BadRequest(new ResponseDto(res.code, res.error)) : Ok(new ResponseDto(res.code,"The answer is sent"));
     }
 }

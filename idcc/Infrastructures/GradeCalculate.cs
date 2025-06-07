@@ -1,21 +1,27 @@
 ﻿using idcc.Dtos;
-using idcc.Infrastructures.Interfaces;
 
 namespace idcc.Infrastructures;
 
+public interface IGradeCalculate
+{
+    GradeDto Calculate(GradeDto current, double min, GradeDto? prev, GradeDto? next, double weight, bool canRaise);
+}
+
 public class GradeCalculate : IGradeCalculate
 {
-    public GradeDto? Calculate(GradeDto current, double min, GradeDto? prev, GradeDto? next, double weight, bool canRaise)
+    public GradeDto Calculate(GradeDto current, double min, GradeDto? prev, GradeDto? next, double weight, bool canRaise)
     {
-        switch (canRaise)
+        if (canRaise)
         {
-            case true when prev is null:
-            case true when next is null:
-                return next;
-            case true when true:
-                return next;
-            case false:
-                return weight < min ? prev : current;
+            return next ?? current;
         }
+
+        if (weight < min)
+        {
+            // если нельзя понизить — остаёмся на текущем
+            return prev ?? current;
+        }
+
+        return current;
     }
 }

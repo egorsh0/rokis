@@ -69,8 +69,8 @@ public class ReportService : IReportService
         var allCloseSessions = await _sessionRepository.GetCloseSessionsAsync(session.Token.DirectionId);
         foreach (var closeSession in allCloseSessions)
         {
-            var userTopics = await _userTopicRepository.GetAllTopicsAsync(closeSession);
-            var userAnswers = await _userAnswerRepository.GetAllUserAnswers(session);
+            var userTopics = await _userTopicRepository.GetAllTopicsAsync(closeSession.Id);
+            var userAnswers = await _userAnswerRepository.GetAllUserAnswers(session.Id);
 
             var finalTopicDatas = new List<FinalTopicData>();
             foreach (var userTopic in userTopics)
@@ -98,13 +98,13 @@ public class ReportService : IReportService
 
     private async Task<FinalScoreDto?> CalculateFinalScoreAsync(SessionDto session)
     {
-        var userTopics = await _userTopicRepository.GetAllTopicsAsync(session);
+        var userTopics = await _userTopicRepository.GetAllTopicsAsync(session.Id);
         if (userTopics.Count == 0)
         {
             return null;
         }
 
-        var userAnswers = await _userAnswerRepository.GetAllUserAnswers(session);
+        var userAnswers = await _userAnswerRepository.GetAllUserAnswers(session.Id);
 
         var sum = 0.0;
         foreach (var userTopic in userTopics)
@@ -122,13 +122,13 @@ public class ReportService : IReportService
     
     private async Task<List<FinalTopicData>?> CalculateFinalTopicDataAsync(SessionDto session)
     {
-        var userTopics = await _userTopicRepository.GetAllTopicsAsync(session);
+        var userTopics = await _userTopicRepository.GetAllTopicsAsync(session.Id);
         if (!userTopics.Any())
         {
             return null;
         }
         
-        var userAnswers = await _userAnswerRepository.GetAllUserAnswers(session);
+        var userAnswers = await _userAnswerRepository.GetAllUserAnswers(session.Id);
 
         var finalTopicDatas = new List<FinalTopicData>();
         foreach (var userTopic in userTopics)

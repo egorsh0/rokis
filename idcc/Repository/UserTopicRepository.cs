@@ -1,6 +1,5 @@
 ﻿using idcc.Context;
 using idcc.Dtos;
-using idcc.Models;
 using idcc.Repository.Interfaces;
 using Microsoft.EntityFrameworkCore;
 
@@ -15,14 +14,15 @@ public class UserTopicRepository : IUserTopicRepository
         _context = context;
     }
 
-    public async Task<bool> HasOpenTopic(Session session)
+    public async Task<bool> HasOpenTopic(int sessionId)
     {
-        return await _context.UserTopics.AnyAsync(t => t.IsFinished == false && t.Session == session);
+        return await _context.UserTopics.AnyAsync(t => t.IsFinished == false && t.Session.Id == sessionId);
     }
 
-    public async Task<UserTopicDto?> GetRandomTopicAsync(Session session)
+    public async Task<UserTopicDto?> GetRandomTopicAsync(int sessionId)
     {
-        var userTopics = await _context.UserTopics.Where(t => t.IsFinished == false && t.Session == session)
+        var userTopics = await _context.UserTopics
+            .Where(t => t.IsFinished == false && t.Session.Id == sessionId)
             .Include(userTopic => userTopic.Session).Include(userTopic => userTopic.Topic)
             .ThenInclude(topic => topic.Direction)
             .Include(userTopic => userTopic.Grade).ToListAsync();
@@ -42,10 +42,10 @@ public class UserTopicRepository : IUserTopicRepository
             userTopic.Weight, userTopic.IsFinished, userTopic.WasPrevious, userTopic.Actual, userTopic.Count);
     }
     
-    public async Task<UserTopicDto?> GetActualTopicAsync(Session session)
+    public async Task<UserTopicDto?> GetActualTopicAsync(int sessionId)
     {
         var userTopic = await _context.UserTopics
-            .Where(t => t.IsFinished == false && t.Actual == true && t.Session == session)
+            .Where(t => t.IsFinished == false && t.Actual && t.Session.Id == sessionId)
             .Include(userTopic => userTopic.Session).Include(userTopic => userTopic.Topic)
             .ThenInclude(topic => topic.Direction)
             .Include(userTopic => userTopic.Grade).FirstOrDefaultAsync();
@@ -71,10 +71,10 @@ public class UserTopicRepository : IUserTopicRepository
             userTopic.Weight, userTopic.IsFinished, userTopic.WasPrevious, userTopic.Actual, userTopic.Count);
     }
 
-    public async Task<List<UserTopicDto>> GetAllTopicsAsync(SessionDto session)
+    public async Task<List<UserTopicDto>> GetAllTopicsAsync(int sessionId)
     {
         var userTopics = await _context.UserTopics
-            .Where(t => t.Session.Id == session.Id)
+            .Where(t => t.Session.Id == sessionId)
             .Include(userTopic => userTopic.Session)
             .Include(userTopic => userTopic.Topic)
             .ThenInclude(topic => topic.Direction)
@@ -125,12 +125,14 @@ public class UserTopicRepository : IUserTopicRepository
         }
     }
 
-    public async Task RefreshActualTopicInfoAsync(int id, Session session)
+    public async Task RefreshActualTopicInfoAsync(int userTopicId, int sessionId)
     {
-        var userTopics = await _context.UserTopics.Where(t => t.Session == session).ToListAsync();
+        var userTopics = await _context.UserTopics
+            .Where(t => t.Session.Id == sessionId)
+            .ToListAsync();
         foreach (var userTopic in userTopics)
         {
-            if (userTopic.Id == id)
+            if (userTopic.Id == userTopicId)
             {
                 userTopic.Actual = true;
                 userTopic.WasPrevious = true;
@@ -155,17 +157,21 @@ public class UserTopicRepository : IUserTopicRepository
         }
     }
 
-    public async Task<int?> CountQuestionAsync(int id, double max)
+    public async Task<bool> HaveQuestionAsync(int topicId, double gradeMax)
     {
-        var userTopic = await _context.UserTopics.Where(t => t.Id == id).FirstOrDefaultAsync();
+        var userTopic = await _context.UserTopics
+            .Where(t => t.Id == topicId)
+            .FirstOrDefaultAsync();
         if (userTopic is null)
         {
-            return null;
+            return false;
         }
 
         var actualWeight = userTopic.Weight;
-        var count = await _context.Questions.CountAsync(q =>
-            q.Topic == userTopic.Topic && q.Weight > actualWeight && q.Weight < max);
-        return count;
+        return await _context.Questions
+            .AnyAsync(q =>
+            q.Topic == userTopic.Topic && 
+            q.Weight >= actualWeight && 
+            q.Weight <= gradeMax);
     }
 }

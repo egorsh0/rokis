@@ -15,7 +15,7 @@ public interface ISessionRepository
 
     Task<Session?> GetSessionAsync(Guid tokenId);
     
-    Task<Session?> GetActualSessionAsync(Guid tokenId);
+    Task<SessionDto?> GetActualSessionAsync(Guid tokenId);
     
     Task<Session?> GetFinishSessionAsync(Guid tokenId);
     

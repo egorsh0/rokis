@@ -747,7 +747,6 @@ COMMIT;
 Конфигурация Counts 
 */
 
-INSERT INTO "Counts" ("Id", "Code", "Description", "Value") VALUES (1, 'Raise', 'Количество вопросов для повышения уровня', 3);
 INSERT INTO "Counts" ("Id", "Code", "Description", "Value") VALUES (2, 'Question', 'Количество вопросов в топике', 10);
 
 /*  
@@ -762,11 +761,10 @@ INSERT INTO "Grades" ("Id", "Name", "Code", "Description") VALUES (3, 'Senior', 
 Конфигурация Persents 
 */
 
-INSERT INTO "Persents" ("Id", "Code", "Description", "Value") VALUES (1, 'GainWeight', 'Верхняя граница веса', 0.17);
-INSERT INTO "Persents" ("Id", "Code", "Description", "Value") VALUES (2, 'LessWeight', 'Нижняя граница веса', 0.1);
-INSERT INTO "Persents" ("Id", "Code", "Description", "Value") VALUES (3, 'RaiseData', 'Процент повышения уровня', 0.15);
-INSERT INTO "Persents" ("Id", "Code", "Description", "Value") VALUES (4, 'RaiseLevel', 'Процент веса при повышении уровня', 0.05);
-INSERT INTO "Persents" ("Id", "Code", "Description", "Value") VALUES (5, 'Reasonable', 'Искуственная граница', 0.45);
+INSERT INTO "Persents" ("Id", "Code", "Description", "Value") VALUES (1, 'DecreaseLevel', 'Процент вопросов для закрытия уровня (/100)', 0.3);
+INSERT INTO "Persents" ("Id", "Code", "Description", "Value") VALUES (2, 'RaiseData', 'Процент разницы веса для повышения уровня', 0.15);
+INSERT INTO "Persents" ("Id", "Code", "Description", "Value") VALUES (3, 'IncreaseLevel', 'Процент вопросов для повышения уровня (/100)', 0.35);
+INSERT INTO "Persents" ("Id", "Code", "Description", "Value") VALUES (4, 'Reasonable', 'Искуственная граница', 0.45);
 
 /*  
 Конфигурация Direction 

@@ -15,19 +15,19 @@ public record AnswerShortDto
 
 public record QuestionDto : QuestionShortDto
 {
-    public string Topic { get; set; }
-    public string Content { get; set; }
-    public List<AnswerDto> Answers { get; set; } = new();
+    public required string Topic { get; set; }
+    public required string Content { get; set; }
+    public new List<AnswerDto> Answers { get; set; } = new();
 }
 
 public record AnswerDto : AnswerShortDto
 {
-    public string Content { get; set; }
+    public required string Content { get; set; }
 }
 
 public record QuestionDataDto
 {
-    public Question Question;
+    public required Question Question;
     public List<Answer> Answers { get; set; } = new();
 }
 

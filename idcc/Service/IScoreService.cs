@@ -1,0 +1,324 @@
+﻿using idcc.Dtos;
+using idcc.Extensions;
+using idcc.Infrastructures;
+using idcc.Infrastructures.Interfaces;
+using idcc.Repository.Interfaces;
+
+namespace idcc.Service;
+
+public interface IScoreService
+{
+    Task<(MessageCode code, string? error)> CalculateScoreAsync(SessionDto session, int interval, int questionId, List<int> answerIds);
+    
+    Task<(MessageCode code, string? error)> CalculateTopicWeightAsync(SessionDto session);
+}
+
+public class ScoreService : IScoreService
+{
+    private ILogger<ScoreService> _logger;
+    
+    private IUserTopicRepository _userTopicRepository;
+    private IDataRepository _dataRepository;
+    private IQuestionRepository _questionRepository;
+    private IUserAnswerRepository _userAnswerRepository;
+    private IScoreCalculate _scoreCalculate;
+    private ITimeCalculate _timeCalculate;
+    private IGradeCalculate _gradeCalculate;
+
+    private bool _isCorrectAnswer;
+    private double _questionWeight;
+
+    public ScoreService(
+        ILogger<ScoreService> logger,
+        IUserTopicRepository userTopicRepository,
+        IDataRepository dataRepository,
+        IQuestionRepository questionRepository,
+        IUserAnswerRepository userAnswerRepository,
+        IScoreCalculate scoreCalculate,
+        ITimeCalculate timeCalculate,
+        IGradeCalculate gradeCalculate)
+    {
+        _logger = logger;
+        _userTopicRepository = userTopicRepository;
+        _dataRepository = dataRepository;
+        _questionRepository = questionRepository;
+        _userAnswerRepository = userAnswerRepository;
+        _scoreCalculate = scoreCalculate;
+        _timeCalculate = timeCalculate;
+        _gradeCalculate = gradeCalculate;
+    }
+
+    public async Task<(MessageCode code, string? error)> CalculateScoreAsync(SessionDto session, int interval, int questionId, List<int> answerIds)
+    {
+        // ───────────────── 1.  Получаем вопрос ─────────────────
+        var question = await _questionRepository.GetQuestionAsync(questionId);
+        if (question is null)
+        {
+            return (MessageCode.QUESTION_IS_NOT_EXIST, MessageCode.QUESTION_IS_NOT_EXIST.GetDescription());
+        }
+
+        _questionWeight = question.Weight;
+        
+        // ───────────────── 2.  Пустой список ответов ────────────
+        if (!answerIds.Any())
+        {
+            _logger.LogInformation($"Список ответов для сессии {session.Id} и вопроса {questionId} пуст.");
+            _isCorrectAnswer = false;
+            await _userAnswerRepository.CreateUserAnswerAsync(session, question, interval, 0, DateTime.Now);
+            return (MessageCode.ANSWER_IS_SEND, null);
+        }
+        
+        // ───────────────── 3.  Одиночный VS множественный ──────
+        if (!question.IsMultipleChoice && answerIds.Count > 1)
+        {
+            return (MessageCode.QUESTION_IS_MULTIPLY, MessageCode.QUESTION_IS_MULTIPLY.GetDescription());
+        }
+        
+        // ───────────────── 4.  Подтягиваем варианты ответа ─────
+        var answers = await _questionRepository.GetAnswersAsync(question);
+
+        // ---------- все ли id присутствуют ----------
+        var validIds = answers.Select(a => a.Id).ToHashSet();
+        var invalid  = answerIds.Where(id => !validIds.Contains(id)).ToList();
+
+        if (invalid.Any())
+        {
+            _logger.LogWarning($"Вопрос {questionId}: некорректные id ответов [{string.Join(",", invalid)}]");
+            return (MessageCode.ANSWER_ID_NOT_FOUND, MessageCode.ANSWER_ID_NOT_FOUND.GetDescription());   // создайте константу / функцию
+        }
+
+        // ───────────────── 5.  Коэффициент времени K ────────────
+        var actualTopic = await _userTopicRepository.GetActualTopicAsync(session.Id);
+        if (actualTopic is null)
+        {
+            return (MessageCode.TOPIC_IS_NULL, MessageCode.TOPIC_IS_NULL.GetDescription());
+        }
+
+        var times = await _dataRepository.GetGradeTimeInfoAsync(actualTopic.Grade.Id);
+        if (times is null)
+        {
+            return (MessageCode.GRADE_TIMES_IS_NULL, ErrorMessages.GRADE_TIMES_IS_NULL(actualTopic.Grade.Name));
+        }
+
+        var k = _timeCalculate.K(interval, times.Value.average, times.Value.min, times.Value.max);
+
+        // ───────────────── 6.  Подсчёт балла ────────────────────
+        var answeredCorrect = answers
+            .Count(a => a.IsCorrect && answerIds.Contains(a.Id));
+
+        var totalCorrect = answers.Count(a => a.IsCorrect);
+
+        var score = _scoreCalculate.GetScore(_questionWeight, k, answeredCorrect, totalCorrect);
+        _isCorrectAnswer = score > 0;
+
+        _logger.LogInformation($"Сессия:{session.Id}; Вопрос:{questionId}; K:{k}; Score:{score}");
+
+        await _userAnswerRepository.CreateUserAnswerAsync(session, question, interval, score, DateTime.Now);
+        return (MessageCode.CALCULATE_IS_FINISHED, null);
+    }
+
+    public async Task<(MessageCode code, string? error)> CalculateTopicWeightAsync(SessionDto session)
+    {
+        var actualTopic = await _userTopicRepository.GetActualTopicAsync(session.Id);
+        if (actualTopic is null)
+        {
+            return (MessageCode.TOPIC_IS_NULL, MessageCode.TOPIC_IS_NULL.GetDescription());
+        }
+        
+        var gradeWeights = await _dataRepository.GetGradeWeightInfoAsync(actualTopic.Grade.Id);
+        if (gradeWeights is null)
+        {
+            return (MessageCode.GRADE_WEIGHT_IS_NULL, ErrorMessages.GRADE_WEIGHT_IS_NULL(actualTopic.Grade.Name));
+        }
+        
+        // Подсчет нового веса вопроса
+        var newWeight = await ChangeGradeAsync(actualTopic.Grade, session.Id, actualTopic.Topic.Id, actualTopic.Weight, _questionWeight, _isCorrectAnswer);
+        
+        // Можно ли быстро закрыть?
+        var canClose = await CanCloseAsync(session.Id);
+        
+        if (canClose)
+        {
+            _logger.LogInformation($"Сессия: {session.Id}; Топик: {actualTopic.Id}; Статус: Закрыт. Причина: Много подрят ошибок.");
+            
+            // Уменьшаем вопросы в теме
+            await ReduceTopicQuestionCountAndCloseTopic(session.Id, actualTopic.Id);
+            // Обновляем вес темы
+            await _userTopicRepository.UpdateTopicInfoAsync(actualTopic.Id, false, true, actualTopic.Grade, newWeight);
+            // Закрываем тему
+            await _userTopicRepository.CloseTopicAsync(actualTopic.Id);
+            return (MessageCode.TOPIC_IS_CLOSED,null);
+        }
+        
+        // Можно ли быстро повысить?
+        var canRaise = await CanRaiseAsync(session.Id, gradeWeights.Value.max, gradeWeights.Value.min, newWeight);
+        
+        // Считаем новый грейд.
+        var (prev, next) = await _dataRepository.GetRelationAsync(actualTopic.Grade);
+        var grade = _gradeCalculate.Calculate(actualTopic.Grade, gradeWeights.Value.min, prev, next, newWeight, canRaise);
+        
+        _logger.LogDebug($"Сессия: {session.Id}; Топик: {actualTopic.Id}; Статус грейда: {actualTopic.Grade.Name} -> {grade.Name}.");
+        // Обновляем вес темы
+        await _userTopicRepository.UpdateTopicInfoAsync(actualTopic.Id, false, true, grade, newWeight);
+        // Уменьшаем количество вопросов в теме
+        await ReduceTopicQuestionCountAndCloseTopic(session.Id, actualTopic.Id);
+        // Проверяем количество вопросов в теме
+        var count = await _userTopicRepository.HaveQuestionAsync(actualTopic.Id, gradeWeights.Value.max);
+        if (!count)
+        {
+            await _userTopicRepository.CloseTopicAsync(actualTopic.Id);
+        }
+        return (MessageCode.CALCULATE_IS_FINISHED, null);
+    }
+
+    private async Task<double> ChangeGradeAsync(GradeDto grade, int sessionId, int topicId, double weight, double questionWeight, bool increase)
+    {
+        var weights = await _dataRepository.GetGradeWeightInfoAsync(grade.Id);
+
+        var userAnswers = await _userAnswerRepository.GetAllUserAnswers(sessionId, topicId);
+        
+        // Среднее время ответов на теме
+        var avgTime = !userAnswers.Any() ? 0 : userAnswers.Select(ua => ua.TimeSpent).Average();
+        
+        // Количество правильных ответов на теме
+        var correct = userAnswers.Count(ua => ua.Score > 0);
+        
+        // Границы времен текущего грейда
+        var times = await _dataRepository.GetGradeTimeInfoAsync(grade.Id);
+        
+        // Количество вопросов в теме
+        var counts = userAnswers.Count;
+        
+        // Расчет сложности нового вопроса
+        var difficulty = CalculateDifficulty(correct, counts, avgTime, times!.Value.max);
+
+        // Расчет нового веса темы
+        var gradeWeight = UpdateWithAsymptoticGrowth(weight, questionWeight, weights!.Value.min, weights.Value.max, increase, difficulty);
+
+        return gradeWeight;
+    }
+    
+    public double CalculateDifficulty(int correct, int total, double avgTimeSeconds, double maxTimeSeconds)
+    {
+        if (total < 3)
+        {
+            return 0.5;
+        }
+
+        var accuracy = (double)correct / total;
+        var timeFactor = Math.Min(avgTimeSeconds / maxTimeSeconds, 1.0);
+
+        return 0.5 * (1 - accuracy) + 0.5 * timeFactor;
+    }
+    
+    double UpdateWithAsymptoticGrowth(double weight, double questionWeight, double min, double max, bool increase, double difficulty)
+    {
+        const double learningRate = 0.3;
+        const double minDamping = 0.09; // минимальная адаптация
+        
+        // Асимптотическое затухание при приближении к границам
+        var distanceToEdge = increase
+            ? max - weight
+            : weight - min;
+
+        distanceToEdge = Math.Max(distanceToEdge, minDamping);
+        
+        var baseDelta = learningRate * distanceToEdge;
+        double delta;
+       
+        if (increase)
+        {
+            // если правильный ответ на очень сложный вопрос → добавляем буст
+            delta = ApplyDifficultyBonus(baseDelta, increase, difficulty);
+        
+            // дополнительный расчет от веса вопроса
+            delta = ApplyQuestionWeightInfluence(delta, questionWeight, weight);
+        }else
+        {
+            delta = -baseDelta * (1 - difficulty);
+            
+            // Дополнительное усиление штрафа, если вопрос был слишком простой
+            var penaltyBoost = weight - questionWeight;
+            delta *= 4 + penaltyBoost;
+        }
+
+        var temp = weight + delta;
+        var clamp = Math.Clamp(temp, min, max);
+        if (temp < min && Math.Abs(clamp - min) < 0.000001)
+        {
+            return temp;
+        }
+
+        return clamp;
+    }
+    
+    double ApplyDifficultyBonus(double delta, bool increase, double difficulty)
+    {
+        if (increase && difficulty > 0.7)
+        {
+            var bonusFactor = (difficulty - 0.7) / 0.3; // нормализация: 0.71 → 0.03, 1.0 → 1.0
+            var bonus = delta * 0.5 * bonusFactor;     // до +50% от текущего delta
+
+            delta += bonus;
+        }
+
+        return delta;
+    }
+    
+    double ApplyQuestionWeightInfluence(double delta, double questionWeight, double topicWeight)
+    {
+        var boost = Math.Clamp(questionWeight - topicWeight, -0.1, 0.2);
+        return delta * (1.0 + boost);
+    }
+    
+    /// <summary>
+    /// Можно ли быстро повысить уровень?
+    /// </summary>
+    /// <param name="sessionId">Id сессии.</param>
+    /// <param name="max">Максимальный вес вопроса текущего грейда.</param>
+    /// <param name="min">Минимальный вес вопроса текущего грейда.</param>
+    /// <param name="newWeight">Новый вес вопроса.</param>
+    /// <returns></returns>
+    private async Task<bool> CanRaiseAsync(int sessionId, double max, double min, double newWeight)
+    {
+        // Разница в весах
+        var raisePercent = await _dataRepository.GetPercentOrDefaultAsync("RaiseData", 0.2);
+        var raiseValue = (max - min) * raisePercent;
+        
+        // Разница в количестве подрят
+        var increasePersent = await _dataRepository.GetPercentOrDefaultAsync("IncreaseLevel", 0.3);
+        var allCount = await _dataRepository.GetCountOrDefaultAsync("Question", 10);
+        var raiseCount = (int)Math.Floor(allCount * increasePersent);
+        var canRaise = await _userAnswerRepository.CanRaiseAsync(sessionId, raiseCount);
+        
+        if (newWeight >= (max - raiseValue) || canRaise)
+        {
+            return true;
+        }
+        return false;
+    }
+    
+    /// <summary>
+    /// Можно ли быстро закрыть топик?
+    /// </summary>
+    /// <param name="sessionId">Id сессии.</param>
+    /// <returns></returns>
+    private async Task<bool> CanCloseAsync(int sessionId)
+    {
+        var decreasePersent = await _dataRepository.GetPercentOrDefaultAsync("DecreaseLevel", 0.3);
+        var allCount = await _dataRepository.GetCountOrDefaultAsync("Question", 10);
+        var closeCount = (int)Math.Floor(allCount * decreasePersent);
+        return await _userAnswerRepository.CanCloseAsync(sessionId, closeCount);
+    }
+    
+    private async Task ReduceTopicQuestionCountAndCloseTopic(int sessionId, int topicId)
+    {
+        await _userTopicRepository.ReduceTopicQuestionCountAsync(topicId);
+        var topic = await _userTopicRepository.GetTopicAsync(topicId);
+        if (topic is not null && topic.Count == 0)
+        {
+            _logger.LogInformation($"Сессия: {sessionId}; Топик: {topicId}; Статус: Закрытие по количеству вопросов.");
+            await _userTopicRepository.CloseTopicAsync(topicId);
+        }
+    }
+}

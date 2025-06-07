@@ -5,11 +5,13 @@ namespace idcc.Repository.Interfaces;
 
 public interface IUserAnswerRepository
 {
-    Task CreateUserAnswerAsync(Session session, Question question, int timeSpent,
+    Task CreateUserAnswerAsync(SessionDto session, Question question, int timeSpent,
         double score, DateTime answerTime);
     
-    Task<List<UserAnswer>> GetAllUserAnswers(SessionDto session);
+    Task<List<UserAnswer>> GetAllUserAnswers(int sessionId);
+    Task<List<UserAnswer>> GetAllUserAnswers(int sessionId, int topicId);
     Task<List<QuestionResultDto>> GetQuestionResults(SessionDto session);
 
-    Task<bool> CanRaiseAsync(Session session, int count);
+    Task<bool> CanRaiseAsync(int sessionId, int count);
+    Task<bool> CanCloseAsync(int sessionId, int count);
 }

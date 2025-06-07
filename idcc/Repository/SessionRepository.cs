@@ -136,9 +136,24 @@ public class SessionRepository : ISessionRepository
         return sessions.SingleOrDefault();
     }
 
-    public async Task<Session?> GetActualSessionAsync(Guid tokenId)
+    public async Task<SessionDto?> GetActualSessionAsync(Guid tokenId)
     {
-        return await _context.Sessions.SingleOrDefaultAsync(s => s.TokenId == tokenId && s.EndTime == null);
+        var session =  await _context.Sessions
+            .Include(session => session.Token)
+            .ThenInclude(token => token.Direction)
+            .SingleOrDefaultAsync(s => s.TokenId == tokenId && s.EndTime == null);
+        return session is null 
+            ? null 
+            : new SessionDto(
+                session.Id, 
+                session.StartTime, 
+                session.EndTime, 
+                session.Score, 
+                new TokenShortDto(
+                    session.Token.Id, 
+                    session.Token.Direction.Id, 
+                    session.Token.Direction.Name, 
+                    session.Token.Status));
     }
 
     public async Task<Session?> GetFinishSessionAsync(Guid tokenId)

@@ -2,7 +2,6 @@
 using System.Security.Claims;
 using System.Text;
 using System.Text.Json.Serialization;
-using idcc.Application;
 using idcc.Application.Interfaces;
 using idcc.Context;
 using idcc.Filters;
@@ -153,60 +152,8 @@ public static class Configuration
             });
         builder.Services.AddAuthorization();
         
-        // Репозиторий компании
-        builder.Services.AddScoped<ICompanyRepository, CompanyRepository>();
-        // Репозиторий сотрудника
-        builder.Services.AddScoped<IEmployeeRepository, EmployeeRepository>();
-        // Репозиторий физ лица
-        builder.Services.AddScoped<IPersonRepository,   PersonRepository>();
-        
-        // Сервис по генерации Jwt
-        builder.Services.AddHttpContextAccessor();
-        builder.Services.AddScoped<ITokenService, TokenService>();
-        
-        // Репозиторий авторизации
-        builder.Services.AddScoped<IRegisterRepository, RegisterRepository>();
-        
-        // Репозиторий конфигурации
-        builder.Services.AddScoped<IConfigRepository, ConfigRepository>();
-        
-        // Репозиторий работы с токенами
-        builder.Services.AddScoped<ITokenRepository, TokenRepository>();
-        
-        // Репозиторий работы с заказами
-        builder.Services.AddScoped<IOrderRepository, OrderRepository>();
-        
-        // Репозиторий сессий
-        builder.Services.AddScoped<ISessionRepository, SessionRepository>();
-        builder.Services.AddScoped<ISessionService, SessionService>();
-        
-        builder.Services.AddScoped<IUserRepository, UserRepository>();
-        builder.Services.AddScoped<IQuestionRepository, QuestionRepository>();
-        builder.Services.AddScoped<IUserTopicRepository, UserTopicRepository>();
-        builder.Services.AddScoped<IUserAnswerRepository, UserAnswerRepository>();
-        builder.Services.AddScoped<IDataRepository, DataRepository>();
-
-        builder.Services.AddScoped<ITimeCalculate, TimeCalculate>();
-        builder.Services.AddScoped<IWeightCalculate, WeightCalculate>();
-        builder.Services.AddScoped<IScoreCalculate, ScoreCalculate>();
-        builder.Services.AddScoped<IGradeCalculate, GradeCalculate>();
-        
-        // Сервис отрисовки отчета
-        builder.Services.AddScoped<IGraphService, GraphService>();
-        builder.Services.AddScoped<IChartService, ChartService>();
-
-        builder.Services.AddScoped<IReportRepository, ReportRepository>();
-        builder.Services.AddScoped<IIdccApplication, IdccApplication>();
-        
-        // Сервис для расчета метрик
-        builder.Services.AddScoped<IMetricService, MetricService>();
-        
-        // Расчет отчета
-        builder.Services.AddScoped<IReportService, ReportService>();
-
-        // Фоновый сервис проверки открытых сессий.
-        builder.Services.AddSingleton<IDurationProvider, SessionDurationProvider>();
-        builder.Services.AddHostedService<SessionTimeoutWorker>();
+        builder.Services.ConfigureRepositories();
+        builder.Services.ConfigureServices();
         
         // 4. Подключаем контроллеры + Swagger
         builder.Services.AddControllers()
@@ -246,6 +193,69 @@ public static class Configuration
         });
     }
 
+    public static void ConfigureRepositories(this IServiceCollection services)
+    {
+        // Репозиторий компании
+        services.AddScoped<ICompanyRepository, CompanyRepository>();
+        // Репозиторий сотрудника
+        services.AddScoped<IEmployeeRepository, EmployeeRepository>();
+        // Репозиторий физ лица
+        services.AddScoped<IPersonRepository,   PersonRepository>();
+        
+        // Репозиторий авторизации
+        services.AddScoped<IRegisterRepository, RegisterRepository>();
+        
+        // Репозиторий конфигурации
+        services.AddScoped<IConfigRepository, ConfigRepository>();
+        
+        // Репозиторий работы с токенами
+        services.AddScoped<ITokenRepository, TokenRepository>();
+        
+        // Репозиторий работы с заказами
+        services.AddScoped<IOrderRepository, OrderRepository>();
+        
+        // Репозиторий сессий
+        services.AddScoped<ISessionRepository, SessionRepository>();
+        
+        services.AddScoped<IUserRepository, UserRepository>();
+        services.AddScoped<IQuestionRepository, QuestionRepository>();
+        services.AddScoped<IUserTopicRepository, UserTopicRepository>();
+        services.AddScoped<IUserAnswerRepository, UserAnswerRepository>();
+        services.AddScoped<IDataRepository, DataRepository>();
+        
+        services.AddScoped<IReportRepository, ReportRepository>();
+    }
+    public static void ConfigureServices(this IServiceCollection services)
+    {
+        // Сервис по генерации Jwt
+        services.AddHttpContextAccessor();
+        services.AddScoped<ITokenService, TokenService>();
+        
+        // Сервис по работе с сессией
+        services.AddScoped<ISessionService, SessionService>();
+        
+        // Сервисы расчетов
+        services.AddScoped<ITimeCalculate, TimeCalculate>();
+        services.AddScoped<IScoreCalculate, ScoreCalculate>();
+        services.AddScoped<IGradeCalculate, GradeCalculate>();
+        
+        // Расчет параметров темы и вопроса
+        services.AddScoped<IScoreService, ScoreService>();
+        
+        // Сервис отрисовки отчета
+        services.AddScoped<IGraphService, GraphService>();
+        services.AddScoped<IChartService, ChartService>();
+        
+        // Сервис для расчета метрик
+        services.AddScoped<IMetricService, MetricService>();
+        
+        // Расчет отчета
+        services.AddScoped<IReportService, ReportService>();
+        
+        // Фоновый сервис проверки открытых сессий.
+        services.AddSingleton<IDurationProvider, SessionDurationProvider>();
+        services.AddHostedService<SessionTimeoutWorker>();
+    }
     public static void RegisterMiddlewares(this WebApplication app)
     {
         app.UseSwagger();

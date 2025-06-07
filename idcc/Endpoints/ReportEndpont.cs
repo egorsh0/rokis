@@ -1,6 +1,5 @@
 ﻿using System.ComponentModel.DataAnnotations;
 using idcc.Application.Interfaces;
-using idcc.Builders;
 using idcc.Dtos;
 using idcc.Extensions;
 using idcc.Infrastructures;
@@ -21,38 +20,32 @@ namespace idcc.Endpoints;
 [Tags("Report")]
 public class ReportController : ControllerBase
 {
-    private readonly HybridCache _cache;
+    private readonly HybridCache _hybridCache;
     private readonly ISessionService _sessionService;
-    private readonly IDataRepository _dataRepo;
-    private readonly IGraphService _graphs;
-    private readonly IConfigRepository _cfgRepo;
-    private readonly IReportRepository _reports;
-    private readonly IUserAnswerRepository _answers;
-    private readonly IMetricService _metrics;
+    private readonly IConfigRepository _configRepository;
+    private readonly IReportRepository _reportRepository;
+    private readonly IUserAnswerRepository _userAnswerRepository;
+    private readonly IMetricService _metricService;
     
     private readonly IReportService  _reportService;
     private readonly IChartService _chartService;
 
     public ReportController(
-        HybridCache cache,
+        HybridCache hybridCache,
         ISessionService sessionService,
-        IDataRepository dataRepository,
-        IGraphService graphService,
         IConfigRepository configRepository,
-        IReportRepository reportRepository,
-        IUserAnswerRepository answerRepository,
-        IMetricService metricService,
+        IReportRepository reportRepositoryRepository,
+        IUserAnswerRepository userAnswerRepositoryRepository,
+        IMetricService metricServiceService,
         IReportService reportService,
         IChartService chartService)
     {
-        _cache = cache;
+        _hybridCache = hybridCache;
         _sessionService = sessionService;
-        _dataRepo = dataRepository;
-        _graphs = graphService;
-        _cfgRepo = configRepository;
-        _reports = reportRepository;
-        _answers = answerRepository;
-        _metrics = metricService;
+        _configRepository = configRepository;
+        _reportRepository = reportRepositoryRepository;
+        _userAnswerRepository = userAnswerRepositoryRepository;
+        _metricService = metricServiceService;
         
         _reportService = reportService;
         _chartService = chartService;
@@ -93,16 +86,9 @@ public class ReportController : ControllerBase
 
         var cacheKey = $"Report:Full:Token:{tokenId}";
         var (errorCode, reportDto) =
-            await _cache.GetOrCreateAsync<(MessageCode? code, ReportGeneratedDto? dto)>(cacheKey,
+            await _hybridCache.GetOrCreateAsync<(MessageCode? code, ReportGeneratedDto? dto)>(cacheKey,
             async _ =>
             {
-                // TODO
-                // отчёт уже есть?
-                // if (await _reports.ExistsForTokenAsync(tokenId))
-                // {
-                //     return (MessageCode.REPORT_ALREADY_EXISTS, null);
-                // }
-
                 // 2. генерируем отчёт
                 var report = await _reportService.GenerateAsync(session);
                 if (report is null)
@@ -117,24 +103,18 @@ public class ReportController : ControllerBase
                 byte[]? img1 = null, img2 = null, img3 = null;
                 if (report.FinalTopicDatas is not null)
                 {
-                    var datas = await _reportService.GetAllTopicDataAsync(session);
-                    var normalizers = new TopicNormalizerBuilder().Build(datas);
-                    img1 = _chartService.DrawUserProfile(report.FinalTopicDatas, normalizers, report.FinalScoreDto.Grade, report.ThinkingPattern, report.CognitiveStabilityIndex);
-                    
-                    var resize = await _dataRepo.GetPercentOrDefaultAsync("Reasonable", 2);
-                    img2 = _graphs.Generate(report.CognitiveStabilityIndex, report.ThinkingPattern,
-                                            report.FinalScoreDto.Grade, report.FinalTopicDatas, resize);
-                    img3 = _graphs.GenerateRadarChartForFinalTopics(report.FinalTopicDatas,
-                                            report.CognitiveStabilityIndex, report.ThinkingPattern,
-                                            report.FinalScoreDto.Grade, resize);
+                    img1 = _chartService.DrawUserProfile(report.FinalTopicDatas, report.FinalScoreDto.Grade, report.ThinkingPattern, report.CognitiveStabilityIndex);
                 }
-
-                // 5. пишем в БД
-                var grades = await _cfgRepo.GetGradesAsync();
-                var gradeId = grades.FirstOrDefault(g => g.Name == report.FinalScoreDto.Grade)?.Id ?? 0;
-
-                await _reports.SaveReportAsync(tokenId, report.FinalScoreDto.Score, gradeId, img1);
-
+                
+                // // 5. пишем в БД, если нету
+                if (!await _reportRepository.ExistsForTokenAsync(tokenId))
+                {
+                    
+                    var grades = await _configRepository.GetGradesAsync();
+                    var gradeId = grades.FirstOrDefault(g => g.Name == report.FinalScoreDto.Grade)?.Id ?? 0;
+                    await _reportRepository.SaveReportAsync(tokenId, report.FinalScoreDto.Score, gradeId, img1);
+                }
+                
                 // 6. возвращаем DTO
                 var dto = new ReportGeneratedDto(
                     report,
@@ -147,7 +127,9 @@ public class ReportController : ControllerBase
             });
 
         if (errorCode.HasValue)
+        {
             return BadRequest(new ResponseDto(errorCode.Value, errorCode.Value.GetDescription()));
+        }
 
         return Ok(reportDto);
     }
@@ -176,13 +158,13 @@ public class ReportController : ControllerBase
         }
 
         var cacheKey = $"Report:Short:Token:{tokenId}";
-        var dto = await _cache.GetOrCreateAsync<ReportShortDto?>(cacheKey, async _ =>
+        var dto = await _hybridCache.GetOrCreateAsync<ReportShortDto?>(cacheKey, async _ =>
         {
-            var questions = await _answers.GetQuestionResults(session);
-            var csIndex = _metrics.CalculateCognitiveStability(questions);
-            var pattern = _metrics.DetectThinkingPattern(questions, csIndex);
+            var questions = await _userAnswerRepository.GetQuestionResults(session);
+            var csIndex = _metricService.CalculateCognitiveStability(questions);
+            var pattern = _metricService.DetectThinkingPattern(questions, csIndex);
 
-            var rr = await _reports.GetByTokenAsync(tokenId);
+            var rr = await _reportRepository.GetByTokenAsync(tokenId);
             return rr is null ? null : new ReportShortDto(
                 rr.TokenId, rr.Score, rr.Grade.Name,
                 csIndex, pattern,

@@ -1,6 +1,9 @@
-﻿using idcc.Infrastructures.Interfaces;
+﻿namespace idcc.Infrastructures;
 
-namespace idcc.Infrastructures;
+public interface ITimeCalculate
+{
+    double K(int timeSpant, double average, double min, double max);
+}
 
 public class TimeCalculate : ITimeCalculate
 {
