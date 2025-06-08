@@ -33,7 +33,23 @@ public static class Configuration
         builder.Services.AddControllers()
             .AddJsonOptions(options =>
                 options.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter()));
-        var connectionString = builder.Configuration.GetConnectionString("idccDb");
+        
+        string ReadSecret(string value)
+        {
+            if (File.Exists(value))
+            {
+                return File.ReadAllText(value).Trim();
+            }
+            return value;
+        }
+        
+        var rawConnectionString = builder.Configuration.GetConnectionString("idccDb") ?? throw new InvalidOperationException("Connection string not configured");
+        var resolvedConnectionString = rawConnectionString.Replace(
+            "Password=/run/secrets/postgres_password",
+            $"Password={ReadSecret("/run/secrets/postgres_password")}"
+        );
+        var jwtSecret = ReadSecret(builder.Configuration["Jwt:Secret"] ?? throw new InvalidOperationException("JWT secret not configured"));
+        var smtpSettings = builder.Configuration.GetSection("Smtp").Get<SmtpSettings>();
 
         // 0. Подключаем кэширование.
         builder.Services.AddFusionCache()
@@ -44,13 +60,12 @@ public static class Configuration
                 {
                     Configuration = builder.Configuration.GetConnectionString("RadisConnection")
                 })
-                ).AsHybridCache();
+            ).AsHybridCache();
         
         // 0.0 Подключаем рассылки
-        
-        var smtpSettings = builder.Configuration.GetSection("Smtp").Get<SmtpSettings>();
         if (smtpSettings != null)
         {
+            smtpSettings.Password = ReadSecret(smtpSettings.Password ?? throw new InvalidOperationException("SMTP password not configured"));
             builder.Services.AddSingleton(smtpSettings);
             builder.Services.AddScoped<IEmailService, MailKitEmailService>();
             builder.Services.AddScoped<IInviteService, InviteService>();
@@ -60,7 +75,7 @@ public static class Configuration
         builder.Services.AddDbContext<IdccContext>(options =>
         {
             options.UseLazyLoadingProxies();
-            options.UseNpgsql(connectionString, npg =>
+            options.UseNpgsql(resolvedConnectionString, npg =>
             {
                 npg.EnableRetryOnFailure(5);
             });
@@ -88,8 +103,6 @@ public static class Configuration
             .AddDefaultTokenProviders();
 
         // 3. Подключаем аутентификацию через JWT
-        var jwtSecret = builder.Configuration["Jwt:Secret"];
-        var key = Encoding.UTF8.GetBytes(jwtSecret ?? throw new InvalidOperationException("JWT secret not configured"));
 
         builder.Services
             .AddAuthentication(options =>
@@ -99,6 +112,7 @@ public static class Configuration
             })
             .AddJwtBearer(options =>
             {
+                var key = Encoding.UTF8.GetBytes(jwtSecret);
                 options.TokenValidationParameters = new TokenValidationParameters
                 {
                     ValidateIssuerSigningKey = true,
