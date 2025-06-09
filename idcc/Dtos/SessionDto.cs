@@ -11,8 +11,8 @@ public record SessionResultDto(int? Id, Guid TokenId, bool Succeeded, MessageCod
 }
 
 public record SessionDto(
-    int         Id,
-    DateTime    StartTime,
-    DateTime?   EndTime,
-    double      Score,
+    int Id,
+    DateTime StartTime,
+    DateTime? EndTime,
+    double Score,
     TokenShortDto Token);

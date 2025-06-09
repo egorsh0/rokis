@@ -39,8 +39,8 @@ public class OrderRepository : IOrderRepository
         }
 
         // ── 4.  отмечаем как оплаченный
-        order.Status    = OrderStatus.Paid;
-        order.PaidAt    = DateTime.UtcNow;
+        order.Status = OrderStatus.Paid;
+        order.PaidAt = DateTime.UtcNow;
         order.PaymentId = paymentId;
 
         // токены становятся доступными
@@ -75,11 +75,11 @@ public class OrderRepository : IOrderRepository
         var order = new Order
         {
             UserId = userId,
-            Role   = role,
-            Quantity        = totalQty,
-            DiscountRate    = discountRate,
-            UnitPrice       = 0,      // посчитаем ниже
-            TotalPrice      = 0,
+            Role = role,
+            Quantity = totalQty,
+            DiscountRate = discountRate,
+            UnitPrice = 0,      // посчитаем ниже
+            TotalPrice = 0,
             DiscountedTotal = 0,
             Status = OrderStatus.Unpaid
         };
@@ -99,19 +99,19 @@ public class OrderRepository : IOrderRepository
                 _idccContext.Tokens.Add(new Token
                 {
                     DirectionId = dir.Id,
-                    UnitPrice   = price,
+                    UnitPrice = price,
                     Status = TokenStatus.Pending,
                     PurchaseDate = DateTime.UtcNow,
                     PersonUserId = role == "Person" ? userId : null,
-                    Order       = order
+                    Order = order
                 });
             }
 
             grandTotal += price * itm.Quantity;
         }
 
-        order.UnitPrice       = grandTotal / totalQty;
-        order.TotalPrice      = grandTotal;
+        order.UnitPrice = grandTotal / totalQty;
+        order.TotalPrice = grandTotal;
         order.DiscountedTotal = grandTotal * (1 - discountRate);
 
         await _idccContext.SaveChangesAsync();
@@ -130,7 +130,7 @@ public class OrderRepository : IOrderRepository
                 t.Status,
                 t.PurchaseDate,
                 t.Score,
-                null, null, null, null)));
+                null, null, null, null, null)));
     }
     
     public async Task<IEnumerable<OrderWithItemsDto>> GetOrdersAsync(string userId)

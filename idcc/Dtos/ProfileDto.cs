@@ -1,12 +1,12 @@
 ﻿namespace idcc.Dtos;
 
 public record EmployeeProfileDto(
-    int    Id,
+    int Id,
     string FullName,
     string Email,
     CompanyProfileShortDto? Company);
 public record CompanyProfileShortDto(
-    int    Id,
+    int Id,
     string Name,
     string? LegalAddress,
     string Inn,
@@ -14,7 +14,7 @@ public record CompanyProfileShortDto(
     string Email);
 
 public record CompanyProfileDto(
-    int    Id,
+    int Id,
     string Name,
     string? LegalAddress,
     string Inn,
@@ -28,6 +28,6 @@ public record EmployeeProfileShortDto(
     string Email);
 
 public record PersonProfileDto(
-    int    Id,
+    int Id,
     string FullName,
     string Email);

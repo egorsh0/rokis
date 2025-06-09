@@ -42,7 +42,6 @@ public class TokenRepository : ITokenRepository
                 (x, ppJoin) => new { x.t, x.EmployeeProfile, ppJoin })
             .SelectMany(x => x.ppJoin.DefaultIfEmpty(),
                 (x, pp) => new { x.t, x.EmployeeProfile, PersonProfile = pp })
-    
             // подгружаем последнюю завершённую сессию (если была)
             .Select(tokenData => new
             {
@@ -52,6 +51,11 @@ public class TokenRepository : ITokenRepository
                 LastSession = _idccContext.Sessions
                     .Where(s => s.TokenId == tokenData.t.Id && s.EndTime != null)
                     .OrderByDescending(s => s.EndTime)
+                    .FirstOrDefault(),
+                Grade = _idccContext.Reports 
+                    .Where(r => r.TokenId == tokenData.t.Id)
+                    .OrderByDescending(r => r.Id)
+                    .Select(r => r.Grade.Name)
                     .FirstOrDefault()
             })
     
@@ -64,7 +68,7 @@ public class TokenRepository : ITokenRepository
                 v.t.Status,
                 v.t.PurchaseDate,
                 v.t.Score,
-    
+                v.Grade,
                 // BoundFullName / Email
                 v.EmployeeProfile != null ? v.EmployeeProfile.FullName :
                 v.PersonProfile != null ? v.PersonProfile.FullName : null,
@@ -202,7 +206,7 @@ public class TokenRepository : ITokenRepository
             .AsNoTracking()
             .Include(t => t.Direction)
             .Where(t => t.EmployeeUserId == employeeUserId)
-            .Where(t => t.Order!.Status  == OrderStatus.Paid
+            .Where(t => t.Order!.Status == OrderStatus.Paid
                         && t.Status != TokenStatus.Pending)
             .Select(t => new
             {
@@ -210,6 +214,11 @@ public class TokenRepository : ITokenRepository
                 LastSession = _idccContext.Sessions
                     .Where(s => s.TokenId == t.Id && s.EndTime != null)
                     .OrderByDescending(s => s.EndTime)
+                    .FirstOrDefault(),
+                Grade = _idccContext.Reports 
+                    .Where(r => r.TokenId == t.Id)
+                    .OrderByDescending(r => r.Id)
+                    .Select(r => r.Grade.Name)
                     .FirstOrDefault()
             })
             .ToListAsync();
@@ -223,6 +232,7 @@ public class TokenRepository : ITokenRepository
             v.Token.Status,
             v.Token.PurchaseDate,
             v.Token.Score,
+            v.Grade,
             fullName,
             email,
             v.Token.Status == TokenStatus.Used ? v.LastSession?.EndTime : null,
@@ -279,6 +289,11 @@ public class TokenRepository : ITokenRepository
                 LastSession = _idccContext.Sessions
                     .Where(s => s.TokenId == t.Id && s.EndTime != null)
                     .OrderByDescending(s => s.EndTime)
+                    .FirstOrDefault(),
+                Grade = _idccContext.Reports 
+                    .Where(r => r.TokenId == t.Id)
+                    .OrderByDescending(r => r.Id)
+                    .Select(r => r.Grade.Name)
                     .FirstOrDefault()
             })
             .ToListAsync();
@@ -292,6 +307,7 @@ public class TokenRepository : ITokenRepository
             v.Token.Status,
             v.Token.PurchaseDate,
             v.Token.Score,
+            v.Grade,
             fullName,
             email,
             v.Token.Status == TokenStatus.Used ? v.LastSession?.EndTime : null,

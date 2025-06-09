@@ -37,8 +37,5 @@ public class ReportRepository : IReportRepository
         }
 
         return null;
-        await _idccContext.Reports
-            .Include(r => r.Grade)
-            .SingleOrDefaultAsync(r => r.TokenId == tokenId);
     }
 }

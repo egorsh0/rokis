@@ -20,7 +20,7 @@ public record CountDto(string Code, string Description, int Value);
 
 /// <summary>Справочник грейдов.</summary>
 public record GradeDto(
-    int    Id,
+    int Id,
     string Name,        // Junior, Middle …
     string Code,        // JN, MD …
     string Description);
@@ -52,10 +52,10 @@ public record TimeDto(string Code, string Description, double Value);
 /// Содержит базовую цену одного токена.
 /// </summary>
 public record DirectionDto(
-    int     Id,
-    string  Name,
-    string  Code,
-    string  Description,
+    int Id,
+    string Name,
+    string Code,
+    string Description,
     decimal BasePrice);
 
 /// <summary>

@@ -16,7 +16,7 @@ public class Token
     [Column(TypeName = "decimal(18,2)")]
     public decimal UnitPrice { get; set; } // копируем цену из Direction.BasePrice
 
-    public DateTime     PurchaseDate { get; set; }
+    public DateTime PurchaseDate { get; set; }
     
     /// <summary>Ссылка на заказ</summary>
     public int? OrderId { get; set; }

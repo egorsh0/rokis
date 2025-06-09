@@ -138,7 +138,7 @@ public class CompanyRepository : ICompanyRepository
             profile.Email = dto.Email;
 
             // 3.2 AspNetUsers
-            user.Email  = dto.Email;
+            user.Email = dto.Email;
             user.UserName = dto.Email;
             user.NormalizedEmail = _userManager.NormalizeEmail(dto.Email);
             user.NormalizedUserName = user.NormalizedEmail;

@@ -3,12 +3,12 @@
 namespace idcc.Dtos;
 
 public record OrderDto(
-    int           Id,
-    int           Quantity,
-    decimal       UnitPrice,
-    decimal       TotalPrice,
-    decimal       DiscountRate,
-    decimal       DiscountedTotal,
+    int Id,
+    int Quantity,
+    decimal UnitPrice,
+    decimal TotalPrice,
+    decimal DiscountRate,
+    decimal DiscountedTotal,
     IEnumerable<TokenDto> Tokens);
 public record PurchaseTokensDto(int DirectionId, int Quantity);
 public record CreateOrderDto(List<PurchaseTokensDto> Items); // "Company" или "Person"
@@ -47,11 +47,11 @@ public record PayOrderDto(int OrderId, string PaymentId);
 /// • <c>Paid</c>   — оплачен, токены активны.
 /// </param>
 public record OrderWithItemsDto(
-    int                     OrderId,
-    DateTime                PurchaseDate,
-    int                     TotalQuantity,
-    decimal                 TotalAmount,
-    OrderStatus             Status,
+    int OrderId,
+    DateTime PurchaseDate,
+    int TotalQuantity,
+    decimal TotalAmount,
+    OrderStatus Status,
     List<OrderDirectionQtyDto> Items);
     
 /// <summary>Количество токенов конкретного направления в заказе.</summary>
@@ -59,6 +59,6 @@ public record OrderWithItemsDto(
 /// <param name="DirectionName">Имя специальности.</param>
 /// <param name="Quantity">Количество токенов.</param>
 public record OrderDirectionQtyDto(
-    int    DirectionId,
+    int DirectionId,
     string DirectionName,
-    int    Quantity);
+    int Quantity);

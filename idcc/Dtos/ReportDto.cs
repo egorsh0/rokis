@@ -16,9 +16,9 @@ public record ReportDto(
     List<FinalTopicData>? FinalTopicDatas);
 
 public record ReportShortDto(
-    Guid    TokenId,
-    double  Score,
-    string  Grade,
+    Guid TokenId,
+    double Score,
+    string Grade,
     double CognitiveStabilityIndex,
     ThinkingPattern ThinkingPattern,
     string? ImageBase64); 

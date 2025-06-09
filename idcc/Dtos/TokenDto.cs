@@ -36,17 +36,18 @@ namespace idcc.Dtos;
 /// <c>null</c> — если токен не использован или сертификат ещё не сгенерирован.
 /// </param>
 public record TokenDto(
-    Guid        Id,
-    int         DirectionId,
-    string      DirectionName,
-    decimal     UnitPrice,
+    Guid Id,
+    int DirectionId,
+    string DirectionName,
+    decimal UnitPrice,
     TokenStatus Status,
-    DateTime    PurchaseDate,
-    double?     Score,
-    string?     BoundFullName,
-    string?     BoundEmail,
-    DateTime?   UsedDate,
-    string?     CertificateUrl
+    DateTime PurchaseDate,
+    double? Score,
+    string? Grade,
+    string? BoundFullName,
+    string? BoundEmail,
+    DateTime? UsedDate,
+    string? CertificateUrl
     );
 
 /// <summary>Команда «привязать токен к сотруднику».</summary>
@@ -84,6 +85,6 @@ public record BindUsedTokenDto(
 /// </param>
 public record TokenShortDto(
     [Required] Guid Id,
-    int    DirectionId,
+    int DirectionId,
     string DirectionName,
     TokenStatus Status);
