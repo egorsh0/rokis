@@ -1,15 +1,15 @@
-version: '3.9'
-
 services:
   # ───── PostgreSQL ───────────────────────────────────────────────────────────
   db:
-    image: postgres:16-alpine
+    image: postgres:16
     ports:
       - "5432:5432"
     environment:
       POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: 787898
       POSTGRES_DB: idcc
+      POSTGRES_PASSWORD_FILE: /run/secrets/postgres_password
+    secrets:
+      - postgres_password
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U postgres"]
       interval: 5s
@@ -59,13 +59,20 @@ services:
   
   # ───── API ──────────────────────────────
   idcc:
-    image: idcc
-    build:
-      context: .
-      dockerfile: idcc/Dockerfile
+    image: idcc:latest
     depends_on:
-      cache:      { condition: service_started }
+      - cache
+      - db
     ports: ["5000:5000"]
+    secrets:
+      - postgres_password
+      - jwt_secret
+      - smtp_password
+    environment:
+      ConnectionStrings__idccDb: "Host=db;Port=5432;Database=idcc;Username=postgres;Password=/run/secrets/postgres_password"
+      ConnectionStrings__RadisConnection: "cache:6379"
+      Jwt__Secret: /run/secrets/jwt_secret
+      Smtp__Password: /run/secrets/smtp_password
     networks: [ internal ]
     logging:
       driver: "json-file"
@@ -98,8 +105,16 @@ volumes:
 
 networks:
   internal:
-    driver: bridge
+    driver: overlay
     attachable: true
   public:
-    driver: bridge
+    driver: overlay
     attachable: true
+    
+secrets:
+  postgres_password:
+    file: ./secrets/postgres_password
+  jwt_secret:
+    file: ./secrets/jwt_secret
+  smtp_password:
+    file: ./secrets/smtp_password
