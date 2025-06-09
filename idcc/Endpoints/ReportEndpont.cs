@@ -81,7 +81,6 @@ public class ReportController : ControllerBase
         {
             return BadRequest(new ResponseDto(MessageCode.SESSION_HAS_ACTIVE,
                                               MessageCode.SESSION_HAS_ACTIVE.GetDescription()));
-            
         }
 
         var cacheKey = $"Report:Full:Token:{tokenId}";
@@ -109,7 +108,6 @@ public class ReportController : ControllerBase
                 // // 5. пишем в БД, если нету
                 if (!await _reportRepository.ExistsForTokenAsync(tokenId))
                 {
-                    
                     var grades = await _configRepository.GetGradesAsync();
                     var gradeId = grades.FirstOrDefault(g => g.Name == report.FinalScoreDto.Grade)?.Id ?? 0;
                     await _reportRepository.SaveReportAsync(tokenId, report.FinalScoreDto.Score, gradeId, img1);
