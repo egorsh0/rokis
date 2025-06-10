@@ -1,5 +1,3 @@
-version: '3.9'
-
 services:
   # ───── PostgreSQL ───────────────────────────────────────────────────────────
   db:
@@ -65,7 +63,15 @@ services:
       dockerfile: idcc/Dockerfile
     depends_on:
       cache:      { condition: service_started }
-    ports: ["5000:5000"]
+    ports:
+      - "5000:5000"
+      - "443:443"
+    volumes:
+      - ./idcc/cert.pfx:/app/https/cert.pfx:ro
+    environment:
+      ASPNETCORE_URLS: "http://+:5000;https://+:443"
+      ASPNETCORE_Kestrel__Certificates__Default__Password: "test"
+      ASPNETCORE_Kestrel__Certificates__Default__Path: "https/cert.pfx"
     networks: [ internal ]
     logging:
       driver: "json-file"
