@@ -1,15 +1,6 @@
 ﻿# ───── build ────────────────────────────────────────────────────────────────
 FROM mcr.microsoft.com/dotnet/sdk:9.0 AS build
 WORKDIR /src
-
-COPY idcc/cert.pfx /https/cert.pfx
-ENV ASPNETCORE_Kestrel__Certificates__Default__Password="test"
-ENV ASPNETCORE_Kestrel__Certificates__Default__Path="https/cert.pfx"
-
-ENV ASPNETCORE_URLS=http://+:5000;https://+:443
-EXPOSE 5000
-EXPOSE 443
-
 COPY idcc/idcc.csproj idcc/
 RUN dotnet restore idcc/idcc.csproj
 COPY . .
@@ -23,5 +14,5 @@ RUN apt-get update && \
     rm -rf /var/lib/apt/lists/*
 WORKDIR /app
 COPY --from=build /app/publish .
-
+ENV ASPNETCORE_URLS=http://+:5000
 ENTRYPOINT ["dotnet", "idcc.dll"]

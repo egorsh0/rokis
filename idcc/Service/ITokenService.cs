@@ -141,8 +141,6 @@ public class TokenService : ITokenService
     {
         var opts = new CookieOptions
         {
-            HttpOnly = true,
-            Secure   = true,
             SameSite = SameSiteMode.Strict,
             Expires  = expiresUtc
         };

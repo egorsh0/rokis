@@ -1,3 +1,5 @@
+version: '3.9'
+
 services:
   # ───── PostgreSQL ───────────────────────────────────────────────────────────
   db:
@@ -22,7 +24,7 @@ services:
       options:
         max-size: "200k"
         max-file: "10"
-        
+  
   # postgres-exporter:
   #   image: prometheuscommunity/postgres-exporter
   #   environment:
@@ -44,7 +46,7 @@ services:
       options:
         max-size: "200k"
         max-file: "10"
-        
+  
   # redis-exporter:
   #   image: oliver006/redis_exporter
   #   environment:
@@ -63,15 +65,7 @@ services:
       dockerfile: idcc/Dockerfile
     depends_on:
       cache:      { condition: service_started }
-    ports:
-      - "5000:5000"
-      - "443:443"
-    volumes:
-      - ./idcc/cert.pfx:/app/https/cert.pfx:ro
-    environment:
-      ASPNETCORE_URLS: "http://+:5000;https://+:443"
-      ASPNETCORE_Kestrel__Certificates__Default__Password: "test"
-      ASPNETCORE_Kestrel__Certificates__Default__Path: "https/cert.pfx"
+    ports: ["5000:5000"]
     networks: [ internal ]
     logging:
       driver: "json-file"
@@ -80,24 +74,24 @@ services:
         max-file: "10"
 
   # ───── Prometheus ───────────────────────
- # prometheus:
- #   image: prom/prometheus
- #   restart: always
- #   volumes:
- #     - ./idcc/monitoring:/etc/prometheus:ro
- #   ports:
- #     - "9090:9090"
- #   networks: [ internal ]
- #   
- # # ───── Grafana ──────────────────────────
- # grafana:
- #   image: grafana/grafana
- #   restart: always
- #   ports:
- #     - "3000:3000"
- #   volumes:
- #     - grafana-data:/var/lib/grafana
- #   networks: [ internal ]
+  # prometheus:
+  #   image: prom/prometheus
+  #   restart: always
+  #   volumes:
+  #     - ./idcc/monitoring:/etc/prometheus:ro
+  #   ports:
+  #     - "9090:9090"
+  #   networks: [ internal ]
+  #   
+  # # ───── Grafana ──────────────────────────
+  # grafana:
+  #   image: grafana/grafana
+  #   restart: always
+  #   ports:
+  #     - "3000:3000"
+  #   volumes:
+  #     - grafana-data:/var/lib/grafana
+  #   networks: [ internal ]
 volumes:
   db_data:
   grafana-data:
