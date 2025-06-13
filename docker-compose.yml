@@ -11,8 +11,6 @@ services:
       - certbot_conf:/vault/certs:ro
       - /opt/vault_data:/vault/data
     command: vault server -config=/vault/config/vault.hcl
-    healthcheck:
-      test: [ "CMD", "vault", "status" ]
     networks: [ internal ]
   
   vault-agent:
