@@ -1,23 +1,14 @@
-﻿vault {
-  address = "https://vault:8200"
-  tls_ca_cert = "/vault/certs/vault.crt"
-}
-
-auto_auth {
-  method "token" {
-    config {
-      token_file_path = "/vault/agent/token"
+﻿auto_auth {
+  method "approle" {
+    config = {
+      role_id_file_path = "/vault/agent/role_id"
+      secret_id_file_path = "/vault/agent/secret_id"
     }
   }
+
   sink "file" {
-    config {
-      path = "/vault/agent/unwrap-token"
+    config = {
+      path = "/vault/agent/sink-token"
     }
   }
-}
-
-template {
-  source = "/etc/vault/template.tpl"
-  destination = "/vault/agent/secrets.env"
-  perms = "0644"
 }

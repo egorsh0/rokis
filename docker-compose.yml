@@ -3,12 +3,11 @@ services:
   vault-agent:
     image: hashicorp/vault:latest
     container_name: vault-agent
-    depends_on: [ vault ]
+    depends_on:
+      - vault
     volumes:
-      - ./vault/agent/config.hcl:/etc/vault/agent.hcl:ro
-      - ./vault/agent/template.tpl:/etc/vault/template.tpl:ro
-      - ./vault/certs:/vault/certs:ro
-      - vault-shared:/vault/agent:ro
+      - ./vault/agent:/vault/agent
+      - ./vault/secrets:/vault/secrets
     command: vault agent -config=/vault/agent/config.hcl
     networks: [ internal ]
   
