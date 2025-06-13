@@ -314,7 +314,6 @@ create table if not exists "GradeLevels"
         constraint "FK_GradeLevels_Grades_GradeId"
             references "Grades"
             on delete cascade,
-    "Level"   double precision           not null,
     "Min"     double precision default 0 not null,
     "Max"     double precision default 0 not null
 );
