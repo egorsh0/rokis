@@ -1,0 +1,24 @@
+﻿using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
+
+namespace rokis.Models.Profile;
+
+/// <summary>
+/// Профиль для "физического лица" (Person).
+/// Пароль хранится в Identity.
+/// </summary>
+public class AdministratorProfile
+{
+    [Key]
+    public int Id { get; set; }
+
+    /// <summary>Email (дублируется, можно хранить только в Identity)</summary>
+    [Required]
+    [MaxLength(200)]
+    public string Email { get; set; } = string.Empty;
+
+    [ForeignKey(nameof(User))]
+    public string UserId { get; set; } = string.Empty;
+
+    public virtual ApplicationUser? User { get; set; }
+}

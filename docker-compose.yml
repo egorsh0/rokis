@@ -1,4 +1,30 @@
 services:
+  # ───── Vault ────────────────────────────────────────────────────────────────
+  vault:
+    image: hashicorp/vault:latest
+    container_name: vault
+    cap_add: [ "IPC_LOCK" ]
+    ports:
+      - "8200:8200"
+    volumes:
+      - ./vault/config:/vault/config:ro
+      - certbot_conf:/vault/certs:ro
+      - vault-data:/vault/data
+    command: vault server -config=/vault/config/vault.hcl
+    healthcheck:
+      test: [ "CMD", "vault", "status" ]
+  
+  vault-agent:
+    image: hashicorp/vault:latest
+    container_name: vault-agent
+    depends_on: [ vault ]
+    volumes:
+      - ./vault/agent/config.hcl:/etc/vault/agent.hcl:ro
+      - ./vault/agent/template.tpl:/etc/vault/template.tpl:ro
+      - ./vault/certs:/vault/certs:ro
+      - rokis-secrets:/vault/agent
+    command: vault agent -config=/vault/agent/config.hcl
+    networks: [ internal ]
   
   # ───── Nginx ────────────────────────────────────────────────────────────────
   nginx:
@@ -7,7 +33,7 @@ services:
       - "80:80"
       - "443:443"
     depends_on:
-      - idcc
+      - rokis
     volumes:
       - ./config/nginx/conf.d:/etc/nginx/conf.d:ro
       - certbot_www:/var/www/certbot:ro
@@ -29,10 +55,8 @@ services:
     image: postgres:16-alpine
     ports:
       - "5432:5432"
-    environment:
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: 787898
-      POSTGRES_DB: idcc
+    depends_on:
+      - vault-agent
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U postgres"]
       interval: 5s
@@ -48,15 +72,20 @@ services:
         max-size: "200k"
         max-file: "10"
   
-  # postgres-exporter:
-  #   image: prometheuscommunity/postgres-exporter
-  #   environment:
-  #     DATA_SOURCE_NAME: "postgresql://postgres:787898@db:5432/idcc?sslmode=disable"
-  #   depends_on:
-  #     - db
-  #   ports:
-  #     - "9187:9187"
-  #   networks: [ internal ]
+  postgres-exporter:
+    image: prometheuscommunity/postgres-exporter
+    env_file:
+      - /vault/agent/secrets.env
+    environment:
+      DATA_SOURCE_NAME: ${POSTGRES_EXPORTER}
+    depends_on:
+      - db
+      - vault-agent
+    ports:
+      - "9187:9187"
+    networks: [ internal ]
+    volumes:
+      - vault-shared:/vault/agent:ro
   
   # ───── Redis ────────────────────────────────────────────────────────────────
   cache:
@@ -70,24 +99,45 @@ services:
         max-size: "200k"
         max-file: "10"
   
-  # redis-exporter:
-  #   image: oliver006/redis_exporter
-  #   environment:
-  #     REDIS_ADDR: redis://cache:6379
-  #   depends_on:
-  #     - cache
-  #   ports:
-  #     - "9121:9121"
-  #   networks: [ internal ]
+  redis-exporter:
+    image: oliver006/redis_exporter
+    env_file:
+      - /vault/agent/secrets.env
+    environment:
+      REDIS_ADDR: ${REDIS_ADDR}
+    depends_on:
+      - cache
+      - vault-agent
+    ports:
+      - "9121:9121"
+    networks: [ internal ]
+    volumes:
+      - vault-shared:/vault/agent:ro
   
   # ───── API ──────────────────────────────
-  idcc:
-    image: idcc
+  rokis:
+    image: rokis
     build:
       context: .
-      dockerfile: idcc/Dockerfile
+      dockerfile: rokis/Dockerfile
+    env_file:
+      - /vault/agent/secrets.env
+    environment:
+      JWT: ${JWT}
+      DB_CONN: ${DB_CONN}
+      CACHE_CONN: ${CACHE_CONN}
+      SMTP_HOST: ${SMTP_HOST}
+      SMTP_USER: ${SMTP_USER}
+      SMTP_PASS: ${SMTP_PASS}
+      SMTP_FROM: ${SMTP_FROM}
+      LOKI: ${LOKI}
     depends_on:
-      cache:      { condition: service_started }
+      cache:
+        condition: service_started
+      db:
+        condition: service_started
+      vault-agent:
+        condition: service_started
     ports: ["5000:5000"]
     networks: [ internal ]
     logging:
@@ -95,27 +145,46 @@ services:
       options:
         max-size: "200k"
         max-file: "10"
+    volumes:
+      - vault-shared:/vault/agent:ro
 
   # ───── Prometheus ───────────────────────
-  # prometheus:
-  #   image: prom/prometheus
-  #   restart: always
-  #   volumes:
-  #     - ./config/monitoring:/etc/prometheus:ro
-  #   ports:
-  #     - "9090:9090"
-  #   networks: [ internal ]
-  #   
-  # # ───── Grafana ──────────────────────────
-  # grafana:
-  #   image: grafana/grafana
-  #   restart: always
-  #   ports:
-  #     - "3000:3000"
-  #   volumes:
-  #     - grafana-data:/var/lib/grafana
-  #   networks: [ internal ]
+  prometheus:
+    image: prom/prometheus
+    restart: always
+    volumes:
+      - ./config/monitoring:/etc/prometheus:ro
+    ports:
+      - "9090:9090"
+    networks: [ internal ]
+  
+  loki:
+    image: grafana/loki:2.9.2
+    ports:
+      - "3100:3100"
+    command: -config.file=/etc/loki/local-config.yaml
+    volumes:
+      - ./loki:/etc/loki
+    
+  # ───── Grafana ──────────────────────────
+  grafana:
+    image: grafana/grafana
+    restart: always
+    ports:
+      - "3000:3000"
+    environment:
+      - GF_SECURITY_ADMIN_USER=admin
+      - GF_SECURITY_ADMIN_PASSWORD=admin
+    depends_on:
+        - loki
+    volumes:
+      - grafana-data:/var/lib/grafana
+    networks: [ internal ]
+
 volumes:
+  vault-data:
+  vault-shared:
+  rokis-secrets:
   db_data:
   grafana-data:
   certbot_www:

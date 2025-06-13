@@ -1,0 +1,12 @@
+﻿JWT={{ with secret "secret/data/rokis/jwt" }}{{ .Data.data.jwt }}{{ end }}
+DB_CONN={{ with secret "secret/data/rokis/db" }}{{ .Data.data.connection }}{{ end }}
+CACHE_CONN={{ with secret "secret/data/rokis/cache" }}{{ .Data.data.cache }}{{ end }}
+SMTP_HOST={{ with secret "secret/data/rokis/smtp" }}{{ .Data.data.host }}{{ end }}
+SMTP_USER={{ with secret "secret/data/rokis/smtp" }}{{ .Data.data.user }}{{ end }}
+SMTP_PASS={{ with secret "secret/data/rokis/smtp" }}{{ .Data.data.pass }}{{ end }}
+SMTP_FROM={{ with secret "secret/data/rokis/smtp" }}{{ .Data.data.from }}{{ end }}
+LOKI={{ with secret "secret/data/rokis/loki" }}{{ .Data.data.loki }}{{ end }}
+POSTGRES_EXPLORER={{ with secret "secret/data/rokis/postgres_exporter" }}{{ .Data.data.postgres_exporter }}{{ end }}
+REDIS_ADDR={{ with secret "secret/data/rokis/redis_addr" }}{{ .Data.data.redis_addr }}{{ end }}
+GF_USER={{ with secret "secret/data/rokis/gf_user" }}{{ .Data.data.gf_user }}{{ end }}
+GF_PASS={{ with secret "secret/data/rokis/gf_pass" }}{{ .Data.data.gf_pass }}{{ end }}
