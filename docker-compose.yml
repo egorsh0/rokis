@@ -182,6 +182,7 @@ services:
     networks: [ internal ]
   
   loki:
+    container_name: loki
     image: grafana/loki:2.9.2
     ports:
       - "3100:3100"
