@@ -190,6 +190,7 @@ services:
     volumes:
       - ./config/loki:/etc/loki
       - loki-data:/loki
+    networks: [ internal ]
     
   # ───── Grafana ──────────────────────────
   grafana:
