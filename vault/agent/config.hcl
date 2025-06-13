@@ -5,6 +5,7 @@ auto_auth {
     config = {
       role_id_file_path = "/vault/agent/role_id"
       secret_id_file_path = "/vault/agent/secret_id"
+      vault_addr = "http://vault:8200"
     }
   }
 
