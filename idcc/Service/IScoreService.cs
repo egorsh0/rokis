@@ -1,6 +1,7 @@
 ﻿using idcc.Dtos;
 using idcc.Extensions;
 using idcc.Infrastructures;
+using idcc.Models;
 using idcc.Repository;
 
 namespace idcc.Service;
@@ -207,8 +208,11 @@ public class ScoreService : IScoreService
         // Расчет сложности нового вопроса
         var difficulty = CalculateDifficulty(correct, counts, avgTime, times!.Value.max);
 
+        // Расчет скользящей точности
+        var answers = await _userAnswerRepository.GetAllUserAnswers(sessionId, topicId);
+        var rollingAcc = await GetRollingAccuracy(answers);
         // Расчет нового веса темы
-        var gradeWeight = UpdateWithAsymptoticGrowth(weight, questionWeight, weights!.Value.min, weights.Value.max, increase, difficulty);
+        var gradeWeight = UpdateWithAsymptoticGrowth(weight, questionWeight, weights!.Value.min, weights.Value.max, increase, difficulty, rollingAcc);
         if (isLeftGrade && gradeWeight < weights.Value.min)
         {
             return weights.Value.min;
@@ -229,10 +233,19 @@ public class ScoreService : IScoreService
         return 0.5 * (1 - accuracy) + 0.5 * timeFactor;
     }
     
-    double UpdateWithAsymptoticGrowth(double weight, double questionWeight, double min, double max, bool increase, double difficulty)
+    double UpdateWithAsymptoticGrowth(
+        double weight, 
+        double questionWeight, 
+        double min, double max, 
+        bool increase, 
+        double difficulty,
+        double rollingAcc)
     {
         const double learningRate = 0.3;
         const double minDamping = 0.09; // минимальная адаптация
+        
+        // 0) если точность < 0.7, урежаем подъём вдвое
+        var accuracyFactor = rollingAcc < 0.7 ? 0.5 : 1.0;
         
         // Асимптотическое затухание при приближении к границам
         var distanceToEdge = increase
@@ -241,7 +254,7 @@ public class ScoreService : IScoreService
 
         distanceToEdge = Math.Max(distanceToEdge, minDamping);
         
-        var baseDelta = learningRate * distanceToEdge;
+        var baseDelta = learningRate * distanceToEdge * accuracyFactor;
         double delta;
        
         if (increase)
@@ -287,6 +300,22 @@ public class ScoreService : IScoreService
     {
         var boost = Math.Clamp(questionWeight - topicWeight, -0.1, 0.2);
         return delta * (1.0 + boost);
+    }
+    
+    /// <summary>
+    /// Скользящая точность.
+    /// </summary>
+    /// <param name="answers">Список ответов пользователя.</param>
+    /// <returns></returns>
+    async Task<double> GetRollingAccuracy(List<UserAnswer> answers)
+    {
+        var window = await _configService.GetCountOrDefaultAsync("RollingWindow", 5);
+        if (answers.Count < window)
+        {
+            return 1.0;
+        }
+        var last = answers.TakeLast(window);
+        return last.Count(a => a.Score > 0) / (double)window;
     }
     
     /// <summary>

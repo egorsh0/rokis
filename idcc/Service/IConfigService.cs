@@ -79,7 +79,6 @@ public class ConfigService : IConfigService
                 return null;
             }
             return (weight.Min, weight.Max);
-            
         });
     }
 
@@ -147,12 +146,12 @@ public class ConfigService : IConfigService
 
             if (next != null)
             {
-                nextDto = new GradeDto(next.Id, next.Name, next.Description, next.Description);
+                nextDto = new GradeDto(next.Id, next.Name, next.Code, next.Description);
             }
 
             if (prev != null)
             {
-                prevDto = new GradeDto(prev.Id, prev.Name, prev.Description, prev.Description);
+                prevDto = new GradeDto(prev.Id, prev.Name, prev.Code, prev.Description);
             }
 
             return (prevDto, nextDto);

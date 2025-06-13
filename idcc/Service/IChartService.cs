@@ -25,7 +25,8 @@ private const int width = 800;
 
     public byte[] DrawUserProfile(List<FinalTopicData> topicDatas, string userGrade, ThinkingPattern thinkingPattern, double cognitiveStabilityIndex)
     {
-        int N = topicDatas.Count;
+        var sortedTopicDatas = topicDatas.OrderBy(topicData => topicData.Topic).ToList();
+        int N = sortedTopicDatas.Count;
         var center = new SKPoint(width / 2f, height / 2f - 50);
 
         using var bitmap = new SKBitmap(width, height);
@@ -95,8 +96,8 @@ private const int width = 800;
         
         for (int i = 0; i < N; i++)
         {
-            var topic = topicDatas[i].Topic;
-            var radius = ComputeWeightedRadius(topicDatas[i]);
+            var topic = sortedTopicDatas[i].Topic;
+            var radius = ComputeWeightedRadius(sortedTopicDatas[i]);
             var angle = i * angleStep;
 
             var r = maxRadius * radius;
@@ -106,7 +107,7 @@ private const int width = 800;
             if (i == 0) pathFilled.MoveTo(x, y);
             else pathFilled.LineTo(x, y);
 
-            var scoreColor = ComputeColor(topicDatas[i]);
+            var scoreColor = ComputeColor(sortedTopicDatas[i]);
             var pointPaint = new SKPaint { Style = SKPaintStyle.Fill, Color = scoreColor };
             canvas.DrawCircle(x, y, 6, pointPaint);
 
