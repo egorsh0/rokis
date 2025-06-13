@@ -3,6 +3,8 @@ services:
   vault-agent:
     image: hashicorp/vault:latest
     container_name: vault-agent
+    environment:
+      VAULT_ADDR: http://vault:8200
     cap_add:
       - IPC_LOCK
     volumes:
