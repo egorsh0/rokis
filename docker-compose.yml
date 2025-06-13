@@ -36,17 +36,26 @@ services:
       - "443:443"
     depends_on:
       - rokis
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "200k"
+        max-file: "10"
     volumes:
       - ./config/nginx/conf.d:/etc/nginx/conf.d:ro
       - certbot_www:/var/www/certbot:ro
       - certbot_conf:/etc/letsencrypt:ro
-    networks: [ internal ]
+    networks:
+      - internal
+      - public
   
   # ───── Certbot ──────────────────────────────────────────────────────────────
   certbot:
     build:
       context: ./config/certbot
       dockerfile: Dockerfile
+    depends_on:
+      - nginx
     volumes:
       - certbot_www:/var/www/certbot
       - certbot_conf:/etc/letsencrypt
@@ -55,6 +64,8 @@ services:
   # ───── PostgreSQL ───────────────────────────────────────────────────────────
   db:
     image: postgres:16-alpine
+    env_file:
+      - ./vault/agent/secrets/secrets.env
     ports:
       - "5432:5432"
     depends_on:
@@ -124,21 +135,14 @@ services:
       dockerfile: rokis/Dockerfile
     env_file:
       - ./vault/agent/secrets/secrets.env
-    environment:
-      JWT: ${JWT}
-      DB_CONN: ${DB_CONN}
-      CACHE_CONN: ${CACHE_CONN}
-      SMTP_HOST: ${SMTP_HOST}
-      SMTP_USER: ${SMTP_USER}
-      SMTP_PASS: ${SMTP_PASS}
-      SMTP_FROM: ${SMTP_FROM}
-      LOKI: ${LOKI}
     depends_on:
       cache:
         condition: service_started
       db:
         condition: service_started
       vault-agent:
+        condition: service_started
+      loki:
         condition: service_started
     ports: ["5000:5000"]
     networks: [ internal ]
@@ -147,8 +151,9 @@ services:
       options:
         max-size: "200k"
         max-file: "10"
+    entrypoint: ["sh", "-c", "while [ ! -f /vault/agent/secrets/secrets.env ]; do sleep 1; done; exec dotnet idcc.dll"]
     volumes:
-      - vault-shared:/vault/agent:ro
+      - ./vault/agent/secrets:/vault/agent/secrets:ro
 
   # ───── Prometheus ───────────────────────
   prometheus:

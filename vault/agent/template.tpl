@@ -1,4 +1,8 @@
-﻿JWT={{ with secret "kv/data/rokis/jwt" }}{{ .Data.data.jwt }}{{ end }}
+﻿POSTGRES_USER={{ with secret "kv/data/rokis/db" }}{{ .Data.data.user }}{{ end }}
+POSTGRES_PASSWORD={{ with secret "kv/data/rokis/db" }}{{ .Data.data.password }}{{ end }}
+POSTGRES_DB={{ with secret "kv/data/rokis/db" }}{{ .Data.data.dbname }}{{ end }}
+
+JWT={{ with secret "kv/data/rokis/jwt" }}{{ .Data.data.jwt }}{{ end }}
 DB_CONN={{ with secret "kv/data/rokis/db_conn" }}{{ .Data.data.db_conn }}{{ end }}
 CACHE_CONN={{ with secret "kv/data/rokis/cache_conn" }}{{ .Data.data.cache_conn }}{{ end }}
 
