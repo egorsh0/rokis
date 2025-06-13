@@ -13,6 +13,7 @@ services:
     command: vault server -config=/vault/config/vault.hcl
     healthcheck:
       test: [ "CMD", "vault", "status" ]
+    networks: [ internal ]
   
   vault-agent:
     image: hashicorp/vault:latest
