@@ -1,3 +1,6 @@
 ﻿namespace rokis.Dtos.AdminDto;
 
-public record AdminOptions(string Secret);
+public class AdminOptions
+{
+    public string Secret { get; set; }
+}
