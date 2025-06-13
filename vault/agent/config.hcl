@@ -17,6 +17,6 @@ auto_auth {
 
 template {
   source      = "/vault/agent/template.tpl"
-  destination = "/vault/secrets/secrets.env"
+  destination = "/vault/agent/secrets/secrets.env"
   command     = "echo 'Secrets written'"
 }
