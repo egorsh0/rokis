@@ -1,24 +1,10 @@
 services:
   # ───── Vault ────────────────────────────────────────────────────────────────
-  vault:
-    image: hashicorp/vault:latest
-    container_name: vault
-    cap_add: [ "IPC_LOCK" ]
-    ports:
-      - "8200:8200"
-    volumes:
-      - ./vault/config:/vault/config:ro
-      - certbot_conf:/vault/certs:ro
-      - /opt/vault_data:/vault/data
-    command: vault server -config=/vault/config/vault.hcl
-    healthcheck:
-      test: [ "CMD", "vault", "status" ]
-  
   vault-agent:
     image: hashicorp/vault:latest
     container_name: vault-agent
-    depends_on:
-      - vault
+    cap_add:
+      - IPC_LOCK
     volumes:
       - ./vault/agent:/vault/agent
       - ./vault/agent/secrets:/vault/agent/secrets
