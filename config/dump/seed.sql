@@ -747,7 +747,8 @@ COMMIT;
 Конфигурация Counts 
 */
 
-INSERT INTO "Counts" ("Id", "Code", "Description", "Value") VALUES (2, 'Question', 'Количество вопросов в топике', 10);
+INSERT INTO "Counts" ("Id", "Code", "Description", "Value") VALUES (1, 'Question', 'Количество вопросов в топике', 10);
+INSERT INTO "Counts" ("Id", "Code", "Description", "Value") VALUES (2, 'RollingWindow', 'Скользящее окно', 5);
 
 /*  
 Конфигурация Grades 
