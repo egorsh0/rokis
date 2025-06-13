@@ -1,21 +1,14 @@
 ﻿ui = true
-disable_mlock = false
+disable_mlock = true
 
 listener "tcp" {
-  address = "0.0.0.0:8200"
-  tls_cert_file = "/vault/certs/vault.crt"
-  tls_key_file = "/vault/certs/vault.key"
+  address     = "0.0.0.0:8200"
+  tls_disable = 1
 }
 
-storage "raft" {
-  path    = "/vault/data"
-  node_id = "vault-1"
+storage "file" {
+  path = "/vault/data"
 }
 
-seal "transit" {
-  address = "https://127.0.0.1:8200"
-  key_name = "autounseal-key"
-}
-
-api_addr = "https://vault.example.com:8200"
-cluster_addr = "https://0.0.0.0:8201"
+api_addr     = "http://0.0.0.0:8200"
+cluster_addr = "http://0.0.0.0:8201"
