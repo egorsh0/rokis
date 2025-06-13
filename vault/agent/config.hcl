@@ -1,4 +1,6 @@
-﻿auto_auth {
+﻿pid_file = "/tmp/pidfile"
+
+auto_auth {
   method "approle" {
     config = {
       role_id_file_path = "/vault/agent/role_id"
@@ -11,4 +13,10 @@
       path = "/vault/agent/sink-token"
     }
   }
+}
+
+template {
+  source      = "/vault/agent/template.tpl"
+  destination = "/vault/secrets/secrets.env"
+  command     = "echo 'Secrets written'"
 }
