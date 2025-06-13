@@ -3,8 +3,6 @@ services:
   vault-agent:
     image: hashicorp/vault:latest
     container_name: vault-agent
-    depends_on:
-      - vault
     volumes:
       - ./vault/agent:/vault/agent
       - ./vault/secrets:/vault/secrets
