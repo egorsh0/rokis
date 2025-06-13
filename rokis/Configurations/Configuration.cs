@@ -19,6 +19,7 @@ using Microsoft.Extensions.Caching.StackExchangeRedis;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 using Prometheus;
+using rokis.Dtos.AdminDto;
 using ZiggyCreatures.Caching.Fusion;
 using ZiggyCreatures.Caching.Fusion.Serialization.SystemTextJson;
 
@@ -33,6 +34,8 @@ public static class Configuration
             .AddJsonOptions(options =>
                 options.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter()));
         var connectionString = builder.Configuration.GetConnectionString("rokisDb");
+        
+        builder.Services.Configure<AdminOptions>(builder.Configuration.GetSection("Admin"));
         
         // Подключение БД через env
         var dbConnection = Environment.GetEnvironmentVariable("DB_CONN");
@@ -261,6 +264,7 @@ public static class Configuration
     }
     public static void ConfigureServices(this IServiceCollection services)
     {
+        services.AddScoped<AdminSecretFilter>();
         // Сервис по генерации Jwt
         services.AddHttpContextAccessor();
         services.AddScoped<IJwtTokenService, JwtTokenService>();

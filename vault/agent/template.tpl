@@ -1,4 +1,6 @@
-﻿POSTGRES_USER={{ with secret "kv/data/rokis/db" }}{{ .Data.data.user }}{{ end }}
+﻿ADMIN__SECRET={{ with secret "kv/rokis/admin" }}{{ .Data.data.secret }}{{ end }}
+
+POSTGRES_USER={{ with secret "kv/data/rokis/db" }}{{ .Data.data.user }}{{ end }}
 POSTGRES_PASSWORD={{ with secret "kv/data/rokis/db" }}{{ .Data.data.password }}{{ end }}
 POSTGRES_DB={{ with secret "kv/data/rokis/db" }}{{ .Data.data.dbname }}{{ end }}
 

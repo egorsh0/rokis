@@ -1,11 +1,13 @@
 ﻿using rokis.Dtos.AdminDto;
 using rokis.Service;
 using Microsoft.AspNetCore.Mvc;
+using rokis.Filters;
 
 namespace rokis.Endpoints;
 
 [ApiController]
 [Route("api/administator")]
+[ServiceFilter(typeof(AdminSecretFilter))]
 public class AdministatorController : ControllerBase
 {
     private readonly IQuestionService _questionService;
