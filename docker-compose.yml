@@ -155,10 +155,11 @@ services:
     ports: ["5000:5000"]
     networks: [ internal ]
     logging:
-      driver: "json-file"
+      driver: loki
       options:
-        max-size: "200k"
-        max-file: "10"
+        loki-url: "http://loki:3100/loki/api/v1/push"
+        max-size: "10m"
+        max-file: "3"
     entrypoint: >
       sh -c '
         echo "⏳ Waiting for /vault/agent/secrets/secrets.env...";
