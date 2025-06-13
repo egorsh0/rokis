@@ -3,7 +3,7 @@ using idcc.Application.Interfaces;
 using idcc.Dtos;
 using idcc.Extensions;
 using idcc.Infrastructures;
-using idcc.Repository.Interfaces;
+using idcc.Repository;
 using idcc.Service;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;

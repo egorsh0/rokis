@@ -1,10 +1,17 @@
 ﻿using idcc.Context;
 using idcc.Models;
 using idcc.Models.Profile;
-using idcc.Repository.Interfaces;
 using Microsoft.EntityFrameworkCore;
 
 namespace idcc.Repository;
+
+public interface IUserRepository
+{
+    Task<PersonProfile?> GetUserAsync(int id);
+    Task<PersonProfile?> GetUserByNameAsync(string name);
+    Task<PersonProfile> CreateAsync(PersonProfile employee);
+    Task<Direction?> GetRoleAsync(string name);
+}
 
 public class UserRepository : IUserRepository
 {

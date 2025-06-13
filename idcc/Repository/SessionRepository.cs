@@ -1,85 +1,84 @@
 ﻿using idcc.Context;
-using idcc.Dtos;
-using idcc.Extensions;
 using idcc.Infrastructures;
 using idcc.Models;
-using idcc.Repository.Interfaces;
 using Microsoft.EntityFrameworkCore;
 
 namespace idcc.Repository;
 
+public interface ISessionRepository
+{
+    /// <summary>
+    /// Получить сессию.
+    /// </summary>
+    /// <param name="sessionId">Идентификатор сессии.</param>
+    /// <returns></returns>
+    Task<Session?> GetSessionAsync(int sessionId);
+    
+    /// <summary>
+    /// Получить сессию.
+    /// </summary>
+    /// <param name="tokenId">Уникальный токен.</param>
+    /// <returns></returns>
+    Task<Session?> GetSessionAsync(Guid tokenId);
+    
+    /// <summary>
+    /// Получить сессию.
+    /// </summary>
+    /// <param name="tokenId">Уникальный токен.</param>
+    /// <param name="endDate">Дата закрытия сессии.</param>
+    /// <returns></returns>
+    Task<Session?> GetSessionAsync(Guid tokenId, DateTime? endDate);
+    
+    /// <summary>
+    /// Получить сессии.
+    /// </summary>
+    /// <param name="userId">Идентификатор пользователя.</param>
+    /// <param name="isEmployee">Это сотрудник?</param>
+    /// <returns></returns>
+    Task<List<Session>> GetSessionsAsync(string userId, bool isEmployee);
+    
+    /// <summary>
+    /// Получить сессии.
+    /// </summary>
+    /// <param name="directionId">Идентификатор направления.</param>
+    /// <returns></returns>
+    Task<List<Session>> GetSessionsAsync(int directionId);
+
+    /// <summary>
+    /// Создать сессию.
+    /// </summary>
+    /// <param name="tokenId">Уникальный токен.</param>
+    /// <param name="employeeUserId">Идентификатор сотрудника.</param>
+    /// <param name="personUserId">Идентификатор физ.лица.</param>
+    /// <returns></returns>
+    Task<Session> CreateAsync(Guid tokenId, string? employeeUserId, string? personUserId);
+
+    /// <summary>
+    /// Завершить сессию.
+    /// </summary>
+    /// <param name="sessionId"></param>
+    /// <returns></returns>
+    Task CloseSessionAsync(int sessionId);
+    
+    Task<Session?> GetFinishSessionAsync(Guid tokenId);
+    
+    Task SessionScoreAsync(int sessionId, double score);
+}
+
 public class SessionRepository : ISessionRepository
 {
     private readonly IdccContext _context;
+    private readonly ITokenRepository _tokenRepository;
 
-    public SessionRepository(IdccContext context)
+    public SessionRepository(
+        IdccContext context,
+        ITokenRepository tokenRepository)
     {
         _context = context;
-    }
-    
-    public async Task<SessionResultDto> StartSessionAsync(string userId, bool isEmployee, Guid tokenId)
-    {
-        var token = await _context.Tokens
-            .Include(t=>t.Order)
-            .FirstOrDefaultAsync(t => t.Id == tokenId);
-
-        if (token is null || token.Status != TokenStatus.Bound)
-        {
-            return new SessionResultDto(null, tokenId, false, MessageCode.TOKEN_NOT_BOUND, MessageCode.TOKEN_NOT_BOUND.GetDescription());
-        }
-
-        switch (isEmployee)
-        {
-            // Проверим, что текущий userId совпадает с тем, кому он привязан
-            case true when token.EmployeeUserId != userId:
-            case false when token.PersonUserId != userId:
-                return new SessionResultDto(null, tokenId, false, MessageCode.TOKEN_IS_FORBIDDEN, MessageCode.TOKEN_IS_FORBIDDEN.GetDescription());
-        }
-        
-        // Проверяем, есть ли уже активная сессия на токен
-        var existing = await _context.Sessions
-            .FirstOrDefaultAsync(s => s.TokenId == tokenId && s.EndTime == null);
-        if (existing != null)
-        {
-            return new SessionResultDto(existing.Id, existing.TokenId, true, MessageCode.SESSION_HAS_ACTIVE,null);
-        } 
-
-        var session = new Session {
-            TokenId = tokenId,
-            StartTime = DateTime.UtcNow,
-            EmployeeUserId = isEmployee ? userId : null,
-            PersonUserId   = !isEmployee ? userId : null
-        };
-        token.Status = TokenStatus.Used;
-        _context.Sessions.Add(session);
-        await CreateSessionUserTopics(session);
-        await _context.SaveChangesAsync();
-        return new SessionResultDto(session.Id, session.TokenId, true, MessageCode.SESSION_IS_STARTED, null);
+        _tokenRepository = tokenRepository;
     }
 
-    public async Task<StopSessionDto> EndSessionAsync(Guid tokenId)
-    {
-        var session = await _context.Sessions
-            .FirstOrDefaultAsync(s => s.TokenId == tokenId && s.EndTime == null);
-        
-        if (session is null)
-        {
-            return new StopSessionDto(false, MessageCode.SESSION_IS_NOT_EXIST, MessageCode.SESSION_IS_NOT_EXIST.GetDescription());
-        }
-        session.EndTime = DateTime.Now;
-        var userTopics = await _context.UserTopics.Where(t => t.Session.Id == session.Id && t.IsFinished == false).ToListAsync();
-        foreach (var userTopic in userTopics)
-        {
-            userTopic.IsFinished = true;
-        }
-        
-        await _context.SaveChangesAsync();
-        return new StopSessionDto(true, MessageCode.SESSION_IS_FINISHED, $"{tokenId} token session completed");
-    }
-    
-    public async Task<IEnumerable<SessionDto>> GetSessionsForUserAsync(
-        string userId,
-        bool   isEmployee)
+    public async Task<List<Session>> GetSessionsAsync(string userId, bool isEmployee)
     {
         // базовый запрос
         IQueryable<Session> query = _context.Sessions
@@ -91,22 +90,10 @@ public class SessionRepository : ISessionRepository
         query = isEmployee
             ? query.Where(s => s.EmployeeUserId == userId)
             : query.Where(s => s.PersonUserId   == userId);
-
-        // проекция в DTO (циклов больше нет)
-        return await query.Select(s => new SessionDto(
-                s.Id,
-                s.StartTime,
-                s.EndTime,
-                s.Score,
-                new TokenShortDto(
-                    s.Token.Id,
-                    s.Token.DirectionId,
-                    s.Token.Direction.Name,
-                    s.Token.Status)))
-            .ToListAsync();
+        return await query.ToListAsync();
     }
-    
-    public async Task<IEnumerable<SessionDto>> GetCloseSessionsAsync(int directionId)
+
+    public async Task<List<Session>> GetSessionsAsync(int directionId)
     {
         IQueryable<Session> query = _context.Sessions
             .AsNoTracking()
@@ -114,46 +101,76 @@ public class SessionRepository : ISessionRepository
             .ThenInclude(t => t.Direction);
         
         query = query.Where(s => 
-            s.EndTime != null && 
             s.Token.Direction.Id == directionId);
+        return await query.ToListAsync();
+    }
+
+    public async Task<Session> CreateAsync(Guid tokenId, string? employeeUserId, string? personUserId)
+    {
+        var entity = new Session {
+            TokenId = tokenId,
+            StartTime = DateTime.UtcNow,
+            EmployeeUserId = employeeUserId,
+            PersonUserId = personUserId
+        };
+        _context.Sessions.Add(entity);
+        await _tokenRepository.UpdateTokesStatusAsync(tokenId, TokenStatus.Used);
+        await _context.SaveChangesAsync();
+        return entity;
+    }
+
+    public async Task CloseSessionAsync(int sessionId)
+    {
+        var session = await _context.Sessions
+            .FirstOrDefaultAsync(s => s.Id == sessionId);
         
-        return await query.Select(s => new SessionDto(
-                s.Id,
-                s.StartTime,
-                s.EndTime,
-                s.Score,
-                new TokenShortDto(
-                    s.Token.Id,
-                    s.Token.DirectionId,
-                    s.Token.Direction.Name,
-                    s.Token.Status)))
-            .ToListAsync();
+        if (session is null)
+        {
+            return;
+        }
+        session.EndTime = DateTime.Now;
+        await _context.SaveChangesAsync();
+    }
+
+    public async Task<Session?> GetSessionAsync(int sessionId)
+    {
+        return await _context.Sessions.FindAsync(sessionId);
     }
 
     public async Task<Session?> GetSessionAsync(Guid tokenId)
     {
         var sessions = await _context.Sessions.Where(s => s.TokenId == tokenId).ToListAsync();
-        return sessions.SingleOrDefault();
+        if (sessions.Any() && sessions.Count > 1)
+        {
+            return null;
+        }
+
+        if (!sessions.Any())
+        {
+            return null;
+        }
+        
+        return sessions.FirstOrDefault();
     }
 
-    public async Task<SessionDto?> GetActualSessionAsync(Guid tokenId)
+    public async Task<Session?> GetSessionAsync(Guid tokenId, DateTime? endDate)
     {
-        var session =  await _context.Sessions
+        var sessions = await _context.Sessions
             .Include(session => session.Token)
             .ThenInclude(token => token.Direction)
-            .SingleOrDefaultAsync(s => s.TokenId == tokenId && s.EndTime == null);
-        return session is null 
-            ? null 
-            : new SessionDto(
-                session.Id, 
-                session.StartTime, 
-                session.EndTime, 
-                session.Score, 
-                new TokenShortDto(
-                    session.Token.Id, 
-                    session.Token.Direction.Id, 
-                    session.Token.Direction.Name, 
-                    session.Token.Status));
+            .Where(s => s.TokenId == tokenId && s.EndTime == endDate)
+            .ToListAsync();
+        if (sessions.Any() && sessions.Count > 1)
+        {
+            return null;
+        }
+
+        if (!sessions.Any())
+        {
+            return null;
+        }
+        
+        return sessions.FirstOrDefault();
     }
 
     public async Task<Session?> GetFinishSessionAsync(Guid tokenId)
@@ -177,37 +194,5 @@ public class SessionRepository : ISessionRepository
         session.Token.Score = score;
 
         await _context.SaveChangesAsync();
-    }
-    
-    private async Task CreateSessionUserTopics(Session session)
-    {
-        var middleGrade = _context.Grades.Single(g => g.Code == "Middle");
-        var weight = _context.Weights.Single(w => w.Grade == middleGrade);
-        var topics = _context.Topics.Where(t => t.Direction == session.Token.Direction);
-        var settingQuestion = await _context.Counts.FirstOrDefaultAsync(c => c.Code == "Question");
-
-        var questionCount = 10;
-        if (settingQuestion is not null)
-        {
-            questionCount = settingQuestion.Value;
-        }
-
-        bool firstActual = true;
-        foreach (var topic in topics)
-        {
-            var userTopic = new UserTopic()
-            {
-                Session = session,
-                Topic = topic,
-                Weight = weight.Min,
-                Grade = middleGrade,
-                IsFinished = false,
-                WasPrevious = false,
-                Actual = firstActual,
-                Count = questionCount
-            };
-            firstActual = false;
-            _context.UserTopics.Add(userTopic);
-        }
     }
 }

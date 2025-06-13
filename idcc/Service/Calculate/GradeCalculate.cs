@@ -1,6 +1,6 @@
 ﻿using idcc.Dtos;
 
-namespace idcc.Infrastructures;
+namespace idcc.Service;
 
 public interface IGradeCalculate
 {

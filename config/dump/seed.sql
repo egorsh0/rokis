@@ -764,7 +764,7 @@ INSERT INTO "Grades" ("Id", "Name", "Code", "Description") VALUES (3, 'Senior', 
 INSERT INTO "Persents" ("Id", "Code", "Description", "Value") VALUES (1, 'DecreaseLevel', 'Процент вопросов для закрытия уровня (/100)', 0.3);
 INSERT INTO "Persents" ("Id", "Code", "Description", "Value") VALUES (2, 'RaiseData', 'Процент разницы веса для повышения уровня', 0.15);
 INSERT INTO "Persents" ("Id", "Code", "Description", "Value") VALUES (3, 'IncreaseLevel', 'Процент вопросов для повышения уровня (/100)', 0.35);
-INSERT INTO "Persents" ("Id", "Code", "Description", "Value") VALUES (4, 'Reasonable', 'Искуственная граница', 0.45);
+INSERT INTO "Persents" ("Id", "Code", "Description", "Value") VALUES (4, 'MandatoryQuestions', 'Процент обязательных вопросов по теме (/100)', 0.5);
 
 /*  
 Конфигурация Direction 

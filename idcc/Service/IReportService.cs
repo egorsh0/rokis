@@ -1,7 +1,6 @@
 ﻿using idcc.Dtos;
 using idcc.Infrastructures;
-using idcc.Infrastructures.Interfaces;
-using idcc.Repository.Interfaces;
+using idcc.Repository;
 using idcc.Service;
 
 namespace idcc.Application.Interfaces;
@@ -9,14 +8,12 @@ namespace idcc.Application.Interfaces;
 public interface IReportService
 {
     Task<ReportDto?> GenerateAsync(SessionDto session);
-    Task<List<List<FinalTopicData>>> GetAllTopicDataAsync(SessionDto session);
 }
 
 public class ReportService : IReportService
 {
-    private readonly ISessionRepository _sessionRepository;
-    private readonly IDataRepository _dataRepository;
-    private readonly IUserTopicRepository _userTopicRepository;
+    private readonly IConfigService _configService;
+    private readonly IUserTopicService _userTopicService;
     private readonly IUserAnswerRepository _userAnswerRepository;
     private readonly IScoreCalculate _scoreCalculate;
     private readonly IMetricService _metricService;
@@ -24,17 +21,15 @@ public class ReportService : IReportService
     private ILogger<ReportService> _logger;
 
     public ReportService(
-        ISessionRepository sessionRepository,
-        IDataRepository dataRepository,
-        IUserTopicRepository userTopicRepository,
+        IConfigService configService,
+        IUserTopicService userTopicService,
         IUserAnswerRepository userAnswerRepository,
         IScoreCalculate scoreCalculate,
         IMetricService metricService,
         ILogger<ReportService> logger)
     {
-        _sessionRepository = sessionRepository;
-        _dataRepository = dataRepository;
-        _userTopicRepository = userTopicRepository;
+        _configService = configService;
+        _userTopicService = userTopicService;
         _userAnswerRepository = userAnswerRepository;
         _scoreCalculate = scoreCalculate;
         _metricService = metricService;
@@ -61,44 +56,10 @@ public class ReportService : IReportService
             session.EndTime.Value - session.StartTime, cognitiveStabilityIndex, thinkingPattern, finalScoreDto, finalTopicDatas);
         return report;
     }
-    
-    public async Task<List<List<FinalTopicData>>> GetAllTopicDataAsync(SessionDto session)
-    {
-        var list = new List<List<FinalTopicData>>();
-        
-        var allCloseSessions = await _sessionRepository.GetCloseSessionsAsync(session.Token.DirectionId);
-        foreach (var closeSession in allCloseSessions)
-        {
-            var userTopics = await _userTopicRepository.GetAllTopicsAsync(closeSession.Id);
-            var userAnswers = await _userAnswerRepository.GetAllUserAnswers(session.Id);
-
-            var finalTopicDatas = new List<FinalTopicData>();
-            foreach (var userTopic in userTopics)
-            {
-                var questionAnswers = userAnswers.Where(a => a.Question.Topic.Id == userTopic.Topic.Id).ToList();
-                var scores = questionAnswers.Select(a => a.Score).ToList();
-                var weight = userTopic.Weight;
-                var topicScore = _scoreCalculate.GetTopicScore(scores, weight);
-                var positive = questionAnswers.Count(answer => answer.Score > 0);
-                var negative = questionAnswers.Count(answer => answer.Score == 0);
-
-                var finalTopicData = new FinalTopicData(
-                    userTopic.Topic.Name,
-                    topicScore == 0 ? ValueConst.MinValue : topicScore,
-                    userTopic.Grade.Name,
-                    positive, 
-                    negative);
-                finalTopicDatas.Add(finalTopicData);
-            }
-            list.Add(finalTopicDatas);
-        }
-        
-        return list;
-    }
 
     private async Task<FinalScoreDto?> CalculateFinalScoreAsync(SessionDto session)
     {
-        var userTopics = await _userTopicRepository.GetAllTopicsAsync(session.Id);
+        var userTopics = await _userTopicService.GetFinishUserTopicsAsync(session.Id);
         if (userTopics.Count == 0)
         {
             return null;
@@ -115,14 +76,13 @@ public class ReportService : IReportService
             sum += topicScore;
         }
 
-        var (_, grade) = await _dataRepository.GetGradeLevelAsync(sum);
-
-        return new FinalScoreDto(sum, grade.Name);
+        var (_, grade) = await _configService.GetGradeLevelAsync(sum);
+        return grade != null ? new FinalScoreDto(sum, grade.Name) : new FinalScoreDto(sum, string.Empty);
     }
     
     private async Task<List<FinalTopicData>?> CalculateFinalTopicDataAsync(SessionDto session)
     {
-        var userTopics = await _userTopicRepository.GetAllTopicsAsync(session.Id);
+        var userTopics = await _userTopicService.GetFinishUserTopicsAsync(session.Id);
         if (!userTopics.Any())
         {
             return null;

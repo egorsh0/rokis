@@ -4,7 +4,7 @@ using idcc.Dtos;
 using idcc.Extensions;
 using idcc.Infrastructures;
 using idcc.Providers;
-using idcc.Repository.Interfaces;
+using idcc.Service;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
@@ -15,11 +15,13 @@ namespace idcc.Endpoints;
 [Authorize(Roles = "Employee,Person")]
 public class SessionController : ControllerBase
 {
-    private readonly ISessionRepository _sessionRepository;
+    private readonly ISessionService _sessionService;
     private readonly IDurationProvider _durationProvider;
-    public SessionController(ISessionRepository sessionRepository, IDurationProvider durationProvider)
+    public SessionController(
+        ISessionService sessionService,
+        IDurationProvider durationProvider)
     {
-        _sessionRepository = sessionRepository;
+        _sessionService = sessionService;
         _durationProvider = durationProvider;
     }
     
@@ -39,7 +41,7 @@ public class SessionController : ControllerBase
         var role   = User.IsInRole("Employee") ? "Employee" : "Person";
         var isEmployee = role == "Employee";
             
-        var session = await _sessionRepository.StartSessionAsync(userId, isEmployee, dto.TokenId);
+        var session = await _sessionService.StartSessionAsync(userId, isEmployee, dto.TokenId);
         if (!session.Succeeded)
         {
             return BadRequest(session);
@@ -72,7 +74,7 @@ public class SessionController : ControllerBase
     [ProducesResponseType(typeof(string),    StatusCodes.Status400BadRequest)]
     public async Task<IActionResult> StopSession([Required] Guid tokenId)
     {
-        var session = await _sessionRepository.GetSessionAsync(tokenId);
+        var session = await _sessionService.GetSessionAsync(tokenId);
         if (session is null)
         {
             return BadRequest(new ResponseDto(MessageCode.SESSION_IS_NOT_EXIST, MessageCode.SESSION_IS_NOT_EXIST.GetDescription()));
@@ -82,7 +84,7 @@ public class SessionController : ControllerBase
         {
             return BadRequest(new ResponseDto(MessageCode.SESSION_IS_FINISHED, MessageCode.SESSION_IS_FINISHED.GetDescription()));
         }
-        var dto = await _sessionRepository.EndSessionAsync(tokenId);
+        var dto = await _sessionService.EndSessionAsync(tokenId);
         return dto.isSuccess ? Ok(new ResponseDto(dto.Code, dto.Message)) : BadRequest(new ResponseDto(dto.Code, dto.Message));
     }
 
@@ -94,7 +96,7 @@ public class SessionController : ControllerBase
     [ProducesResponseType(typeof(IEnumerable<SessionDto>), StatusCodes.Status200OK)]
     public async Task<IActionResult> Sessions(){
         var userId = User.FindFirstValue(ClaimTypes.NameIdentifier)!;
-        var sessions = await _sessionRepository.GetSessionsForUserAsync(userId,false);
+        var sessions = await _sessionService.GetUserSessionsAsync(userId,false);
         return Ok(sessions);
     }
 }

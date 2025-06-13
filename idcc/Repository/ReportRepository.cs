@@ -1,14 +1,25 @@
 ﻿using idcc.Context;
 using idcc.Models;
-using idcc.Repository.Interfaces;
 using Microsoft.EntityFrameworkCore;
 
 namespace idcc.Repository;
 
+public interface IReportRepository
+{
+    Task<bool> ExistsForTokenAsync(Guid tokenId);
+    Task SaveReportAsync(Guid tokenId, double score, int gradeId, byte[]? image);
+    
+    Task<Report?> GetByTokenAsync(Guid tokenId);
+}
+
 public class ReportRepository : IReportRepository
 {
     private readonly IdccContext _idccContext;
-    public ReportRepository(IdccContext idccContext) => _idccContext = idccContext;
+
+    public ReportRepository(IdccContext idccContext)
+    {
+        _idccContext = idccContext;
+    }
 
     public async Task<bool> ExistsForTokenAsync(Guid tokenId) =>
         await _idccContext.Reports.AnyAsync(r => r.TokenId == tokenId);

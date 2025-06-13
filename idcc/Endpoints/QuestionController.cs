@@ -1,7 +1,6 @@
 ﻿using idcc.Dtos;
 using idcc.Extensions;
 using idcc.Infrastructures;
-using idcc.Repository.Interfaces;
 using idcc.Service;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -16,19 +15,19 @@ namespace idcc.Endpoints;
 [Authorize(Roles = "Employee,Person")]
 public class QuestionController : ControllerBase
 {
-    private readonly ISessionRepository _sessionRepository;
-    private readonly IUserTopicRepository _topicRepository;
-    private readonly IQuestionRepository _questionRepository;
+    private readonly ISessionService _sessionService;
+    private readonly IUserTopicService _userTopicService;
+    private readonly IQuestionService _questionService;
     private readonly IScoreService _scoreService;
 
-    public QuestionController(ISessionRepository sessionRepository,
-                              IUserTopicRepository topicRepository,
-                              IQuestionRepository questionRepository,
-                              IScoreService scoreService)
+    public QuestionController(ISessionService sessionService,
+        IUserTopicService userTopicService,
+        IQuestionService questionService,
+        IScoreService scoreService)
     {
-        _sessionRepository = sessionRepository;
-        _topicRepository = topicRepository;
-        _questionRepository = questionRepository;
+        _sessionService = sessionService;
+        _userTopicService = userTopicService;
+        _questionService = questionService;
         _scoreService = scoreService;
     }
 
@@ -55,7 +54,7 @@ public class QuestionController : ControllerBase
     [ProducesResponseType(typeof(string), StatusCodes.Status423Locked)]
     public async Task<IActionResult> GetRandom([FromQuery] Guid tokenId)
     {
-        var session = await _sessionRepository.GetActualSessionAsync(tokenId);
+        var session = await _sessionService.GetActualSessionAsync(tokenId);
 
         if (session == null)
         {
@@ -72,25 +71,25 @@ public class QuestionController : ControllerBase
         var cancelTokenSource = new CancellationTokenSource();
         while (!cancelTokenSource.Token.IsCancellationRequested)
         {
-            if (!await _topicRepository.HasOpenTopic(session.Id))
+            if (!await _userTopicService.HasOpenTopic(session.Id))
             {
-                await _sessionRepository.EndSessionAsync(tokenId);
+                await _sessionService.EndSessionAsync(tokenId);
                 return NoContent();
             }
 
-            userTopicDto = await _topicRepository.GetRandomTopicAsync(session.Id);
+            userTopicDto = await _userTopicService.GetRandomUserTopicAsync(session.Id);
             if (userTopicDto == null)
             {
                 return BadRequest(new ResponseDto(MessageCode.GET_RANDOM_TOPIC, MessageCode.GET_RANDOM_TOPIC.GetDescription()));
             }
 
-            questionDto = await _questionRepository.GetQuestionAsync(userTopicDto);
+            questionDto = await _questionService.GetQuestionAsync(session.Id, userTopicDto.Id, userTopicDto.Grade.Id);
             if (questionDto != null)
             {
                 await cancelTokenSource.CancelAsync();
                 continue;
             }
-            await _topicRepository.CloseTopicAsync(userTopicDto.Id);
+            await _userTopicService.CloseUserTopicAsync(userTopicDto.Id);
             return Accepted();
         }
 
@@ -98,7 +97,7 @@ public class QuestionController : ControllerBase
         {
             return BadRequest(new ResponseDto(MessageCode.TOPIC_IS_NULL, MessageCode.TOPIC_IS_NULL.GetDescription()));
         }
-        await _topicRepository.RefreshActualTopicInfoAsync(userTopicDto.Id, session.Id);
+        await _userTopicService.RefreshActualTopicInfoAsync(userTopicDto.Id, session.Id);
         return Ok(questionDto);
     }
 
@@ -124,7 +123,7 @@ public class QuestionController : ControllerBase
         [FromQuery] TimeSpan dateInterval,
         [FromBody]  QuestionShortDto question)
     {
-        var session = await _sessionRepository.GetActualSessionAsync(tokenId);
+        var session = await _sessionService.GetActualSessionAsync(tokenId);
 
         if (session == null)
         {

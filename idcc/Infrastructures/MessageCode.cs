@@ -102,6 +102,8 @@ public enum MessageCode
     QUESTION_IS_NOT_EXIST,
     [Description("The question has multiply option")]
     QUESTION_IS_MULTIPLY,
+    [Description("The answers was not found")]
+    ANSWER_IS_NOT_EXIST,
     [Description("The answer is not tied to the question")]
     ANSWER_ID_NOT_FOUND,
     [Description("The answer was sending")]
@@ -111,6 +113,7 @@ public enum MessageCode
     
     GRADE_TIMES_IS_NULL,
     GRADE_WEIGHT_IS_NULL,
+    GRADE_RELATIONS_IS_NULL,
     
     MAILING_TEMPLATE_IS_NULL,
     

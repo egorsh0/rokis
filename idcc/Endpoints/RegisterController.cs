@@ -4,7 +4,7 @@ using idcc.Dtos;
 using idcc.Extensions;
 using idcc.Infrastructures;
 using idcc.Models;
-using idcc.Repository.Interfaces;
+using idcc.Repository;
 using idcc.Service;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -18,24 +18,20 @@ namespace idcc.Endpoints;
 [Route("api/register")]
 public class RegisterController : ControllerBase
 {
-    private readonly ITokenService _tokenService;
+    private readonly IJwtTokenService _jwtTokenService;
     private readonly UserManager<ApplicationUser> _userManager;
     private readonly IRegisterRepository _registerRepository;
-    private readonly IConfiguration _configuration;
     private readonly ILogger<RegisterController> _logger;
-
     
     public RegisterController(
-        ITokenService tokenService,
+        IJwtTokenService jwtTokenService,
         UserManager<ApplicationUser> userManager,
         IRegisterRepository registerRepository, 
-        IConfiguration configuration,
         ILogger<RegisterController> logger)
     {
-        _tokenService = tokenService;
+        _jwtTokenService = jwtTokenService;
         _userManager = userManager;
         _registerRepository = registerRepository;
-        _configuration = configuration;
         _logger = logger;
     }
 
@@ -163,7 +159,7 @@ public class RegisterController : ControllerBase
             {
                 return Unauthorized(new ResponseDto(user.code,"Invalid credentials"));
             }
-            var login = await _tokenService.CreateTokensAsync(user.applicationUser);
+            var login = await _jwtTokenService.CreateTokensAsync(user.applicationUser);
             return Ok(login);
         }
         catch (Exception ex)
@@ -188,7 +184,7 @@ public class RegisterController : ControllerBase
             return Unauthorized(new ResponseDto(MessageCode.INVALID_REFRESH_TOKEN,"Refresh token is empty"));
         }
 
-        var login = await _tokenService.RefreshAsync(token);
+        var login = await _jwtTokenService.RefreshAsync(token);
         return login is null ? Unauthorized(new ResponseDto(MessageCode.INVALID_REFRESH_TOKEN,"Invalid credentials for refresh token")) : Ok(login);
     }
     
@@ -200,7 +196,7 @@ public class RegisterController : ControllerBase
         var token = Request.Cookies["refreshToken"];
         if (!string.IsNullOrEmpty(token))
         {
-            await _tokenService.RevokeAsync(token);
+            await _jwtTokenService.RevokeAsync(token);
         }
 
         Response.Cookies.Delete("refreshToken");
@@ -227,7 +223,7 @@ public class RegisterController : ControllerBase
             {
                 return Unauthorized(new ResponseDto(MessageCode.USER_NOT_FOUND, "Invalid credentials"));
             }
-            var token = await _tokenService.CreateTokensAsync(user);
+            var token = await _jwtTokenService.CreateTokensAsync(user);
             return Ok(token);
         }
         catch (Exception ex)
@@ -244,7 +240,7 @@ public class RegisterController : ControllerBase
     [ProducesResponseType(typeof(ResponseDto), StatusCodes.Status400BadRequest)]
     public async Task<IActionResult> ForgotPassword([FromBody] ForgotPasswordDto dto,
         [FromServices] IEmailService emailService, 
-        [FromServices] IConfigRepository configRepository)
+        [FromServices] IConfigService configService)
     {
         var user = await _userManager.FindByEmailAsync(dto.Email);
         if (user is null)
@@ -258,7 +254,7 @@ public class RegisterController : ControllerBase
         var link =
             $"{dto.BaseUrl}/reset-password?userId={user.Id}&token={encoded}";
         
-        var template = await configRepository.GetMailingAsync("ResetPassword");
+        var template = await configService.GetMailingAsync("ResetPassword");
         if (template is null)
         {
             return BadRequest(new ResponseDto(MessageCode.MAILING_TEMPLATE_IS_NULL,"Mailing template ResetPassword disabled or missing"));

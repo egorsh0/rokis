@@ -1,7 +1,5 @@
 ﻿using idcc.Dtos.AdminDto;
-using idcc.Infrastructures;
-using idcc.Repository.Interfaces;
-using Microsoft.AspNetCore.Authorization;
+using idcc.Service;
 using Microsoft.AspNetCore.Mvc;
 
 namespace idcc.Endpoints;
@@ -10,12 +8,12 @@ namespace idcc.Endpoints;
 [Route("api/administator")]
 public class AdministatorController : ControllerBase
 {
-    private readonly IQuestionRepository _questionRepository;
+    private readonly IQuestionService _questionService;
     private readonly ILogger<AdministatorController> _logger;
 
-    public AdministatorController(IQuestionRepository questionRepository, ILogger<AdministatorController> logger)
+    public AdministatorController(IQuestionService questionService, ILogger<AdministatorController> logger)
     {
-        _questionRepository = questionRepository;
+        _questionService = questionService;
         _logger = logger;
     }
 
@@ -23,7 +21,7 @@ public class AdministatorController : ControllerBase
     [Route("question/create")]
     public async Task<IResult> Create([FromBody] List<QuestionAdminDto> questions)
     {
-        var notAddedQuestions = await _questionRepository.CreateAsync(questions);
+        var notAddedQuestions = await _questionService.CreateAsync(questions);
 
         return Results.Ok(notAddedQuestions);
     }

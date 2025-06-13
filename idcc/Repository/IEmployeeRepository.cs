@@ -4,11 +4,16 @@ using idcc.Extensions;
 using idcc.Infrastructures;
 using idcc.Models;
 using idcc.Models.Profile;
-using idcc.Repository.Interfaces;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 
 namespace idcc.Repository;
+
+public interface IEmployeeRepository
+{
+    Task<EmployeeProfile?> GetEmployeeWithCompanyAsync(string employeeUserId);
+    Task<UpdateResult> UpdateEmployeeAsync(string userId, UpdateEmployeeDto dto);
+}
 
 public class EmployeeRepository : IEmployeeRepository
 {

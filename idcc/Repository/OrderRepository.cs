@@ -2,15 +2,27 @@
 using idcc.Dtos;
 using idcc.Infrastructures;
 using idcc.Models;
-using idcc.Repository.Interfaces;
 using Microsoft.EntityFrameworkCore;
 
 namespace idcc.Repository;
 
+public interface IOrderRepository
+{
+    Task<MessageCode> MarkOrderPaidAsync(int orderId, string paymentId);
+    
+    Task<OrderDto> CreateOrderAsync(string userId, string role, List<PurchaseTokensDto> items);
+    
+    Task<IEnumerable<OrderWithItemsDto>> GetOrdersAsync(string userId);
+}
+
 public class OrderRepository : IOrderRepository
 {
     private readonly IdccContext _idccContext;
-    public OrderRepository(IdccContext idccContext) => _idccContext = idccContext;
+
+    public OrderRepository(IdccContext idccContext)
+    {
+        _idccContext = idccContext;
+    }
 
     public async Task<MessageCode> MarkOrderPaidAsync(int orderId, string paymentId)
     {

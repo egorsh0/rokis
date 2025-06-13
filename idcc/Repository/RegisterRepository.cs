@@ -4,11 +4,25 @@ using idcc.Extensions;
 using idcc.Infrastructures;
 using idcc.Models;
 using idcc.Models.Profile;
-using idcc.Repository.Interfaces;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 
 namespace idcc.Repository;
+
+public interface IRegisterRepository
+{
+    // Регистрация
+    Task<AuthResult> RegisterCompanyAsync(RegisterCompanyPayload dto);
+    Task<AuthResult> RegisterEmployeeAsync(RegisterEmployeePayload dto);
+    Task<AuthResult> RegisterPersonAsync(RegisterPersonPayload dto);
+    
+    Task<AuthResult> RegisterAdministratorAsync(RegisterAdministratorPayload dto);
+
+    // Логин
+    Task<(MessageCode code, ApplicationUser? applicationUser)> LoginCheckAsync(LoginPayload dto);
+    
+    Task<ApplicationUser?> FindUserAsync(string userId);
+}
 
 public class RegisterRepository : IRegisterRepository
 {

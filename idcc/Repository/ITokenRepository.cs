@@ -2,11 +2,37 @@
 using idcc.Dtos;
 using idcc.Infrastructures;
 using idcc.Models;
-using idcc.Repository.Interfaces;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 
 namespace idcc.Repository;
+
+public interface ITokenRepository
+{
+    /// <summary>
+    /// Получение токена.
+    /// </summary>
+    /// <param name="tokenId">Идентификатор токена.</param>
+    /// <returns></returns>
+    Task<Token?> GetTokenAsync(Guid tokenId);
+    
+    /// <summary>
+    /// Обновить статус токена.
+    /// </summary>
+    /// <param name="tokenId">Идентификатор токена.</param>
+    /// <param name="status">Новый статус токена</param>
+    /// <returns></returns>
+    Task UpdateTokesStatusAsync(Guid tokenId, TokenStatus status);
+    
+    Task<IEnumerable<TokenDto>> GetTokensForCompanyAsync(string companyUserId);
+    Task<IEnumerable<TokenDto>> GetTokensForEmployeeAsync(string employeeUserId);
+    Task<IEnumerable<TokenDto>> GetTokensForPersonAsync(string personUserId);
+    
+    Task<MessageCode> BindTokenToEmployeeAsync(Guid tokenId, string employeeEmail, string companyUserId);
+    Task<MessageCode> UnBindTokenToEmployeeAsync(Guid tokenId, string employeeEmail, string companyUserId);
+    
+    Task<MessageCode> BindUsedTokenToPersonAsync(Guid tokenId, string personEmail);
+}
 
 public class TokenRepository : ITokenRepository
 {
@@ -17,6 +43,24 @@ public class TokenRepository : ITokenRepository
     {
         _idccContext = idccContext;
         _userManager = userManager;
+    }
+
+    public async Task<Token?> GetTokenAsync(Guid tokenId)
+    {
+        return await _idccContext.Tokens
+            .Include(t=> t.Order)
+            .FirstOrDefaultAsync(t => t.Id == tokenId);
+    }
+
+    public async Task UpdateTokesStatusAsync(Guid tokenId, TokenStatus status)
+    {
+        var token = await GetTokenAsync(tokenId);
+        if (token == null)
+        {
+            return;
+        }
+        token.Status = status;
+        await _idccContext.SaveChangesAsync();
     }
 
     public async Task<IEnumerable<TokenDto>> GetTokensForCompanyAsync(string companyUserId)

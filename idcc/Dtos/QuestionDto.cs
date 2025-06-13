@@ -1,6 +1,8 @@
-﻿using idcc.Models;
+﻿using System.Text.Json.Serialization;
 
 namespace idcc.Dtos;
+
+public record QuestionSmartDto(int QuestionId, bool IsMultipleChoice, double Weight);
 
 public record QuestionShortDto()
 {
@@ -22,13 +24,8 @@ public record QuestionDto : QuestionShortDto
 
 public record AnswerDto : AnswerShortDto
 {
-    public required string Content { get; set; }
-}
-
-public record QuestionDataDto
-{
-    public required Question Question;
-    public List<Answer> Answers { get; set; } = new();
+    public bool IsCorrect { get; set; }
+    public string Content { get; set; }
 }
 
 public record QuestionResultDto(double Difficulty, bool IsCorrect, double TimeSeconds);

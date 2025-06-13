@@ -1,6 +1,29 @@
-version: '3.9'
-
 services:
+  
+  # ───── Nginx ────────────────────────────────────────────────────────────────
+  nginx:
+    image: nginx:latest
+    ports:
+      - "80:80"
+      - "443:443"
+    depends_on:
+      - idcc
+    volumes:
+      - ./config/nginx/conf.d:/etc/nginx/conf.d:ro
+      - certbot_www:/var/www/certbot:ro
+      - certbot_conf:/etc/letsencrypt:ro
+    networks: [ internal ]
+  
+  # ───── Certbot ──────────────────────────────────────────────────────────────
+  certbot:
+    build:
+      context: ./config/certbot
+      dockerfile: Dockerfile
+    volumes:
+      - certbot_www:/var/www/certbot
+      - certbot_conf:/etc/letsencrypt
+    networks: [ internal ]
+  
   # ───── PostgreSQL ───────────────────────────────────────────────────────────
   db:
     image: postgres:16-alpine
@@ -17,7 +40,7 @@ services:
       retries: 5
     volumes:
       - db_data:/var/lib/postgresql/data
-      - ./idcc/docker/seed.sql:/docker-entrypoint-initdb.d/init.sql
+      - ./config/dump/seed.sql:/docker-entrypoint-initdb.d/init.sql
     networks: [ internal ]
     logging:
       driver: "json-file"
@@ -78,7 +101,7 @@ services:
   #   image: prom/prometheus
   #   restart: always
   #   volumes:
-  #     - ./idcc/monitoring:/etc/prometheus:ro
+  #     - ./config/monitoring:/etc/prometheus:ro
   #   ports:
   #     - "9090:9090"
   #   networks: [ internal ]
@@ -95,6 +118,8 @@ services:
 volumes:
   db_data:
   grafana-data:
+  certbot_www:
+  certbot_conf:
 
 networks:
   internal:

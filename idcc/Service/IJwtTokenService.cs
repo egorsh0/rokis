@@ -11,14 +11,14 @@ using Microsoft.IdentityModel.Tokens;
 
 namespace idcc.Service;
 
-public interface ITokenService
+public interface IJwtTokenService
 {
     Task<LoginDto> CreateTokensAsync(ApplicationUser user);
     Task<LoginDto?> RefreshAsync(string refreshToken);
     Task RevokeAsync(string refreshToken);
 }
 
-public class TokenService : ITokenService
+public class JwtTokenService : IJwtTokenService
 {
     private const string _alphabet =
         "abcdefghijklmnopqrstuvwxyz" +
@@ -29,17 +29,17 @@ public class TokenService : ITokenService
     private readonly UserManager<ApplicationUser> _userManager;
     private readonly IConfiguration _configuration;
     private readonly IHttpContextAccessor _httpContextAccessor;
-    private readonly ILogger<TokenService> _logger;
+    private readonly ILogger<JwtTokenService> _logger;
 
     private readonly int _accessMinutes;
     private readonly int _refreshDays;
     private readonly byte[] _jwtKey;
 
-    public TokenService(IdccContext context,
+    public JwtTokenService(IdccContext context,
         UserManager<ApplicationUser> userManager,
         IConfiguration configuration,
         IHttpContextAccessor httpContextAccessor,
-        ILogger<TokenService> logger)
+        ILogger<JwtTokenService> logger)
     {
         _context = context;
         _userManager = userManager;

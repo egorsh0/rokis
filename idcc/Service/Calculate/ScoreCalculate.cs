@@ -1,6 +1,10 @@
-﻿using idcc.Infrastructures.Interfaces;
+﻿namespace idcc.Service;
 
-namespace idcc.Infrastructures;
+public interface IScoreCalculate
+{
+    double GetScore(double weight, double k, int answered, int total);
+    double GetTopicScore(List<double> scores, double weight);
+}
 
 public class ScoreCalculate : IScoreCalculate
 {

@@ -6,14 +6,13 @@ using idcc.Application.Interfaces;
 using idcc.Context;
 using idcc.Filters;
 using idcc.Infrastructures;
-using idcc.Infrastructures.Interfaces;
 using idcc.Middlewares;
 using idcc.Models;
 using idcc.Providers;
 using idcc.Repository;
-using idcc.Repository.Interfaces;
 using idcc.Service;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Caching.StackExchangeRedis;
@@ -195,18 +194,19 @@ public static class Configuration
 
     public static void ConfigureRepositories(this IServiceCollection services)
     {
+        // Репозиторий конфигурации
+        services.AddScoped<IConfigRepository, ConfigRepository>();
+        
         // Репозиторий компании
         services.AddScoped<ICompanyRepository, CompanyRepository>();
         // Репозиторий сотрудника
         services.AddScoped<IEmployeeRepository, EmployeeRepository>();
         // Репозиторий физ лица
-        services.AddScoped<IPersonRepository,   PersonRepository>();
+        services.AddScoped<IPersonRepository, PersonRepository>();
         
+        services.AddScoped<IUserRepository, UserRepository>();
         // Репозиторий авторизации
         services.AddScoped<IRegisterRepository, RegisterRepository>();
-        
-        // Репозиторий конфигурации
-        services.AddScoped<IConfigRepository, ConfigRepository>();
         
         // Репозиторий работы с токенами
         services.AddScoped<ITokenRepository, TokenRepository>();
@@ -217,11 +217,9 @@ public static class Configuration
         // Репозиторий сессий
         services.AddScoped<ISessionRepository, SessionRepository>();
         
-        services.AddScoped<IUserRepository, UserRepository>();
         services.AddScoped<IQuestionRepository, QuestionRepository>();
         services.AddScoped<IUserTopicRepository, UserTopicRepository>();
         services.AddScoped<IUserAnswerRepository, UserAnswerRepository>();
-        services.AddScoped<IDataRepository, DataRepository>();
         
         services.AddScoped<IReportRepository, ReportRepository>();
     }
@@ -229,21 +227,32 @@ public static class Configuration
     {
         // Сервис по генерации Jwt
         services.AddHttpContextAccessor();
-        services.AddScoped<ITokenService, TokenService>();
+        services.AddScoped<IJwtTokenService, JwtTokenService>();
         
-        // Сервис по работе с сессией
-        services.AddScoped<ISessionService, SessionService>();
+        // Сервис работы с конфигурациями
+        services.AddScoped<IConfigService, ConfigService>();
         
         // Сервисы расчетов
         services.AddScoped<ITimeCalculate, TimeCalculate>();
         services.AddScoped<IScoreCalculate, ScoreCalculate>();
         services.AddScoped<IGradeCalculate, GradeCalculate>();
         
+        // Сервис по работе с пользовательскими темами
+        services.AddScoped<IUserTopicService, UserTopicService>();
+        
+        // Сервис по работе с сессией
+        services.AddScoped<ISessionService, SessionService>();
+        
+        // Сервис по работе с вопросами
+        services.AddScoped<IQuestionService, QuestionService>();
+        
+        // Сервис по работе с пользовательскими ответами
+        services.AddScoped<IUserAnswerService, UserAnswerService>();
+        
         // Расчет параметров темы и вопроса
         services.AddScoped<IScoreService, ScoreService>();
         
         // Сервис отрисовки отчета
-        services.AddScoped<IGraphService, GraphService>();
         services.AddScoped<IChartService, ChartService>();
         
         // Сервис для расчета метрик
@@ -264,7 +273,9 @@ public static class Configuration
             c.SwaggerEndpoint("/swagger/v1/swagger.json", "MVP Аттестация API");
         });
 
-        app.UseHttpsRedirection();
+        app.UseForwardedHeaders(new ForwardedHeadersOptions {
+            ForwardedHeaders = ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto
+        });
         
         app.UseRouting();
         

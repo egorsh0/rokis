@@ -1,4 +1,4 @@
-﻿using idcc.Repository.Interfaces;
+﻿using idcc.Service;
 using Microsoft.Extensions.Caching.Hybrid;
 
 namespace idcc.Providers;
@@ -24,7 +24,7 @@ public class SessionDurationProvider : IDurationProvider
     {
         _logger.LogInformation("SessionDurationMinutes");
         await using var scope = _serviceProvider.CreateAsyncScope();
-        var cfg = scope.ServiceProvider.GetRequiredService<IConfigRepository>();
+        var cfg = scope.ServiceProvider.GetRequiredService<IConfigService>();
         
         var cachekey = $"{nameof(SessionDurationProvider)}.{nameof(GetDurationAsync)}.SessionDuration";
         var times = await _hybridCache.GetOrCreateAsync(cachekey, async _ =>

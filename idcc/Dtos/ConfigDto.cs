@@ -8,7 +8,7 @@
 /// <param name="Average">Среднее время ответа (сек).</param>
 /// <param name="Min">Минимальное «нормативное» время (сек).</param>
 /// <param name="Max">Максимальное «нормативное» время (сек).</param>
-public record AnswerTimeDto(string Grade, double Average, double Min, double Max);
+public record AnswerTimeDto(GradeDto Grade, double Average, double Min, double Max);
 
 /// <summary>
 /// Универсальный «счётчик» с произвольным кодом и числовым значением.
@@ -32,14 +32,14 @@ public record GradeDto(
 /// <param name="Grade">Название грейда.</param>
 /// <param name="Min">Коэффициент уровня Min.</param>
 /// <param name="Max">Коэффициент уровня Max.</param>
-public record GradeLevelDto(string Grade, double Min, double Max);
+public record GradeLevelDto(GradeDto Grade, double Min, double Max);
 
 /// <summary>
 /// Диапазоны «начало–конец» для привязки результата к уровню грейда.
 /// </summary>
 /// <param name="Start">Нижняя граница %, включительно.</param>
 /// <param name="End">Верхняя граница %, включительно.</param>
-public record GradeRelationDto(string Start, string End);
+public record GradeRelationDto(string? Start, string? End);
 
 /// <summary>Процентные значения для настроек системы.</summary>
 public record PersentDto(string Code, string Description, double Value);
@@ -70,10 +70,11 @@ public record DirectionDto(
 public record DiscountRuleDto(int MinQuantity, int? MaxQuantity, decimal DiscountRate);
 
 /// <summary>Диапазон весов вопросов для конкретного грейда.</summary>
+/// <param name="Id">Идентификатор грейда.</param>
 /// <param name="Grade">Название грейда.</param>
 /// <param name="Min">Min-вес вопроса.</param>
 /// <param name="Max">Max-вес вопроса.</param>
-public record WeightDto(string Grade, double Min, double Max);
+public record WeightDto(int Id, GradeDto Grade, double Min, double Max);
 
 /// <summary>
 /// Настройка рассылки (cron-job / событие). Определяет, включена ли

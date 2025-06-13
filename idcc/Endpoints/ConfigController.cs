@@ -1,7 +1,6 @@
 ﻿using idcc.Dtos;
-using idcc.Repository.Interfaces;
+using idcc.Service;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.Extensions.Caching.Hybrid;
 
 namespace idcc.Endpoints;
 
@@ -11,17 +10,11 @@ namespace idcc.Endpoints;
 [Route("api/config")]
 public class ConfigController : ControllerBase
 {
-    private readonly IConfigRepository _configRepository;
-    private readonly HybridCache _hybridCache;
-    private readonly ILogger<ConfigController> _logger;
+    private IConfigService _configService;
 
-    public ConfigController(IConfigRepository configRepository, 
-        HybridCache hybridCache,
-        ILogger<ConfigController> logger)
+    public ConfigController(IConfigService configService)
     {
-        _configRepository = configRepository;
-        _hybridCache = hybridCache;
-        _logger = logger;
+        _configService = configService;
     }
 
     /*────────── 1. AnswerTimes ──────────*/
@@ -32,10 +25,7 @@ public class ConfigController : ControllerBase
     [ProducesResponseType(StatusCodes.Status500InternalServerError)]
     public async Task<List<AnswerTimeDto>> GetAnswerTimesAsync()
     {
-        _logger.LogInformation("GetAnswerTimesAsync");
-        var cachekey = $"{nameof(ConfigController)}.{nameof(GetAnswerTimesAsync)}";
-        return await _hybridCache.GetOrCreateAsync<List<AnswerTimeDto>>(cachekey, async _ =>
-            await _configRepository.GetAnswerTimesAsync());
+        return await _configService.GetAnswerTimesAsync();
     }
 
     /*────────── 2. Counts ──────────*/
@@ -45,10 +35,7 @@ public class ConfigController : ControllerBase
     [ProducesResponseType(StatusCodes.Status500InternalServerError)]
     public async Task<List<CountDto>> GetCountsAsync()
     {
-        _logger.LogInformation("GetCountsAsync");
-        var cachekey = $"{nameof(ConfigController)}.{nameof(GetCountsAsync)}";
-        return await _hybridCache.GetOrCreateAsync<List<CountDto>>(cachekey, async _ =>
-            await _configRepository.GetCountsAsync());
+        return await _configService.GetCountsAsync();
     }
 
     /*────────── 3. Grades ──────────*/
@@ -58,10 +45,7 @@ public class ConfigController : ControllerBase
     [ProducesResponseType(StatusCodes.Status500InternalServerError)]
     public async Task<List<GradeDto>> GetGradesAsync()
     {
-        _logger.LogInformation("GetGradesAsync");
-        var cachekey = $"{nameof(ConfigController)}.{nameof(GetGradesAsync)}";
-        return await _hybridCache.GetOrCreateAsync<List<GradeDto>>(cachekey, async _ =>
-            await _configRepository.GetGradesAsync());
+        return await _configService.GetGradesAsync();
     }
 
     /*────────── 4. GradeLevels ──────────*/
@@ -71,10 +55,7 @@ public class ConfigController : ControllerBase
     [ProducesResponseType(StatusCodes.Status500InternalServerError)]
     public async Task<List<GradeLevelDto>> GetGradeLevelsAsync()
     {
-        _logger.LogInformation("GetGradeLevelsAsync");
-        var cachekey = $"{nameof(ConfigController)}.{nameof(GetGradeLevelsAsync)}";
-        return await _hybridCache.GetOrCreateAsync<List<GradeLevelDto>>(cachekey, async _ =>
-            await _configRepository.GetGradeLevelsAsync());
+        return await _configService.GetGradeLevelsAsync();
     }
 
     /*────────── 5. GradeRelations ──────────*/
@@ -84,10 +65,7 @@ public class ConfigController : ControllerBase
     [ProducesResponseType(StatusCodes.Status500InternalServerError)]
     public async Task<List<GradeRelationDto>> GetGradeRelationsAsync()
     {
-        _logger.LogInformation("GetGradeRelationsAsync");
-        var cachekey = $"{nameof(ConfigController)}.{nameof(GetGradeRelationsAsync)}";
-        return await _hybridCache.GetOrCreateAsync<List<GradeRelationDto>>(cachekey, async _ =>
-            await _configRepository.GetGradeRelationsAsync());
+        return await _configService.GetGradeRelationsAsync();
     }
 
     /*────────── 6. Percents ──────────*/
@@ -97,10 +75,7 @@ public class ConfigController : ControllerBase
     [ProducesResponseType(StatusCodes.Status500InternalServerError)]
     public async Task<List<PersentDto>> GetPersentsAsync()
     {
-        _logger.LogInformation("GetPersentsAsync");
-        var cachekey = $"{nameof(ConfigController)}.{nameof(GetPersentsAsync)}";
-        return await _hybridCache.GetOrCreateAsync<List<PersentDto>>(cachekey, async _ =>
-            await _configRepository.GetPersentsAsync());
+        return await _configService.GetPersentsAsync();
     }
 
     /*────────── 7. Directions ──────────*/
@@ -110,10 +85,7 @@ public class ConfigController : ControllerBase
     [ProducesResponseType(StatusCodes.Status500InternalServerError)]
     public async Task<List<DirectionDto>> GetDirectionsAsync()
     {
-        _logger.LogInformation("GetDirectionsAsync");
-        var cachekey = $"{nameof(ConfigController)}.{nameof(GetDirectionsAsync)}";
-        return await _hybridCache.GetOrCreateAsync<List<DirectionDto>>(cachekey, async _ =>
-            await _configRepository.GetDirectionsAsync());
+        return await _configService.GetDirectionsAsync();
     }
 
     /*────────── 8. Weights ──────────*/
@@ -123,10 +95,7 @@ public class ConfigController : ControllerBase
     [ProducesResponseType(StatusCodes.Status500InternalServerError)]
     public async Task<List<WeightDto>> GetWeightsAsync()
     {
-        _logger.LogInformation("GetWeightsAsync");
-        var cachekey = $"{nameof(ConfigController)}.{nameof(GetWeightsAsync)}";
-        return await _hybridCache.GetOrCreateAsync<List<WeightDto>>(cachekey, async _ =>
-            await _configRepository.GetWeightsAsync());
+        return await _configService.GetWeightsAsync();
     }
 
     /*────────── 9. Discount rules ──────────*/
@@ -136,10 +105,7 @@ public class ConfigController : ControllerBase
     [ProducesResponseType(StatusCodes.Status500InternalServerError)]
     public async Task<List<DiscountRuleDto>> GetDiscountsRulesAsync()
     {
-        _logger.LogInformation("GetDiscountsRuleAsync");
-        var cachekey = $"{nameof(ConfigController)}.{nameof(GetDiscountsRulesAsync)}";
-        return await _hybridCache.GetOrCreateAsync<List<DiscountRuleDto>>(cachekey, async _ =>
-            await _configRepository.GetDiscountsRuleAsync());
+        return await _configService.GetDiscountRulesAsync();
     }
     
     /*────────── 10. Mailing rules ──────────*/
@@ -149,10 +115,7 @@ public class ConfigController : ControllerBase
     [ProducesResponseType(StatusCodes.Status500InternalServerError)]
     public async Task<List<MailingDto>> GetMailingRulesAsync()
     {
-        _logger.LogInformation("GetMailingRulesAsync");
-        var cachekey = $"{nameof(ConfigController)}.{nameof(GetMailingRulesAsync)}";
-        return await _hybridCache.GetOrCreateAsync<List<MailingDto>>(cachekey, async _ =>
-            await _configRepository.GetMailingRulesAsync());
+        return await _configService.GetMailingRulesAsync();
     }
     
     /*────────── 11. Topics ──────────*/
@@ -162,10 +125,7 @@ public class ConfigController : ControllerBase
     [ProducesResponseType(StatusCodes.Status500InternalServerError)]
     public async Task<List<TopicDto>> GetTopicsAsync()
     {
-        _logger.LogInformation("GetTopicsAsync");
-        var cachekey = $"{nameof(ConfigController)}.{nameof(GetTopicsAsync)}";
-        return await _hybridCache.GetOrCreateAsync<List<TopicDto>>(cachekey, async _ =>
-            await _configRepository.GetTopicsAsync());
+        return await _configService.GetTopicsAsync();
     }
     
     /*────────── 12. Times ──────────*/
@@ -175,9 +135,6 @@ public class ConfigController : ControllerBase
     [ProducesResponseType(StatusCodes.Status500InternalServerError)]
     public async Task<List<TimeDto>> GetTimesAsync()
     {
-        _logger.LogInformation("GetTimesAsync");
-        var cachekey = $"{nameof(ConfigController)}.{nameof(GetTimesAsync)}";
-        return await _hybridCache.GetOrCreateAsync<List<TimeDto>>(cachekey, async _ =>
-            await _configRepository.GetTimesAsync());
+        return await _configService.GetTimesAsync();
     }
 }

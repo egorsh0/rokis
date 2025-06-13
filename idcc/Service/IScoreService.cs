@@ -1,8 +1,7 @@
 ﻿using idcc.Dtos;
 using idcc.Extensions;
 using idcc.Infrastructures;
-using idcc.Infrastructures.Interfaces;
-using idcc.Repository.Interfaces;
+using idcc.Repository;
 
 namespace idcc.Service;
 
@@ -17,10 +16,11 @@ public class ScoreService : IScoreService
 {
     private ILogger<ScoreService> _logger;
     
-    private IUserTopicRepository _userTopicRepository;
-    private IDataRepository _dataRepository;
-    private IQuestionRepository _questionRepository;
+    private IUserTopicService _userTopicService;
+    private IConfigService _configService;
+    private IQuestionService _questionService;
     private IUserAnswerRepository _userAnswerRepository;
+    private IUserAnswerService _userAnswerService;
     private IScoreCalculate _scoreCalculate;
     private ITimeCalculate _timeCalculate;
     private IGradeCalculate _gradeCalculate;
@@ -30,19 +30,21 @@ public class ScoreService : IScoreService
 
     public ScoreService(
         ILogger<ScoreService> logger,
-        IUserTopicRepository userTopicRepository,
-        IDataRepository dataRepository,
-        IQuestionRepository questionRepository,
+        IUserTopicService userTopicService,
+        IConfigService configService,
+        IQuestionService questionService,
         IUserAnswerRepository userAnswerRepository,
+        IUserAnswerService userAnswerService,
         IScoreCalculate scoreCalculate,
         ITimeCalculate timeCalculate,
         IGradeCalculate gradeCalculate)
     {
         _logger = logger;
-        _userTopicRepository = userTopicRepository;
-        _dataRepository = dataRepository;
-        _questionRepository = questionRepository;
+        _userTopicService = userTopicService;
+        _configService = configService;
+        _questionService = questionService;
         _userAnswerRepository = userAnswerRepository;
+        _userAnswerService = userAnswerService;
         _scoreCalculate = scoreCalculate;
         _timeCalculate = timeCalculate;
         _gradeCalculate = gradeCalculate;
@@ -51,7 +53,7 @@ public class ScoreService : IScoreService
     public async Task<(MessageCode code, string? error)> CalculateScoreAsync(SessionDto session, int interval, int questionId, List<int> answerIds)
     {
         // ───────────────── 1.  Получаем вопрос ─────────────────
-        var question = await _questionRepository.GetQuestionAsync(questionId);
+        var question = await _questionService.GetQuestionAsync(questionId);
         if (question is null)
         {
             return (MessageCode.QUESTION_IS_NOT_EXIST, MessageCode.QUESTION_IS_NOT_EXIST.GetDescription());
@@ -75,7 +77,11 @@ public class ScoreService : IScoreService
         }
         
         // ───────────────── 4.  Подтягиваем варианты ответа ─────
-        var answers = await _questionRepository.GetAnswersAsync(question);
+        var answers = await _questionService.GetAnswersAsync(question.QuestionId);
+        if (!answers.Any())
+        {
+            return (MessageCode.ANSWER_IS_NOT_EXIST, MessageCode.ANSWER_IS_NOT_EXIST.GetDescription());
+        }
 
         // ---------- все ли id присутствуют ----------
         var validIds = answers.Select(a => a.Id).ToHashSet();
@@ -88,13 +94,13 @@ public class ScoreService : IScoreService
         }
 
         // ───────────────── 5.  Коэффициент времени K ────────────
-        var actualTopic = await _userTopicRepository.GetActualTopicAsync(session.Id);
+        var actualTopic = await _userTopicService.GetActualTopicAsync(session.Id);
         if (actualTopic is null)
         {
             return (MessageCode.TOPIC_IS_NULL, MessageCode.TOPIC_IS_NULL.GetDescription());
         }
 
-        var times = await _dataRepository.GetGradeTimeInfoAsync(actualTopic.Grade.Id);
+        var times = await _configService.GetGradeTimeInfoAsync(actualTopic.Grade.Id);
         if (times is null)
         {
             return (MessageCode.GRADE_TIMES_IS_NULL, ErrorMessages.GRADE_TIMES_IS_NULL(actualTopic.Grade.Name));
@@ -119,61 +125,70 @@ public class ScoreService : IScoreService
 
     public async Task<(MessageCode code, string? error)> CalculateTopicWeightAsync(SessionDto session)
     {
-        var actualTopic = await _userTopicRepository.GetActualTopicAsync(session.Id);
+        var actualTopic = await _userTopicService.GetActualTopicAsync(session.Id);
         if (actualTopic is null)
         {
             return (MessageCode.TOPIC_IS_NULL, MessageCode.TOPIC_IS_NULL.GetDescription());
         }
         
-        var gradeWeights = await _dataRepository.GetGradeWeightInfoAsync(actualTopic.Grade.Id);
+        var gradeWeights = await _configService.GetGradeWeightInfoAsync(actualTopic.Grade.Id);
         if (gradeWeights is null)
         {
             return (MessageCode.GRADE_WEIGHT_IS_NULL, ErrorMessages.GRADE_WEIGHT_IS_NULL(actualTopic.Grade.Name));
         }
+
+        var gradeRelations = await _configService.GetGradeRelationsAsync();
+        var gradeRelation = gradeRelations.FirstOrDefault(gr => gr.End == actualTopic.Grade.Code);
+        if (gradeRelation == null)
+        {
+            return (MessageCode.GRADE_RELATIONS_IS_NULL, ErrorMessages.GRADE_RELATIONS_IS_NULL(actualTopic.Grade.Name));
+        }
+
+        var isLeftGrade = gradeRelation.Start == null;
         
         // Подсчет нового веса вопроса
-        var newWeight = await ChangeGradeAsync(actualTopic.Grade, session.Id, actualTopic.Topic.Id, actualTopic.Weight, _questionWeight, _isCorrectAnswer);
+        var newWeight = await ChangeGradeAsync(actualTopic.Grade, session.Id, actualTopic.Topic.Id, actualTopic.Weight, _questionWeight, _isCorrectAnswer, isLeftGrade);
         
         // Можно ли быстро закрыть?
-        var canClose = await CanCloseAsync(session.Id);
+        var canClose = await CanCloseAsync(session.Id, actualTopic.Topic.Id);
         
         if (canClose)
         {
-            _logger.LogInformation($"Сессия: {session.Id}; Топик: {actualTopic.Id}; Статус: Закрыт. Причина: Много подрят ошибок.");
+            _logger.LogInformation($"Сессия: {session.Id}; Топик {actualTopic.Id}; Тема;{actualTopic.Topic.Id}; Статус: Закрыт. Причина: Много подрят ошибок.");
             
             // Уменьшаем вопросы в теме
             await ReduceTopicQuestionCountAndCloseTopic(session.Id, actualTopic.Id);
             // Обновляем вес темы
-            await _userTopicRepository.UpdateTopicInfoAsync(actualTopic.Id, false, true, actualTopic.Grade, newWeight);
+            await _userTopicService.UpdateUserTopicInfoAsync(actualTopic.Id, false, true, null, actualTopic.Grade, newWeight);
             // Закрываем тему
-            await _userTopicRepository.CloseTopicAsync(actualTopic.Id);
+            await _userTopicService.CloseUserTopicAsync(actualTopic.Id);
             return (MessageCode.TOPIC_IS_CLOSED,null);
         }
         
         // Можно ли быстро повысить?
-        var canRaise = await CanRaiseAsync(session.Id, gradeWeights.Value.max, gradeWeights.Value.min, newWeight);
+        var canRaise = await CanRaiseAsync(session.Id, actualTopic.Topic.Id, gradeWeights.Value.max, gradeWeights.Value.min, newWeight);
         
         // Считаем новый грейд.
-        var (prev, next) = await _dataRepository.GetRelationAsync(actualTopic.Grade);
+        var (prev, next) = await _configService.GetRelationAsync(actualTopic.Grade);
         var grade = _gradeCalculate.Calculate(actualTopic.Grade, gradeWeights.Value.min, prev, next, newWeight, canRaise);
         
         _logger.LogDebug($"Сессия: {session.Id}; Топик: {actualTopic.Id}; Статус грейда: {actualTopic.Grade.Name} -> {grade.Name}.");
         // Обновляем вес темы
-        await _userTopicRepository.UpdateTopicInfoAsync(actualTopic.Id, false, true, grade, newWeight);
+        await _userTopicService.UpdateUserTopicInfoAsync(actualTopic.Id, false, true, null, grade, newWeight);
         // Уменьшаем количество вопросов в теме
         await ReduceTopicQuestionCountAndCloseTopic(session.Id, actualTopic.Id);
         // Проверяем количество вопросов в теме
-        var count = await _userTopicRepository.HaveQuestionAsync(actualTopic.Id, gradeWeights.Value.max);
+        var count = await _userTopicService.HaveQuestionAsync(actualTopic.Id, gradeWeights.Value.max);
         if (!count)
         {
-            await _userTopicRepository.CloseTopicAsync(actualTopic.Id);
+            await _userTopicService.CloseUserTopicAsync(actualTopic.Id);
         }
         return (MessageCode.CALCULATE_IS_FINISHED, null);
     }
 
-    private async Task<double> ChangeGradeAsync(GradeDto grade, int sessionId, int topicId, double weight, double questionWeight, bool increase)
+    private async Task<double> ChangeGradeAsync(GradeDto grade, int sessionId, int topicId, double weight, double questionWeight, bool increase, bool isLeftGrade)
     {
-        var weights = await _dataRepository.GetGradeWeightInfoAsync(grade.Id);
+        var weights = await _configService.GetGradeWeightInfoAsync(grade.Id);
 
         var userAnswers = await _userAnswerRepository.GetAllUserAnswers(sessionId, topicId);
         
@@ -184,7 +199,7 @@ public class ScoreService : IScoreService
         var correct = userAnswers.Count(ua => ua.Score > 0);
         
         // Границы времен текущего грейда
-        var times = await _dataRepository.GetGradeTimeInfoAsync(grade.Id);
+        var times = await _configService.GetGradeTimeInfoAsync(grade.Id);
         
         // Количество вопросов в теме
         var counts = userAnswers.Count;
@@ -194,7 +209,10 @@ public class ScoreService : IScoreService
 
         // Расчет нового веса темы
         var gradeWeight = UpdateWithAsymptoticGrowth(weight, questionWeight, weights!.Value.min, weights.Value.max, increase, difficulty);
-
+        if (isLeftGrade && gradeWeight < weights.Value.min)
+        {
+            return weights.Value.min;
+        }
         return gradeWeight;
     }
     
@@ -274,22 +292,23 @@ public class ScoreService : IScoreService
     /// <summary>
     /// Можно ли быстро повысить уровень?
     /// </summary>
-    /// <param name="sessionId">Id сессии.</param>
+    /// <param name="sessionId">Идентификатор сессии.</param>
+    /// <param name="topicId">Идентификатор темы.</param>
     /// <param name="max">Максимальный вес вопроса текущего грейда.</param>
     /// <param name="min">Минимальный вес вопроса текущего грейда.</param>
     /// <param name="newWeight">Новый вес вопроса.</param>
     /// <returns></returns>
-    private async Task<bool> CanRaiseAsync(int sessionId, double max, double min, double newWeight)
+    private async Task<bool> CanRaiseAsync(int sessionId, int topicId, double max, double min, double newWeight)
     {
         // Разница в весах
-        var raisePercent = await _dataRepository.GetPercentOrDefaultAsync("RaiseData", 0.2);
+        var raisePercent = await _configService.GetPercentOrDefaultAsync("RaiseData", 0.2);
         var raiseValue = (max - min) * raisePercent;
         
         // Разница в количестве подрят
-        var increasePersent = await _dataRepository.GetPercentOrDefaultAsync("IncreaseLevel", 0.3);
-        var allCount = await _dataRepository.GetCountOrDefaultAsync("Question", 10);
+        var increasePersent = await _configService.GetPercentOrDefaultAsync("IncreaseLevel", 0.3);
+        var allCount = await _configService.GetCountOrDefaultAsync("Question", 10);
         var raiseCount = (int)Math.Floor(allCount * increasePersent);
-        var canRaise = await _userAnswerRepository.CanRaiseAsync(sessionId, raiseCount);
+        var canRaise = await _userAnswerService.CanRaiseTopicAsync(sessionId, topicId, raiseCount);
         
         if (newWeight >= (max - raiseValue) || canRaise)
         {
@@ -301,24 +320,34 @@ public class ScoreService : IScoreService
     /// <summary>
     /// Можно ли быстро закрыть топик?
     /// </summary>
-    /// <param name="sessionId">Id сессии.</param>
+    /// <param name="sessionId">Идентификатор сессии.</param>
+    /// <param name="topicId">Идентификатор темы.</param>
     /// <returns></returns>
-    private async Task<bool> CanCloseAsync(int sessionId)
+    private async Task<bool> CanCloseAsync(int sessionId, int topicId)
     {
-        var decreasePersent = await _dataRepository.GetPercentOrDefaultAsync("DecreaseLevel", 0.3);
-        var allCount = await _dataRepository.GetCountOrDefaultAsync("Question", 10);
+        var decreasePersent = await _configService.GetPercentOrDefaultAsync("DecreaseLevel", 0.3);
+        var allCount = await _configService.GetCountOrDefaultAsync("Question", 10);
+        var mandatoryQuestionPersent = await _configService.GetPercentOrDefaultAsync("MandatoryQuestions", 0.5);
         var closeCount = (int)Math.Floor(allCount * decreasePersent);
-        return await _userAnswerRepository.CanCloseAsync(sessionId, closeCount);
+        var mandatoryCount = (int)Math.Floor(allCount * mandatoryQuestionPersent);
+        var canClose = await _userAnswerService.CanCloseTopicAsync(sessionId, topicId, closeCount);
+        var userAnswers = await _userAnswerService.CountUserAnswersAsync(sessionId, topicId);
+        if (canClose && userAnswers >= mandatoryCount)
+        {
+            _logger.LogInformation($"Сессия: {sessionId}; Топик: {topicId}; Статус: можно быстро закрыть.");
+            return true;
+        }
+        return false;
     }
     
-    private async Task ReduceTopicQuestionCountAndCloseTopic(int sessionId, int topicId)
+    private async Task ReduceTopicQuestionCountAndCloseTopic(int sessionId, int userTopicId)
     {
-        await _userTopicRepository.ReduceTopicQuestionCountAsync(topicId);
-        var topic = await _userTopicRepository.GetTopicAsync(topicId);
-        if (topic is not null && topic.Count == 0)
+        await _userTopicService.ReduceUserTopicQuestionCountAsync(sessionId, userTopicId);
+        var userTopic = await _userTopicService.GetUserTopicAsync(sessionId, userTopicId);
+        if (userTopic is not null && userTopic.Count == 0)
         {
-            _logger.LogInformation($"Сессия: {sessionId}; Топик: {topicId}; Статус: Закрытие по количеству вопросов.");
-            await _userTopicRepository.CloseTopicAsync(topicId);
+            _logger.LogInformation($"Сессия: {sessionId}; Топик: {userTopicId}; Статус: Закрытие по количеству вопросов.");
+            await _userTopicService.CloseUserTopicAsync(userTopicId);
         }
     }
 }

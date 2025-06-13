@@ -1,4 +1,4 @@
-﻿namespace idcc.Infrastructures;
+﻿namespace idcc.Service;
 
 public interface ITimeCalculate
 {

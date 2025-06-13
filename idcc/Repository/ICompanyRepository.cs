@@ -4,11 +4,17 @@ using idcc.Extensions;
 using idcc.Infrastructures;
 using idcc.Models;
 using idcc.Models.Profile;
-using idcc.Repository.Interfaces;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 
 namespace idcc.Repository;
+
+public interface ICompanyRepository
+{
+    Task<(bool result, MessageCode code)> AttachEmployeeToCompanyAsync(string companyUserId, string employeeEmail);
+    Task<CompanyProfile?> GetCompanyWithEmployeesAsync(string companyUserId);
+    Task<UpdateResult> UpdateCompanyAsync(string userId, UpdateCompanyDto dto);
+}
 
 public class CompanyRepository : ICompanyRepository
 {
