@@ -193,6 +193,7 @@ services:
   # ───── Grafana ──────────────────────────
   grafana:
     image: grafana/grafana
+    container_name: grafana
     env_file:
       - ./vault/agent/secrets/secrets.env
     restart: always
