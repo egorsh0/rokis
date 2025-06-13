@@ -5,8 +5,8 @@ services:
     container_name: vault-agent
     volumes:
       - ./vault/agent:/vault/agent
-      - ./vault/agent/secrets:/vault/secrets
-    command: vault agent -config=/vault/agent/config.hcl
+      - ./vault/agent/secrets:/vault/agent/secrets
+    command: vault agent -config=/vault/agent/config.hcl -log-level=debug
     networks: [ internal ]
   
   # ───── Nginx ────────────────────────────────────────────────────────────────
