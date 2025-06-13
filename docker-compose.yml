@@ -5,7 +5,7 @@ services:
     container_name: vault-agent
     volumes:
       - ./vault/agent:/vault/agent
-      - ./vault/secrets:/vault/secrets
+      - ./vault/agent/secrets:/vault/secrets
     command: vault agent -config=/vault/agent/config.hcl
     networks: [ internal ]
   
