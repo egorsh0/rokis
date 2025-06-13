@@ -35,7 +35,7 @@ private const int width = 800;
 
         var angleStep = 2 * Math.PI / N;
 
-        // Draw background zones by grade
+        // Отрисовка фона
         foreach (var (grade, color) in gradeColors)
         {
             float ring = grade switch
@@ -109,7 +109,7 @@ private const int width = 800;
 
             var scoreColor = ComputeColor(sortedTopicDatas[i]);
             var pointPaint = new SKPaint { Style = SKPaintStyle.Fill, Color = scoreColor };
-            canvas.DrawCircle(x, y, 6, pointPaint);
+            canvas.DrawCircle(x, y, 3, pointPaint);
 
             var lx = center.X + (maxRadius + 20) * (float)Math.Cos(angle);
             var ly = center.Y + (maxRadius + 20) * (float)Math.Sin(angle);
