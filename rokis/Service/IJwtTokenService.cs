@@ -141,8 +141,10 @@ public class JwtTokenService : IJwtTokenService
     {
         var opts = new CookieOptions
         {
+            HttpOnly = true,
             SameSite = SameSiteMode.Strict,
-            Expires  = expiresUtc
+            Expires  = expiresUtc,
+            Secure = true
         };
         _httpContextAccessor.HttpContext!.Response.Cookies.Append("refreshToken", token, opts);
     }
