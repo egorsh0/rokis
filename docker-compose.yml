@@ -184,6 +184,7 @@ services:
   # ───── Promtail ───────────────────────
   promtail:
     image: grafana/promtail:2.9.2
+    container_name: promtail
     volumes:
       - /var/log:/var/log
       - /etc/machine-id:/etc/machine-id
