@@ -31,6 +31,7 @@ services:
   # ───── Nginx ────────────────────────────────────────────────────────────────
   nginx:
     image: nginx:latest
+    container_name: nginx
     ports:
       - "80:80"
       - "443:443"
@@ -51,6 +52,7 @@ services:
   
   # ───── Certbot ──────────────────────────────────────────────────────────────
   certbot:
+    container_name: certbot
     build:
       context: ./config/certbot
       dockerfile: Dockerfile
@@ -64,6 +66,7 @@ services:
   # ───── PostgreSQL ───────────────────────────────────────────────────────────
   db:
     image: postgres:16-alpine
+    container_name: db
     env_file:
       - ./vault/agent/secrets/secrets.env
     ports:
@@ -76,6 +79,7 @@ services:
       timeout: 3s
       retries: 5
     volumes:
+      - ./vault/agent/secrets:/vault/agent/secrets:ro
       - db_data:/var/lib/postgresql/data
       - ./config/dump/seed.sql:/docker-entrypoint-initdb.d/init.sql
     networks: [ internal ]
@@ -87,6 +91,7 @@ services:
   
   postgres-exporter:
     image: prometheuscommunity/postgres-exporter
+    container_name: postgres-exporter
     env_file:
       - ./vault/agent/secrets/secrets.env
     environment:
@@ -97,12 +102,11 @@ services:
     ports:
       - "9187:9187"
     networks: [ internal ]
-    volumes:
-      - vault-shared:/vault/agent:ro
   
   # ───── Redis ────────────────────────────────────────────────────────────────
   cache:
     image: redis:7.0.4-alpine
+    container_name: redis
     restart: always
     ports: []
     networks: [ internal ]
@@ -111,9 +115,12 @@ services:
       options:
         max-size: "200k"
         max-file: "10"
+    volumes:
+      - ./vault/agent/secrets:/vault/agent/secrets:ro
   
   redis-exporter:
     image: oliver006/redis_exporter
+    container_name: redis_exporter
     env_file:
       - ./vault/agent/secrets/secrets.env
     environment:
@@ -125,11 +132,12 @@ services:
       - "9121:9121"
     networks: [ internal ]
     volumes:
-      - vault-shared:/vault/agent:ro
+      - ./vault/agent/secrets:/vault/agent/secrets:ro
   
   # ───── API ──────────────────────────────
   rokis:
     image: rokis
+    container_name: rokis_api
     build:
       context: .
       dockerfile: rokis/Dockerfile
@@ -151,13 +159,21 @@ services:
       options:
         max-size: "200k"
         max-file: "10"
-    entrypoint: ["sh", "-c", "while [ ! -f /vault/agent/secrets/secrets.env ]; do sleep 1; done; exec dotnet idcc.dll"]
+    entrypoint: >
+      sh -c '
+        echo "⏳ Waiting for /vault/agent/secrets/secrets.env...";
+        while [ ! -f /vault/agent/secrets/secrets.env ]; do
+          sleep 1;
+        done;
+        echo "✅ Secrets ready, starting app...";
+        exec dotnet rokis.dll'
     volumes:
       - ./vault/agent/secrets:/vault/agent/secrets:ro
 
   # ───── Prometheus ───────────────────────
   prometheus:
     image: prom/prometheus
+    container_name: prometheus
     restart: always
     volumes:
       - ./config/monitoring:/etc/prometheus:ro
@@ -169,9 +185,10 @@ services:
     image: grafana/loki:2.9.2
     ports:
       - "3100:3100"
-    command: -config.file=/etc/loki/local-config.yaml
+    command: -config.file=/etc/loki/config.yaml
     volumes:
-      - ./loki:/etc/loki
+      - ./config/loki:/etc/loki
+      - loki-data:/loki
     
   # ───── Grafana ──────────────────────────
   grafana:
@@ -189,14 +206,13 @@ services:
         - rokis
         - vault-agent
     volumes:
+      - ./vault/agent/secrets:/vault/agent/secrets:ro
       - grafana-data:/var/lib/grafana
-      - vault-shared:/vault/agent:ro
     networks: [ internal ]
 
 volumes:
-  vault-data:
-  vault-shared:
   db_data:
+  loki-data:
   grafana-data:
   certbot_www:
   certbot_conf:
