@@ -1,74 +1,177 @@
-﻿using idcc.Application.Interfaces;
+﻿using System.ComponentModel.DataAnnotations;
+using idcc.Application.Interfaces;
+using idcc.Dtos;
+using idcc.Extensions;
 using idcc.Infrastructures;
-using idcc.Infrastructures.Interfaces;
-using idcc.Models;
-using idcc.Models.Dto;
-using idcc.Repository.Interfaces;
-using Microsoft.OpenApi.Models;
+using idcc.Repository;
+using idcc.Service;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Caching.Hybrid;
 
 namespace idcc.Endpoints;
 
-public static class ReportEndpont
+/// <summary>
+/// Формирование и получение итоговых отчётов.
+/// </summary>
+[ApiController]
+[Authorize]
+[Route("api/report")]
+[Tags("Report")]
+public class ReportController : ControllerBase
 {
-    public static void RegisterReportEndpoints(this IEndpointRouteBuilder routes)
+    private readonly HybridCache _hybridCache;
+    private readonly ISessionService _sessionService;
+    private readonly IConfigRepository _configRepository;
+    private readonly IReportRepository _reportRepository;
+    private readonly IUserAnswerRepository _userAnswerRepository;
+    private readonly IMetricService _metricService;
+    
+    private readonly IReportService  _reportService;
+    private readonly IChartService _chartService;
+
+    public ReportController(
+        HybridCache hybridCache,
+        ISessionService sessionService,
+        IConfigRepository configRepository,
+        IReportRepository reportRepositoryRepository,
+        IUserAnswerRepository userAnswerRepositoryRepository,
+        IMetricService metricServiceService,
+        IReportService reportService,
+        IChartService chartService)
     {
-        var reports = routes.MapGroup("/api/v1/report");
-      
-        reports.MapGet("generate", async (int? sessionId, string? username, bool? full, ISessionRepository sessionRepository, IDataRepository dataRepository, IGraphGenerate graphGenerate,  IIdccReport idccReport) =>
+        _hybridCache = hybridCache;
+        _sessionService = sessionService;
+        _configRepository = configRepository;
+        _reportRepository = reportRepositoryRepository;
+        _userAnswerRepository = userAnswerRepositoryRepository;
+        _metricService = metricServiceService;
+        
+        _reportService = reportService;
+        _chartService = chartService;
+    }
+
+    // ════════════════════════════════════════════════════════════════
+    //  GET /api/report/generate
+    // ════════════════════════════════════════════════════════════════
+    /// <summary>Генерирует (или пытается сгенерировать) PDF-отчёт.</summary>
+    /// <remarks>
+    /// <para>
+    /// • Принимает <paramref name="tokenId"/>.<br/>
+    /// • Если отчёт уже существует — <c>400</c>.<br/>
+    /// • Сохраняет полный отчёт в БД, но не кеширует в HybridCache
+    ///   (кеш держит только DTO).
+    /// </para>
+    /// </remarks>
+    [HttpGet("generate")]
+    [ProducesResponseType(typeof(ReportGeneratedDto), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ResponseDto),       StatusCodes.Status400BadRequest)]
+    public async Task<IActionResult> Generate([FromQuery, Required] Guid tokenId)
+    {
+        // 1. находим финальную сессию
+        SessionDto? session = await _sessionService.GetFinishSessionAsync(tokenId);
+
+        if (session is null)
         {
-            // Проверка на открытую сессию
-            Session? session= null;
-            
-            if (sessionId.HasValue)
+            return BadRequest(new ResponseDto(MessageCode.SESSION_IS_NOT_EXIST,
+                                              MessageCode.SESSION_IS_NOT_EXIST.GetDescription()));
+        }
+
+        if (session.EndTime is null)
+        {
+            return BadRequest(new ResponseDto(MessageCode.SESSION_HAS_ACTIVE,
+                                              MessageCode.SESSION_HAS_ACTIVE.GetDescription()));
+        }
+
+        var cacheKey = $"Report:Full:Token:{tokenId}";
+        var (errorCode, reportDto) =
+            await _hybridCache.GetOrCreateAsync<(MessageCode? code, ReportGeneratedDto? dto)>(cacheKey,
+            async _ =>
             {
-                session = await sessionRepository.GetSessionAsync(sessionId.Value);
-            }
-            else
-            {
-                if (!string.IsNullOrWhiteSpace(username))
+                // 2. генерируем отчёт
+                var report = await _reportService.GenerateAsync(session);
+                if (report is null)
                 {
-                    session = await sessionRepository.GetFinishSessionAsync(username);
+                    return (MessageCode.REPORT_IS_FAILED, null);
                 }
-            }
-            if (session is null)
-            {
-                return Results.BadRequest(new ErrorMessage()
-                {
-                    Message = ErrorMessages.SESSION_IS_NOT_EXIST
-                });
-            }
-            
-            if (session.EndTime is not null && session.Score > 0 && !full.HasValue)
-            {
-                return Results.BadRequest(new ErrorMessage()
-                {
-                    Message = ErrorMessages.SESSION_IS_FINISHED
-                });
-            }
-            
-            var report = await idccReport.GenerateAsync(session);
-            if (report is null)
-            {
-                return Results.BadRequest(new ErrorMessage()
-                {
-                    Message = ErrorMessages.REPORT_IS_FAILED
-                });
-            }
 
-            await sessionRepository.SessionScoreAsync(session.Id, report.FinalScoreDto!.Score);
+                // 3. обновляем Score в сессии
+                await _sessionService.SessionScoreAsync(session.Id, report.FinalScoreDto!.Score);
 
-            if (report.FinalTopicDatas is not null)
-            {
-                var resize = await dataRepository.GetPercentOrDefaultAsync("GraphSize", 25);
-                var img = graphGenerate.Generate(report.FinalTopicDatas, (float)resize);
-                report.TopicReport = img;
-            }
-            return Results.Ok(report);
-        }).WithOpenApi(x => new OpenApiOperation(x)
+                // 4. графики (если нужны)
+                byte[]? img1 = null, img2 = null, img3 = null;
+                if (report.FinalTopicDatas is not null)
+                {
+                    img1 = _chartService.DrawUserProfile(report.FinalTopicDatas, report.FinalScoreDto.Grade, report.ThinkingPattern, report.CognitiveStabilityIndex);
+                }
+                
+                // // 5. пишем в БД, если нету
+                if (!await _reportRepository.ExistsForTokenAsync(tokenId))
+                {
+                    var grades = await _configRepository.GetGradesAsync();
+                    var gradeId = grades.FirstOrDefault(g => g.Name == report.FinalScoreDto.Grade)?.Id ?? 0;
+                    await _reportRepository.SaveReportAsync(tokenId, report.FinalScoreDto.Score, gradeId, img1);
+                }
+                
+                // 6. возвращаем DTO
+                var dto = new ReportGeneratedDto(
+                    report,
+                    img1 is null ? null : Convert.ToBase64String(img1),
+                    img3 is null ? null : Convert.ToBase64String(img3),
+                    img2 is null ? null : Convert.ToBase64String(img2));
+
+                // dto кэшируем, code=null
+                return (null, dto);
+            });
+
+        if (errorCode.HasValue)
         {
-            Summary = "Generate report",
-            Description = "Returns report.",
-            Tags = new List<OpenApiTag> { new() { Name = "Report" } }
+            return BadRequest(new ResponseDto(errorCode.Value, errorCode.Value.GetDescription()));
+        }
+
+        return Ok(reportDto);
+    }
+
+    // ════════════════════════════════════════════════════════════════
+    //  GET /api/report/get
+    // ════════════════════════════════════════════════════════════════
+    /// <summary>Получить ранее сформированный отчёт.</summary>
+    [HttpGet("get")]
+    [ProducesResponseType(typeof(ReportShortDto), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ResponseDto),     StatusCodes.Status400BadRequest)]
+    public async Task<IActionResult> Get([FromQuery, Required] Guid tokenId)
+    {
+        // 1. проверяем, что сессия завершена
+        var session = await _sessionService.GetSessionAsync(tokenId);
+        if (session is null)
+        {
+            return BadRequest(new ResponseDto(MessageCode.SESSION_IS_NOT_EXIST,
+                                              MessageCode.SESSION_IS_NOT_EXIST.GetDescription()));
+        }
+
+        if (session.EndTime is null)
+        {
+            return BadRequest(new ResponseDto(MessageCode.SESSION_HAS_ACTIVE,
+                                              MessageCode.SESSION_HAS_ACTIVE.GetDescription()));
+        }
+
+        var cacheKey = $"Report:Short:Token:{tokenId}";
+        var dto = await _hybridCache.GetOrCreateAsync<ReportShortDto?>(cacheKey, async _ =>
+        {
+            var questions = await _userAnswerRepository.GetQuestionResults(session);
+            var csIndex = _metricService.CalculateCognitiveStability(questions);
+            var pattern = _metricService.DetectThinkingPattern(questions, csIndex);
+
+            var rr = await _reportRepository.GetByTokenAsync(tokenId);
+            return rr is null ? null : new ReportShortDto(
+                rr.TokenId, rr.Score, rr.Grade.Name,
+                csIndex, pattern,
+                rr.Image is null ? null : Convert.ToBase64String(rr.Image));
         });
+
+        return dto is null
+            ? BadRequest(new ResponseDto(MessageCode.REPORT_NOT_FOUND,
+                                         MessageCode.REPORT_NOT_FOUND.GetDescription()))
+            : Ok(dto);
     }
 }

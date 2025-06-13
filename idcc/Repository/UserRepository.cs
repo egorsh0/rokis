@@ -1,9 +1,17 @@
 ﻿using idcc.Context;
 using idcc.Models;
-using idcc.Repository.Interfaces;
+using idcc.Models.Profile;
 using Microsoft.EntityFrameworkCore;
 
 namespace idcc.Repository;
+
+public interface IUserRepository
+{
+    Task<PersonProfile?> GetUserAsync(int id);
+    Task<PersonProfile?> GetUserByNameAsync(string name);
+    Task<PersonProfile> CreateAsync(PersonProfile employee);
+    Task<Direction?> GetRoleAsync(string name);
+}
 
 public class UserRepository : IUserRepository
 {
@@ -14,25 +22,25 @@ public class UserRepository : IUserRepository
         _context = context;
     }
     
-    public async Task<User?> GetUserAsync(int id)
+    public async Task<PersonProfile?> GetUserAsync(int id)
     {
-        return await _context.Users.SingleOrDefaultAsync(u => u.Id == id);
+        return await _context.PersonProfiles.SingleOrDefaultAsync(u => u.Id == id);
     }
 
-    public async Task<User?> GetUserByNameAsync(string username)
+    public async Task<PersonProfile?> GetUserByNameAsync(string name)
     {
-        return await _context.Users.SingleOrDefaultAsync(u => u.UserName == username);
+        return await _context.PersonProfiles.FindAsync(name);
     }
 
-    public async Task<User> CreateAsync(User user)
+    public async Task<PersonProfile> CreateAsync(PersonProfile personProfile)
     {
-        var entryUser = await _context.Users.AddAsync(user);
+        var entryUser = await _context.PersonProfiles.AddAsync(personProfile);
         await _context.SaveChangesAsync();
         return entryUser.Entity;
     }
     
-    public Task<Role?> GetRoleAsync(string code)
+    public Task<Direction?> GetRoleAsync(string code)
     {
-        return _context.Roles.SingleOrDefaultAsync(r => r.Code == code);
+        return _context.Directions.SingleOrDefaultAsync(r => r.Code == code);
     }
 }

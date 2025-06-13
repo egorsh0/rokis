@@ -1,122 +1,198 @@
 ﻿using idcc.Context;
+using idcc.Infrastructures;
 using idcc.Models;
-using idcc.Repository.Interfaces;
 using Microsoft.EntityFrameworkCore;
 
 namespace idcc.Repository;
 
+public interface ISessionRepository
+{
+    /// <summary>
+    /// Получить сессию.
+    /// </summary>
+    /// <param name="sessionId">Идентификатор сессии.</param>
+    /// <returns></returns>
+    Task<Session?> GetSessionAsync(int sessionId);
+    
+    /// <summary>
+    /// Получить сессию.
+    /// </summary>
+    /// <param name="tokenId">Уникальный токен.</param>
+    /// <returns></returns>
+    Task<Session?> GetSessionAsync(Guid tokenId);
+    
+    /// <summary>
+    /// Получить сессию.
+    /// </summary>
+    /// <param name="tokenId">Уникальный токен.</param>
+    /// <param name="endDate">Дата закрытия сессии.</param>
+    /// <returns></returns>
+    Task<Session?> GetSessionAsync(Guid tokenId, DateTime? endDate);
+    
+    /// <summary>
+    /// Получить сессии.
+    /// </summary>
+    /// <param name="userId">Идентификатор пользователя.</param>
+    /// <param name="isEmployee">Это сотрудник?</param>
+    /// <returns></returns>
+    Task<List<Session>> GetSessionsAsync(string userId, bool isEmployee);
+    
+    /// <summary>
+    /// Получить сессии.
+    /// </summary>
+    /// <param name="directionId">Идентификатор направления.</param>
+    /// <returns></returns>
+    Task<List<Session>> GetSessionsAsync(int directionId);
+
+    /// <summary>
+    /// Создать сессию.
+    /// </summary>
+    /// <param name="tokenId">Уникальный токен.</param>
+    /// <param name="employeeUserId">Идентификатор сотрудника.</param>
+    /// <param name="personUserId">Идентификатор физ.лица.</param>
+    /// <returns></returns>
+    Task<Session> CreateAsync(Guid tokenId, string? employeeUserId, string? personUserId);
+
+    /// <summary>
+    /// Завершить сессию.
+    /// </summary>
+    /// <param name="sessionId"></param>
+    /// <returns></returns>
+    Task CloseSessionAsync(int sessionId);
+    
+    Task<Session?> GetFinishSessionAsync(Guid tokenId);
+    
+    Task SessionScoreAsync(int sessionId, double score);
+}
+
 public class SessionRepository : ISessionRepository
 {
     private readonly IdccContext _context;
+    private readonly ITokenRepository _tokenRepository;
 
-    public SessionRepository(IdccContext context)
+    public SessionRepository(
+        IdccContext context,
+        ITokenRepository tokenRepository)
     {
         _context = context;
+        _tokenRepository = tokenRepository;
     }
-    
-    public async Task<Session> StartSessionAsync(User user, Role role)
-    {
-        var session = new Session()
-        {
-            User = user,
-            Score = 0,
-            StartTime = DateTime.Now,
-            EndTime = null,
-            Role = role
-        };
-        _context.Sessions.Add(session);
 
-        await CreateSessionUserTopics(session);
+    public async Task<List<Session>> GetSessionsAsync(string userId, bool isEmployee)
+    {
+        // базовый запрос
+        IQueryable<Session> query = _context.Sessions
+            .AsNoTracking()
+            .Include(s => s.Token)
+            .ThenInclude(t => t.Direction);
+
+        // фильтр по пользователю
+        query = isEmployee
+            ? query.Where(s => s.EmployeeUserId == userId)
+            : query.Where(s => s.PersonUserId   == userId);
+        return await query.ToListAsync();
+    }
+
+    public async Task<List<Session>> GetSessionsAsync(int directionId)
+    {
+        IQueryable<Session> query = _context.Sessions
+            .AsNoTracking()
+            .Include(s => s.Token)
+            .ThenInclude(t => t.Direction);
         
-        await _context.SaveChangesAsync();
-        return session;
+        query = query.Where(s => 
+            s.Token.Direction.Id == directionId);
+        return await query.ToListAsync();
     }
 
-    public async Task<bool> EndSessionAsync(int id, bool faster)
+    public async Task<Session> CreateAsync(Guid tokenId, string? employeeUserId, string? personUserId)
     {
-        var session = await _context.Sessions.FindAsync(id);
+        var entity = new Session {
+            TokenId = tokenId,
+            StartTime = DateTime.UtcNow,
+            EmployeeUserId = employeeUserId,
+            PersonUserId = personUserId
+        };
+        _context.Sessions.Add(entity);
+        await _tokenRepository.UpdateTokesStatusAsync(tokenId, TokenStatus.Used);
+        await _context.SaveChangesAsync();
+        return entity;
+    }
+
+    public async Task CloseSessionAsync(int sessionId)
+    {
+        var session = await _context.Sessions
+            .FirstOrDefaultAsync(s => s.Id == sessionId);
+        
         if (session is null)
         {
-            return false;
+            return;
         }
         session.EndTime = DateTime.Now;
-        if (faster)
+        await _context.SaveChangesAsync();
+    }
+
+    public async Task<Session?> GetSessionAsync(int sessionId)
+    {
+        return await _context.Sessions.FindAsync(sessionId);
+    }
+
+    public async Task<Session?> GetSessionAsync(Guid tokenId)
+    {
+        var sessions = await _context.Sessions.Where(s => s.TokenId == tokenId).ToListAsync();
+        if (sessions.Any() && sessions.Count > 1)
         {
-            session.Score = -1;
+            return null;
         }
-        else
+
+        if (!sessions.Any())
         {
-            var userTopics = await _context.UserTopics.Where(t => t.Session == session && t.IsFinished == false).ToListAsync();
-            foreach (var userTopic in userTopics)
-            {
-                userTopic.IsFinished = true;
-            }
+            return null;
         }
         
+        return sessions.FirstOrDefault();
+    }
+
+    public async Task<Session?> GetSessionAsync(Guid tokenId, DateTime? endDate)
+    {
+        var sessions = await _context.Sessions
+            .Include(session => session.Token)
+            .ThenInclude(token => token.Direction)
+            .Where(s => s.TokenId == tokenId && s.EndTime == endDate)
+            .ToListAsync();
+        if (sessions.Any() && sessions.Count > 1)
+        {
+            return null;
+        }
+
+        if (!sessions.Any())
+        {
+            return null;
+        }
+        
+        return sessions.FirstOrDefault();
+    }
+
+    public async Task<Session?> GetFinishSessionAsync(Guid tokenId)
+    {
+        return await _context.Sessions.Where(s => s.TokenId == tokenId && s.Score >= 0).OrderByDescending(s => s.EndTime).FirstOrDefaultAsync();
+    }
+
+    public async Task SessionScoreAsync(int sessionId, double score)
+    {
+        // 1. Подгружаем сессию сразу с Token’ом
+        var session = await _context.Sessions
+            .Include(s => s.Token)
+            .FirstOrDefaultAsync(s => s.Id == sessionId);
+
+        if (session is null)
+        {
+            return;
+        }
+
+        session.Score = score;
+        session.Token.Score = score;
+
         await _context.SaveChangesAsync();
-        return true;
-    }
-
-    public async Task<Session?> GetSessionAsync(int id)
-    {
-        return await _context.Sessions.FindAsync(id);
-    }
-
-    public async Task<List<Session>> GetSessionsAsync(User user)
-    {
-        return await _context.Sessions.Where(s => s.User == user).ToListAsync();
-    }
-
-    public async Task<Session?> GetActualSessionAsync(string name)
-    {
-        var where = _context.Sessions.Where(s => s.User.UserName == name && s.EndTime == null);
-        return await _context.Sessions.SingleOrDefaultAsync(s => s.User.UserName == name && s.EndTime == null);
-    }
-
-    public async Task<Session?> GetFinishSessionAsync(string name)
-    {
-        return await _context.Sessions.Where(s => s.User.UserName == name && s.Score >= 0).OrderByDescending(s => s.EndTime).FirstOrDefaultAsync();
-    }
-
-    public async Task SessionScoreAsync(int id, double score)
-    {
-        var session = await _context.Sessions.FindAsync(id);
-        if (session is not null)
-        {
-            session.Score = score;
-        }
-        await _context.SaveChangesAsync();
-    }
-
-    private async Task CreateSessionUserTopics(Session session)
-    {
-        var middleGrade = _context.Grades.Single(g => g.Code == "Middle");
-        var weight = _context.Weights.Single(w => w.Grade == middleGrade);
-        var topics = _context.Topics.Where(t => t.Role == session.Role);
-        var settingQuestion = await _context.Counts.FirstOrDefaultAsync(c => c.Code == "Question");
-
-        var questionCount = 10;
-        if (settingQuestion is not null)
-        {
-            questionCount = settingQuestion.Value;
-        }
-
-        bool firstActual = true;
-        foreach (var topic in topics)
-        {
-            var userTopic = new UserTopic()
-            {
-                Session = session,
-                Topic = topic,
-                Weight = weight.Min,
-                Grade = middleGrade,
-                IsFinished = false,
-                WasPrevious = false,
-                Actual = firstActual,
-                Count = questionCount
-            };
-            firstActual = false;
-            _context.UserTopics.Add(userTopic);
-        }
     }
 }

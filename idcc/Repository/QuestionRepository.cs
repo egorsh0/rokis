@@ -1,11 +1,39 @@
 ﻿using idcc.Context;
+using idcc.Dtos;
+using idcc.Dtos.AdminDto;
 using idcc.Models;
-using idcc.Models.AdminDto;
-using idcc.Models.Dto;
-using idcc.Repository.Interfaces;
 using Microsoft.EntityFrameworkCore;
 
 namespace idcc.Repository;
+
+public interface IQuestionRepository
+{
+    /// <summary>
+    /// Получение уникального вопроса.
+    /// </summary>
+    /// <param name="answeredIds">Список id уже отвеченных вопросов.</param>
+    /// <param name="topicId">Идентификатор темы.</param>
+    /// <param name="topicWeight">Вес темы.</param>
+    /// <param name="maxWeight">Максимальный вес вопроса (грейда)</param>
+    /// <returns></returns>
+    Task<Question?> GetQuestionAsync(List<int> answeredIds, int topicId, double topicWeight, double maxWeight);
+
+    /// <summary>
+    /// Получить список ответов для вопроса.
+    /// </summary>
+    /// <param name="questionId">Идентификатор вопроса.</param>
+    /// <returns></returns>
+    Task<List<AnswerDto>> GetAnswersAsync(int questionId);
+    
+    /// <summary>
+    /// Получение вопроса.
+    /// </summary>
+    /// <param name="questionId"></param>
+    /// <returns></returns>
+    Task<QuestionSmartDto?> GetQuestionAsync(int questionId);
+    
+    Task<List<string>> CreateAsync(List<QuestionAdminDto> questions);
+}
 
 public class QuestionRepository : IQuestionRepository
 {
@@ -15,49 +43,39 @@ public class QuestionRepository : IQuestionRepository
     {
         _context = context;
     }
-    
-    public async Task<QuestionDto?> GetQuestionAsync(UserTopic userTopic)
+
+
+    public async Task<Question?> GetQuestionAsync(List<int> answeredIds, int topicId, double topicWeight, double maxWeight)
     {
-        var weight = await _context.Weights.SingleOrDefaultAsync(_ => _.Grade == userTopic.Grade);
-        if (weight is null)
+        return await _context.Questions
+            .Where(q => !answeredIds.Contains(q.Id))
+            .Where(q => q.Topic.Id == topicId && q.Weight >= topicWeight && q.Weight <= maxWeight)
+            .OrderBy(o => Guid.NewGuid())
+            .FirstOrDefaultAsync();
+    }
+
+    public async Task<List<AnswerDto>> GetAnswersAsync(int questionId)
+    {
+        var answers = await _context.Answers
+            .Where(a => a.Question.Id == questionId)
+            .Select(answer => answer)
+            .ToListAsync();
+        return answers.Select(a => new AnswerDto()
         {
-            return null;
-        }
-        
-        var question = await _context.Questions.Where(_ => _.Topic == userTopic.Topic && _.Weight >= userTopic.Weight && _.Weight <= weight.Max).OrderBy(o => Guid.NewGuid()).FirstOrDefaultAsync();
-        if (question is null)
-        {
-            return null;
-        }
-        
-        // TODO проверить на отсутствие ответов к вопросу
-        var answers = await _context.Answers.Where(_ => _.Question == question).Select(a => new AnswerDto()
-        {
-            Id = a.Id,
+            Id = a.Id, 
+            IsCorrect = a.IsCorrect, 
             Content = a.Content
-        }).ToListAsync();
-
-        var dto = new QuestionDto()
-        {
-            Id = question.Id,
-            Topic = userTopic.Topic.Name,
-            Content = question.Content,
-            Answers = answers
-        };
-
-        return dto;
+        }).ToList();
     }
 
-    public async Task<Question?> GetQuestionAsync(int id)
+    public async Task<QuestionSmartDto?> GetQuestionAsync(int id)
     {
-        var question =  await _context.Questions.Where(_ => _.Id == id).FirstOrDefaultAsync();
-        return question ?? null;
-    }
-    
-    public async Task<List<Answer>> GetAnswersAsync(Question question)
-    {
-        var answers = await _context.Answers.Where(_ => _.Question == question).ToListAsync();
-        return answers;
+        var question = await _context.Questions
+            .AsNoTracking()
+            .Include(q=> q.Topic)
+                .ThenInclude(t => t.Direction)
+            .SingleOrDefaultAsync(q => q.Id == id);
+        return question is null ? null : new QuestionSmartDto(question.Id, question.IsMultipleChoice, question.Weight);
     }
 
     public async Task<List<string>> CreateAsync(List<QuestionAdminDto> questions)
@@ -65,39 +83,40 @@ public class QuestionRepository : IQuestionRepository
         var notAdded = new List<string>();
         foreach (var question in questions)
         {
-            var topic = await _context.Topics.Where(_ => _.Name == question.Topic).SingleOrDefaultAsync();
+            var topic = await _context.Topics.Where(t => t.Name == question.Topic).SingleOrDefaultAsync();
             if (topic is null)
             {
                 notAdded.Add(question.Content);
-                break;
             }
-
-            try
+            else
             {
-                var q = await _context.Questions.AddAsync(new Question()
+                try
                 {
-                    Topic = topic,
-                    Content = question.Content,
-                    Weight = question.Weight,
-                    IsMultipleChoice = question.IsMultipleChoice
-                });
-
-
-                foreach (var answer in question.Answers)
-                {
-                    await _context.Answers.AddAsync(new Answer()
+                    var q = await _context.Questions.AddAsync(new Question()
                     {
-                        Question = q.Entity,
-                        Content = answer.Content,
-                        IsCorrect = answer.IsCorrect
+                        Topic = topic,
+                        Content = question.Content,
+                        Weight = question.Weight,
+                        IsMultipleChoice = question.IsMultipleChoice
                     });
-                }
 
-                await _context.SaveChangesAsync();
-            }
-            catch (Exception ex)
-            {
-                notAdded.Add(question.Content);
+
+                    foreach (var answer in question.Answers)
+                    {
+                        await _context.Answers.AddAsync(new Answer()
+                        {
+                            Question = q.Entity,
+                            Content = answer.Content,
+                            IsCorrect = answer.IsCorrect
+                        });
+                    }
+
+                    await _context.SaveChangesAsync();
+                }
+                catch (Exception)
+                {
+                    notAdded.Add(question.Content);
+                }
             }
         }
 
