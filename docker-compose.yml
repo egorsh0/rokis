@@ -22,7 +22,7 @@ services:
       - ./vault/agent/config.hcl:/etc/vault/agent.hcl:ro
       - ./vault/agent/template.tpl:/etc/vault/template.tpl:ro
       - ./vault/certs:/vault/certs:ro
-      - rokis-secrets:/vault/agent
+      - vault-shared:/vault/agent:ro
     command: vault agent -config=/vault/agent/config.hcl
     networks: [ internal ]
   
@@ -169,22 +169,26 @@ services:
   # ───── Grafana ──────────────────────────
   grafana:
     image: grafana/grafana
+    env_file:
+      - /vault/agent/secrets.env
     restart: always
     ports:
       - "3000:3000"
     environment:
-      - GF_SECURITY_ADMIN_USER=admin
-      - GF_SECURITY_ADMIN_PASSWORD=admin
+      - GF_SECURITY_ADMIN_USER=${GF_USER}
+      - GF_SECURITY_ADMIN_PASSWORD=${GF_PASS}
     depends_on:
         - loki
+        - rokis
+        - vault-agent
     volumes:
       - grafana-data:/var/lib/grafana
+      - vault-shared:/vault/agent:ro
     networks: [ internal ]
 
 volumes:
   vault-data:
   vault-shared:
-  rokis-secrets:
   db_data:
   grafana-data:
   certbot_www:
