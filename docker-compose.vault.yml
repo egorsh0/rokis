@@ -12,3 +12,6 @@
     command: vault server -config=/vault/config/vault.hcl
     healthcheck:
       test: [ "CMD", "vault", "status" ]
+volumes:
+  vault-data:
+  certbot_conf:
