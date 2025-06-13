@@ -5,14 +5,12 @@
     cap_add: [ "IPC_LOCK" ]
     ports:
       - "8200:8200"
-    tmpfs:
-      - /vault/data
     volumes:
       - ./vault/config:/vault/config:ro
       - certbot_conf:/vault/certs:ro
+      - /opt/vault_data:/vault/data
     command: vault server -config=/vault/config/vault.hcl
     healthcheck:
       test: [ "CMD", "vault", "status" ]
 volumes:
-  vault-data:
   certbot_conf:
