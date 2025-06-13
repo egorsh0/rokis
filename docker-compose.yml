@@ -74,7 +74,7 @@ services:
   postgres-exporter:
     image: prometheuscommunity/postgres-exporter
     env_file:
-      - /vault/agent/secrets/secrets.env
+      - ./vault/agent/secrets/secrets.env
     environment:
       DATA_SOURCE_NAME: ${POSTGRES_EXPORTER}
     depends_on:
@@ -101,7 +101,7 @@ services:
   redis-exporter:
     image: oliver006/redis_exporter
     env_file:
-      - /vault/agent/secrets/secrets.env
+      - ./vault/agent/secrets/secrets.env
     environment:
       REDIS_ADDR: ${REDIS_ADDR}
     depends_on:
@@ -120,7 +120,7 @@ services:
       context: .
       dockerfile: rokis/Dockerfile
     env_file:
-      - /vault/agent/secrets/secrets.env
+      - ./vault/agent/secrets/secrets.env
     environment:
       JWT: ${JWT}
       DB_CONN: ${DB_CONN}
@@ -169,7 +169,7 @@ services:
   grafana:
     image: grafana/grafana
     env_file:
-      - /vault/agent/secrets/secrets.env
+      - ./vault/agent/secrets/secrets.env
     restart: always
     ports:
       - "3000:3000"
