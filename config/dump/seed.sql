@@ -1,434 +1,595 @@
-﻿CREATE TABLE IF NOT EXISTS "__EFMigrationsHistory" (
-                                                       "MigrationId" character varying(150) NOT NULL,
-                                                       "ProductVersion" character varying(32) NOT NULL,
-                                                       CONSTRAINT "PK___EFMigrationsHistory" PRIMARY KEY ("MigrationId")
+﻿create table if not exists "__EFMigrationsHistory"
+(
+    "MigrationId"    varchar(150) not null
+        constraint "PK___EFMigrationsHistory"
+            primary key,
+    "ProductVersion" varchar(32)  not null
 );
 
-START TRANSACTION;
-CREATE TABLE "AspNetRoles" (
-                               "Id" text NOT NULL,
-                               "Name" character varying(256),
-                               "NormalizedName" character varying(256),
-                               "ConcurrencyStamp" text,
-                               CONSTRAINT "PK_AspNetRoles" PRIMARY KEY ("Id")
+create table if not exists "AspNetRoles"
+(
+    "Id"               text not null
+        constraint "PK_AspNetRoles"
+            primary key,
+    "Name"             varchar(256),
+    "NormalizedName"   varchar(256),
+    "ConcurrencyStamp" text
 );
 
-CREATE TABLE "AspNetUsers" (
-                               "Id" text NOT NULL,
-                               "DisplayName" character varying(255) NOT NULL,
-                               "PasswordLastChanged" timestamp with time zone NOT NULL,
-                               "UserName" character varying(256),
-                               "NormalizedUserName" character varying(256),
-                               "Email" character varying(256),
-                               "NormalizedEmail" character varying(256),
-                               "EmailConfirmed" boolean NOT NULL,
-                               "PasswordHash" text,
-                               "SecurityStamp" text,
-                               "ConcurrencyStamp" text,
-                               "PhoneNumber" text,
-                               "PhoneNumberConfirmed" boolean NOT NULL,
-                               "TwoFactorEnabled" boolean NOT NULL,
-                               "LockoutEnd" timestamp with time zone,
-                               "LockoutEnabled" boolean NOT NULL,
-                               "AccessFailedCount" integer NOT NULL,
-                               CONSTRAINT "PK_AspNetUsers" PRIMARY KEY ("Id")
+create unique index if not exists "RoleNameIndex"
+    on "AspNetRoles" ("NormalizedName");
+
+create table if not exists "AspNetUsers"
+(
+    "Id"                   text                     not null
+        constraint "PK_AspNetUsers"
+            primary key,
+    "DisplayName"          varchar(255)             not null,
+    "PasswordLastChanged"  timestamp with time zone not null,
+    "UserName"             varchar(256),
+    "NormalizedUserName"   varchar(256),
+    "Email"                varchar(256),
+    "NormalizedEmail"      varchar(256),
+    "EmailConfirmed"       boolean                  not null,
+    "PasswordHash"         text,
+    "SecurityStamp"        text,
+    "ConcurrencyStamp"     text,
+    "PhoneNumber"          text,
+    "PhoneNumberConfirmed" boolean                  not null,
+    "TwoFactorEnabled"     boolean                  not null,
+    "LockoutEnd"           timestamp with time zone,
+    "LockoutEnabled"       boolean                  not null,
+    "AccessFailedCount"    integer                  not null
 );
 
-CREATE TABLE "Counts" (
-                          "Id" serial NOT NULL,
-                          "Code" text NOT NULL,
-                          "Description" text NOT NULL,
-                          "Value" integer NOT NULL,
-                          CONSTRAINT "PK_Counts" PRIMARY KEY ("Id")
+create index if not exists "EmailIndex"
+    on "AspNetUsers" ("NormalizedEmail");
+
+create unique index if not exists "UserNameIndex"
+    on "AspNetUsers" ("NormalizedUserName");
+
+create table if not exists "Counts"
+(
+    "Id"          serial
+        constraint "PK_Counts"
+            primary key,
+    "Code"        text    not null,
+    "Description" text    not null,
+    "Value"       integer not null
 );
 
-CREATE TABLE "Directions" (
-                              "Id" serial NOT NULL,
-                              "Name" text NOT NULL,
-                              "Code" text NOT NULL,
-                              "Description" text NOT NULL,
-                              "BasePrice" numeric(18,2) NOT NULL,
-                              CONSTRAINT "PK_Directions" PRIMARY KEY ("Id")
+create table if not exists "Directions"
+(
+    "Id"          serial
+        constraint "PK_Directions"
+            primary key,
+    "Name"        text           not null,
+    "Code"        text           not null,
+    "Description" text           not null,
+    "BasePrice"   numeric(18, 2) not null
 );
 
-CREATE TABLE "DiscountRules" (
-                                 "Id" serial NOT NULL,
-                                 "MinQuantity" integer NOT NULL,
-                                 "MaxQuantity" integer,
-                                 "DiscountRate" numeric(5,4) NOT NULL,
-                                 CONSTRAINT "PK_DiscountRules" PRIMARY KEY ("Id")
+create unique index if not exists "IX_Directions_Name"
+    on "Directions" ("Name");
+
+create table if not exists "DiscountRules"
+(
+    "Id"           serial
+        constraint "PK_DiscountRules"
+            primary key,
+    "MinQuantity"  integer       not null,
+    "MaxQuantity"  integer,
+    "DiscountRate" numeric(5, 4) not null
 );
 
-CREATE TABLE "Grades" (
-                          "Id" serial NOT NULL,
-                          "Name" text NOT NULL,
-                          "Code" text NOT NULL,
-                          "Description" text NOT NULL,
-                          CONSTRAINT "PK_Grades" PRIMARY KEY ("Id")
+create index if not exists "IX_DiscountRules_MinQuantity"
+    on "DiscountRules" ("MinQuantity");
+
+create table if not exists "Grades"
+(
+    "Id"          serial
+        constraint "PK_Grades"
+            primary key,
+    "Name"        text not null,
+    "Code"        text not null,
+    "Description" text not null
 );
 
-CREATE TABLE "Invites" (
-                           "Id" uuid NOT NULL,
-                           "Email" text NOT NULL,
-                           "InviteCode" text NOT NULL,
-                           "IsUsed" boolean NOT NULL,
-                           "CreatedAt" timestamp with time zone NOT NULL,
-                           CONSTRAINT "PK_Invites" PRIMARY KEY ("Id")
+create table if not exists "Invites"
+(
+    "Id"         uuid                     not null
+        constraint "PK_Invites"
+            primary key,
+    "Email"      text                     not null,
+    "InviteCode" text                     not null,
+    "IsUsed"     boolean                  not null,
+    "CreatedAt"  timestamp with time zone not null
 );
 
-CREATE TABLE "MailingSettings" (
-                                   "Id" serial NOT NULL,
-                                   "MailingCode" character varying(255) NOT NULL,
-                                   "IsEnabled" boolean NOT NULL,
-                                   "Subject" text NOT NULL,
-                                   "Body" text NOT NULL,
-                                   CONSTRAINT "PK_MailingSettings" PRIMARY KEY ("Id")
+create table if not exists "MailingSettings"
+(
+    "Id"          serial
+        constraint "PK_MailingSettings"
+            primary key,
+    "MailingCode" text    not null,
+    "IsEnabled"   boolean not null,
+    "Subject"     text    not null,
+    "Body"        text    not null
 );
 
-CREATE TABLE "Orders" (
-                          "Id" serial NOT NULL,
-                          "UserId" text NOT NULL,
-                          "Role" text NOT NULL,
-                          "Quantity" integer NOT NULL,
-                          "UnitPrice" numeric(18,2) NOT NULL,
-                          "TotalPrice" numeric(18,2) NOT NULL,
-                          "DiscountRate" numeric(18,2) NOT NULL,
-                          "DiscountedTotal" numeric(18,2) NOT NULL,
-                          "Status" integer NOT NULL,
-                          "PaidAt" timestamp with time zone,
-                          "PaymentId" character varying(64),
-                          CONSTRAINT "PK_Orders" PRIMARY KEY ("Id")
+create table if not exists "Orders"
+(
+    "Id"              serial
+        constraint "PK_Orders"
+            primary key,
+    "UserId"          text           not null,
+    "Role"            text           not null,
+    "Quantity"        integer        not null,
+    "UnitPrice"       numeric(18, 2) not null,
+    "TotalPrice"      numeric(18, 2) not null,
+    "DiscountRate"    numeric(18, 2) not null,
+    "DiscountedTotal" numeric(18, 2) not null,
+    "Status"          integer        not null,
+    "PaidAt"          timestamp with time zone,
+    "PaymentId"       varchar(64)
 );
 
-CREATE TABLE "Persents" (
-                            "Id" serial NOT NULL,
-                            "Code" text NOT NULL,
-                            "Description" text NOT NULL,
-                            "Value" double precision NOT NULL,
-                            CONSTRAINT "PK_Persents" PRIMARY KEY ("Id")
+create table if not exists "Persents"
+(
+    "Id"          serial
+        constraint "PK_Persents"
+            primary key,
+    "Code"        text             not null,
+    "Description" text             not null,
+    "Value"       double precision not null
 );
 
-CREATE TABLE "Times" (
-                         "Id" serial NOT NULL,
-                         "Code" text NOT NULL,
-                         "Description" text NOT NULL,
-                         "Value" double precision NOT NULL,
-                         CONSTRAINT "PK_Times" PRIMARY KEY ("Id")
+create table if not exists "AspNetRoleClaims"
+(
+    "Id"         serial
+        constraint "PK_AspNetRoleClaims"
+            primary key,
+    "RoleId"     text not null
+        constraint "FK_AspNetRoleClaims_AspNetRoles_RoleId"
+            references "AspNetRoles"
+            on delete cascade,
+    "ClaimType"  text,
+    "ClaimValue" text
 );
 
-CREATE TABLE "AspNetRoleClaims" (
-                                    "Id" serial NOT NULL,
-                                    "RoleId" text NOT NULL,
-                                    "ClaimType" text,
-                                    "ClaimValue" text,
-                                    CONSTRAINT "PK_AspNetRoleClaims" PRIMARY KEY ("Id"),
-                                    CONSTRAINT "FK_AspNetRoleClaims_AspNetRoles_RoleId" FOREIGN KEY ("RoleId") REFERENCES "AspNetRoles" ("Id") ON DELETE CASCADE
+create index if not exists "IX_AspNetRoleClaims_RoleId"
+    on "AspNetRoleClaims" ("RoleId");
+
+create table if not exists "AdministratorProfiles"
+(
+    "Id"     serial
+        constraint "PK_AdministratorProfiles"
+            primary key,
+    "Email"  varchar(200) not null,
+    "UserId" text         not null
+        constraint "FK_AdministratorProfiles_AspNetUsers_UserId"
+            references "AspNetUsers"
+            on delete cascade
 );
 
-CREATE TABLE "AdministratorProfiles" (
-                                         "Id" serial NOT NULL,
-                                         "Email" character varying(200) NOT NULL,
-                                         "UserId" text NOT NULL,
-                                         CONSTRAINT "PK_AdministratorProfiles" PRIMARY KEY ("Id"),
-                                         CONSTRAINT "FK_AdministratorProfiles_AspNetUsers_UserId" FOREIGN KEY ("UserId") REFERENCES "AspNetUsers" ("Id") ON DELETE CASCADE
+create index if not exists "IX_AdministratorProfiles_UserId"
+    on "AdministratorProfiles" ("UserId");
+
+create table if not exists "AspNetUserClaims"
+(
+    "Id"         serial
+        constraint "PK_AspNetUserClaims"
+            primary key,
+    "UserId"     text not null
+        constraint "FK_AspNetUserClaims_AspNetUsers_UserId"
+            references "AspNetUsers"
+            on delete cascade,
+    "ClaimType"  text,
+    "ClaimValue" text
 );
 
-CREATE TABLE "AspNetUserClaims" (
-                                    "Id" serial NOT NULL,
-                                    "UserId" text NOT NULL,
-                                    "ClaimType" text,
-                                    "ClaimValue" text,
-                                    CONSTRAINT "PK_AspNetUserClaims" PRIMARY KEY ("Id"),
-                                    CONSTRAINT "FK_AspNetUserClaims_AspNetUsers_UserId" FOREIGN KEY ("UserId") REFERENCES "AspNetUsers" ("Id") ON DELETE CASCADE
+create index if not exists "IX_AspNetUserClaims_UserId"
+    on "AspNetUserClaims" ("UserId");
+
+create table if not exists "AspNetUserLogins"
+(
+    "LoginProvider"       text not null,
+    "ProviderKey"         text not null,
+    "ProviderDisplayName" text,
+    "UserId"              text not null
+        constraint "FK_AspNetUserLogins_AspNetUsers_UserId"
+            references "AspNetUsers"
+            on delete cascade,
+    constraint "PK_AspNetUserLogins"
+        primary key ("LoginProvider", "ProviderKey")
 );
 
-CREATE TABLE "AspNetUserLogins" (
-                                    "LoginProvider" text NOT NULL,
-                                    "ProviderKey" text NOT NULL,
-                                    "ProviderDisplayName" text,
-                                    "UserId" text NOT NULL,
-                                    CONSTRAINT "PK_AspNetUserLogins" PRIMARY KEY ("LoginProvider", "ProviderKey"),
-                                    CONSTRAINT "FK_AspNetUserLogins_AspNetUsers_UserId" FOREIGN KEY ("UserId") REFERENCES "AspNetUsers" ("Id") ON DELETE CASCADE
+create index if not exists "IX_AspNetUserLogins_UserId"
+    on "AspNetUserLogins" ("UserId");
+
+create table if not exists "AspNetUserRoles"
+(
+    "UserId" text not null
+        constraint "FK_AspNetUserRoles_AspNetUsers_UserId"
+            references "AspNetUsers"
+            on delete cascade,
+    "RoleId" text not null
+        constraint "FK_AspNetUserRoles_AspNetRoles_RoleId"
+            references "AspNetRoles"
+            on delete cascade,
+    constraint "PK_AspNetUserRoles"
+        primary key ("UserId", "RoleId")
 );
 
-CREATE TABLE "AspNetUserRoles" (
-                                   "UserId" text NOT NULL,
-                                   "RoleId" text NOT NULL,
-                                   CONSTRAINT "PK_AspNetUserRoles" PRIMARY KEY ("UserId", "RoleId"),
-                                   CONSTRAINT "FK_AspNetUserRoles_AspNetRoles_RoleId" FOREIGN KEY ("RoleId") REFERENCES "AspNetRoles" ("Id") ON DELETE CASCADE,
-                                   CONSTRAINT "FK_AspNetUserRoles_AspNetUsers_UserId" FOREIGN KEY ("UserId") REFERENCES "AspNetUsers" ("Id") ON DELETE CASCADE
+create index if not exists "IX_AspNetUserRoles_RoleId"
+    on "AspNetUserRoles" ("RoleId");
+
+create table if not exists "AspNetUserTokens"
+(
+    "UserId"        text not null
+        constraint "FK_AspNetUserTokens_AspNetUsers_UserId"
+            references "AspNetUsers"
+            on delete cascade,
+    "LoginProvider" text not null,
+    "Name"          text not null,
+    "Value"         text,
+    constraint "PK_AspNetUserTokens"
+        primary key ("UserId", "LoginProvider", "Name")
 );
 
-CREATE TABLE "AspNetUserTokens" (
-                                    "UserId" text NOT NULL,
-                                    "LoginProvider" text NOT NULL,
-                                    "Name" text NOT NULL,
-                                    "Value" text,
-                                    CONSTRAINT "PK_AspNetUserTokens" PRIMARY KEY ("UserId", "LoginProvider", "Name"),
-                                    CONSTRAINT "FK_AspNetUserTokens_AspNetUsers_UserId" FOREIGN KEY ("UserId") REFERENCES "AspNetUsers" ("Id") ON DELETE CASCADE
+create table if not exists "CompanyProfiles"
+(
+    "Id"           serial
+        constraint "PK_CompanyProfiles"
+            primary key,
+    "FullName"     varchar(200) not null,
+    "LegalAddress" varchar(256),
+    "INN"          varchar(12)  not null,
+    "Kpp"          varchar(9),
+    "Email"        varchar(200) not null,
+    "UserId"       text         not null
+        constraint "FK_CompanyProfiles_AspNetUsers_UserId"
+            references "AspNetUsers"
+            on delete cascade
 );
 
-CREATE TABLE "CompanyProfiles" (
-                                   "Id" serial NOT NULL,
-                                   "FullName" character varying(200) NOT NULL,
-                                   "LegalAddress" character varying(256),
-                                   "INN" character varying(12) NOT NULL,
-                                   "Kpp" character varying(9),
-                                   "Email" character varying(200) NOT NULL,
-                                   "UserId" text NOT NULL,
-                                   CONSTRAINT "PK_CompanyProfiles" PRIMARY KEY ("Id"),
-                                   CONSTRAINT "FK_CompanyProfiles_AspNetUsers_UserId" FOREIGN KEY ("UserId") REFERENCES "AspNetUsers" ("Id") ON DELETE CASCADE
+create unique index if not exists "IX_CompanyProfiles_UserId"
+    on "CompanyProfiles" ("UserId");
+
+create table if not exists "PersonProfiles"
+(
+    "Id"       serial
+        constraint "PK_PersonProfiles"
+            primary key,
+    "FullName" varchar(200) not null,
+    "Email"    varchar(200) not null,
+    "UserId"   text         not null
+        constraint "FK_PersonProfiles_AspNetUsers_UserId"
+            references "AspNetUsers"
+            on delete cascade
 );
 
-CREATE TABLE "PersonProfiles" (
-                                  "Id" serial NOT NULL,
-                                  "FullName" character varying(200) NOT NULL,
-                                  "Email" character varying(200) NOT NULL,
-                                  "UserId" text NOT NULL,
-                                  CONSTRAINT "PK_PersonProfiles" PRIMARY KEY ("Id"),
-                                  CONSTRAINT "FK_PersonProfiles_AspNetUsers_UserId" FOREIGN KEY ("UserId") REFERENCES "AspNetUsers" ("Id") ON DELETE CASCADE
+create unique index if not exists "IX_PersonProfiles_UserId"
+    on "PersonProfiles" ("UserId");
+
+create table if not exists "Topics"
+(
+    "Id"          serial
+        constraint "PK_Topics"
+            primary key,
+    "Name"        text    not null,
+    "Description" text    not null,
+    "DirectionId" integer not null
+        constraint "FK_Topics_Directions_DirectionId"
+            references "Directions"
+            on delete cascade
 );
 
-CREATE TABLE "RefreshTokens" (
-                                 "Id" serial NOT NULL,
-                                 "Token" text NOT NULL,
-                                 "Expires" timestamp with time zone NOT NULL,
-                                 "Created" timestamp with time zone NOT NULL,
-                                 "Revoked" timestamp with time zone,
-                                 "UserId" text NOT NULL,
-                                 CONSTRAINT "PK_RefreshTokens" PRIMARY KEY ("Id"),
-                                 CONSTRAINT "FK_RefreshTokens_AspNetUsers_UserId" FOREIGN KEY ("UserId") REFERENCES "AspNetUsers" ("Id") ON DELETE CASCADE
+create index if not exists "IX_Topics_DirectionId"
+    on "Topics" ("DirectionId");
+
+create table if not exists "AnswerTimes"
+(
+    "Id"      serial
+        constraint "PK_AnswerTimes"
+            primary key,
+    "GradeId" integer          not null
+        constraint "FK_AnswerTimes_Grades_GradeId"
+            references "Grades"
+            on delete cascade,
+    "Average" double precision not null,
+    "Min"     double precision not null,
+    "Max"     double precision not null
 );
 
-CREATE TABLE "Topics" (
-                          "Id" serial NOT NULL,
-                          "Name" text NOT NULL,
-                          "Description" text NOT NULL,
-                          "DirectionId" integer NOT NULL,
-                          CONSTRAINT "PK_Topics" PRIMARY KEY ("Id"),
-                          CONSTRAINT "FK_Topics_Directions_DirectionId" FOREIGN KEY ("DirectionId") REFERENCES "Directions" ("Id") ON DELETE CASCADE
+create index if not exists "IX_AnswerTimes_GradeId"
+    on "AnswerTimes" ("GradeId");
+
+create table if not exists "GradeLevels"
+(
+    "Id"      serial
+        constraint "PK_GradeLevels"
+            primary key,
+    "GradeId" integer                    not null
+        constraint "FK_GradeLevels_Grades_GradeId"
+            references "Grades"
+            on delete cascade,
+    "Level"   double precision           not null,
+    "Min"     double precision default 0 not null,
+    "Max"     double precision default 0 not null
 );
 
-CREATE TABLE "AnswerTimes" (
-                               "Id" serial NOT NULL,
-                               "GradeId" integer NOT NULL,
-                               "Average" double precision NOT NULL,
-                               "Min" double precision NOT NULL,
-                               "Max" double precision NOT NULL,
-                               CONSTRAINT "PK_AnswerTimes" PRIMARY KEY ("Id"),
-                               CONSTRAINT "FK_AnswerTimes_Grades_GradeId" FOREIGN KEY ("GradeId") REFERENCES "Grades" ("Id") ON DELETE CASCADE
+create index if not exists "IX_GradeLevels_GradeId"
+    on "GradeLevels" ("GradeId");
+
+create table if not exists "GradeRelations"
+(
+    "Id"      serial
+        constraint "PK_GradeRelations"
+            primary key,
+    "StartId" integer
+        constraint "FK_GradeRelations_Grades_StartId"
+            references "Grades",
+    "EndId"   integer
+        constraint "FK_GradeRelations_Grades_EndId"
+            references "Grades"
 );
 
-CREATE TABLE "GradeLevels" (
-                               "Id" serial NOT NULL,
-                               "GradeId" integer NOT NULL,
-                               "Min" double precision NOT NULL,
-                               "Max" double precision NOT NULL,
-                               CONSTRAINT "PK_GradeLevels" PRIMARY KEY ("Id"),
-                               CONSTRAINT "FK_GradeLevels_Grades_GradeId" FOREIGN KEY ("GradeId") REFERENCES "Grades" ("Id") ON DELETE CASCADE
+create index if not exists "IX_GradeRelations_EndId"
+    on "GradeRelations" ("EndId");
+
+create index if not exists "IX_GradeRelations_StartId"
+    on "GradeRelations" ("StartId");
+
+create table if not exists "Weights"
+(
+    "Id"      serial
+        constraint "PK_Weights"
+            primary key,
+    "GradeId" integer          not null
+        constraint "FK_Weights_Grades_GradeId"
+            references "Grades"
+            on delete cascade,
+    "Min"     double precision not null,
+    "Max"     double precision not null
 );
 
-CREATE TABLE "GradeRelations" (
-                                  "Id" serial NOT NULL,
-                                  "StartId" integer,
-                                  "EndId" integer,
-                                  CONSTRAINT "PK_GradeRelations" PRIMARY KEY ("Id"),
-                                  CONSTRAINT "FK_GradeRelations_Grades_EndId" FOREIGN KEY ("EndId") REFERENCES "Grades" ("Id"),
-                                  CONSTRAINT "FK_GradeRelations_Grades_StartId" FOREIGN KEY ("StartId") REFERENCES "Grades" ("Id")
+create index if not exists "IX_Weights_GradeId"
+    on "Weights" ("GradeId");
+
+create table if not exists "Tokens"
+(
+    "Id"             uuid                     not null
+        constraint "PK_Tokens"
+            primary key,
+    "DirectionId"    integer                  not null
+        constraint "FK_Tokens_Directions_DirectionId"
+            references "Directions"
+            on delete cascade,
+    "Status"         integer                  not null,
+    "UnitPrice"      numeric(18, 2)           not null,
+    "PurchaseDate"   timestamp with time zone not null,
+    "OrderId"        integer
+        constraint "FK_Tokens_Orders_OrderId"
+            references "Orders",
+    "EmployeeUserId" text,
+    "EmployeeId"     text
+        constraint "FK_Tokens_AspNetUsers_EmployeeId"
+            references "AspNetUsers",
+    "PersonUserId"   text,
+    "PersonId"       text
+        constraint "FK_Tokens_AspNetUsers_PersonId"
+            references "AspNetUsers",
+    "Score"          double precision,
+    "CertificateUrl" text
 );
 
-CREATE TABLE "Weights" (
-                           "Id" serial NOT NULL,
-                           "GradeId" integer NOT NULL,
-                           "Min" double precision NOT NULL,
-                           "Max" double precision NOT NULL,
-                           CONSTRAINT "PK_Weights" PRIMARY KEY ("Id"),
-                           CONSTRAINT "FK_Weights_Grades_GradeId" FOREIGN KEY ("GradeId") REFERENCES "Grades" ("Id") ON DELETE CASCADE
+create index if not exists "IX_Tokens_DirectionId"
+    on "Tokens" ("DirectionId");
+
+create index if not exists "IX_Tokens_EmployeeId"
+    on "Tokens" ("EmployeeId");
+
+create index if not exists "IX_Tokens_OrderId"
+    on "Tokens" ("OrderId");
+
+create index if not exists "IX_Tokens_PersonId"
+    on "Tokens" ("PersonId");
+
+create table if not exists "EmployeeProfiles"
+(
+    "Id"               serial
+        constraint "PK_EmployeeProfiles"
+            primary key,
+    "FullName"         varchar(200) not null,
+    "Email"            varchar(200) not null,
+    "UserId"           text         not null
+        constraint "FK_EmployeeProfiles_AspNetUsers_UserId"
+            references "AspNetUsers"
+            on delete cascade,
+    "CompanyProfileId" integer
+        constraint "FK_EmployeeProfiles_CompanyProfiles_CompanyProfileId"
+            references "CompanyProfiles"
+            on delete set null
 );
 
-CREATE TABLE "Tokens" (
-                          "Id" uuid NOT NULL,
-                          "DirectionId" integer NOT NULL,
-                          "Status" integer NOT NULL,
-                          "UnitPrice" numeric(18,2) NOT NULL,
-                          "PurchaseDate" timestamp with time zone NOT NULL,
-                          "OrderId" integer,
-                          "EmployeeUserId" text,
-                          "EmployeeId" text,
-                          "PersonUserId" text,
-                          "PersonId" text,
-                          "Score" double precision,
-                          "CertificateUrl" text,
-                          CONSTRAINT "PK_Tokens" PRIMARY KEY ("Id"),
-                          CONSTRAINT "FK_Tokens_AspNetUsers_EmployeeId" FOREIGN KEY ("EmployeeId") REFERENCES "AspNetUsers" ("Id"),
-                          CONSTRAINT "FK_Tokens_AspNetUsers_PersonId" FOREIGN KEY ("PersonId") REFERENCES "AspNetUsers" ("Id"),
-                          CONSTRAINT "FK_Tokens_Directions_DirectionId" FOREIGN KEY ("DirectionId") REFERENCES "Directions" ("Id") ON DELETE CASCADE,
-                          CONSTRAINT "FK_Tokens_Orders_OrderId" FOREIGN KEY ("OrderId") REFERENCES "Orders" ("Id")
+create index if not exists "IX_EmployeeProfiles_CompanyProfileId"
+    on "EmployeeProfiles" ("CompanyProfileId");
+
+create unique index if not exists "IX_EmployeeProfiles_UserId"
+    on "EmployeeProfiles" ("UserId");
+
+create table if not exists "Questions"
+(
+    "Id"               serial
+        constraint "PK_Questions"
+            primary key,
+    "Content"          text             not null,
+    "TopicId"          integer          not null
+        constraint "FK_Questions_Topics_TopicId"
+            references "Topics"
+            on delete cascade,
+    "Weight"           double precision not null,
+    "IsMultipleChoice" boolean          not null
 );
 
-CREATE TABLE "EmployeeProfiles" (
-                                    "Id" serial NOT NULL,
-                                    "FullName" character varying(200) NOT NULL,
-                                    "Email" character varying(200) NOT NULL,
-                                    "UserId" text NOT NULL,
-                                    "CompanyProfileId" integer,
-                                    CONSTRAINT "PK_EmployeeProfiles" PRIMARY KEY ("Id"),
-                                    CONSTRAINT "FK_EmployeeProfiles_AspNetUsers_UserId" FOREIGN KEY ("UserId") REFERENCES "AspNetUsers" ("Id") ON DELETE CASCADE,
-                                    CONSTRAINT "FK_EmployeeProfiles_CompanyProfiles_CompanyProfileId" FOREIGN KEY ("CompanyProfileId") REFERENCES "CompanyProfiles" ("Id") ON DELETE SET NULL
+create index if not exists "IX_Questions_TopicId"
+    on "Questions" ("TopicId");
+
+create table if not exists "Reports"
+(
+    "Id"      serial
+        constraint "PK_Reports"
+            primary key,
+    "TokenId" uuid             not null
+        constraint "FK_Reports_Tokens_TokenId"
+            references "Tokens"
+            on delete cascade,
+    "Score"   double precision not null,
+    "GradeId" integer          not null
+        constraint "FK_Reports_Grades_GradeId"
+            references "Grades"
+            on delete cascade,
+    "Image"   bytea
 );
 
-CREATE TABLE "Questions" (
-                             "Id" serial NOT NULL,
-                             "Content" text NOT NULL,
-                             "TopicId" integer NOT NULL,
-                             "Weight" double precision NOT NULL,
-                             "IsMultipleChoice" boolean NOT NULL,
-                             CONSTRAINT "PK_Questions" PRIMARY KEY ("Id"),
-                             CONSTRAINT "FK_Questions_Topics_TopicId" FOREIGN KEY ("TopicId") REFERENCES "Topics" ("Id") ON DELETE CASCADE
+create index if not exists "IX_Reports_GradeId"
+    on "Reports" ("GradeId");
+
+create index if not exists "IX_Reports_TokenId"
+    on "Reports" ("TokenId");
+
+create table if not exists "Sessions"
+(
+    "Id"             serial
+        constraint "PK_Sessions"
+            primary key,
+    "TokenId"        uuid                     not null
+        constraint "FK_Sessions_Tokens_TokenId"
+            references "Tokens"
+            on delete cascade,
+    "StartTime"      timestamp with time zone not null,
+    "EndTime"        timestamp with time zone,
+    "Score"          double precision         not null,
+    "EmployeeUserId" text,
+    "EmployeeId"     text
+        constraint "FK_Sessions_AspNetUsers_EmployeeId"
+            references "AspNetUsers",
+    "PersonUserId"   text,
+    "PersonId"       text
+        constraint "FK_Sessions_AspNetUsers_PersonId"
+            references "AspNetUsers"
 );
 
-CREATE TABLE "Reports" (
-                           "Id" serial NOT NULL,
-                           "TokenId" uuid NOT NULL,
-                           "Score" double precision NOT NULL,
-                           "GradeId" integer NOT NULL,
-                           "Image" bytea,
-                           CONSTRAINT "PK_Reports" PRIMARY KEY ("Id"),
-                           CONSTRAINT "FK_Reports_Grades_GradeId" FOREIGN KEY ("GradeId") REFERENCES "Grades" ("Id") ON DELETE CASCADE,
-                           CONSTRAINT "FK_Reports_Tokens_TokenId" FOREIGN KEY ("TokenId") REFERENCES "Tokens" ("Id") ON DELETE CASCADE
+create index if not exists "IX_Sessions_EmployeeId"
+    on "Sessions" ("EmployeeId");
+
+create index if not exists "IX_Sessions_PersonId"
+    on "Sessions" ("PersonId");
+
+create index if not exists "IX_Sessions_TokenId"
+    on "Sessions" ("TokenId");
+
+create table if not exists "Answers"
+(
+    "Id"         serial
+        constraint "PK_Answers"
+            primary key,
+    "QuestionId" integer not null
+        constraint "FK_Answers_Questions_QuestionId"
+            references "Questions"
+            on delete cascade,
+    "Content"    text    not null,
+    "IsCorrect"  boolean not null
 );
 
-CREATE TABLE "Sessions" (
-                            "Id" serial NOT NULL,
-                            "TokenId" uuid NOT NULL,
-                            "StartTime" timestamp with time zone NOT NULL,
-                            "EndTime" timestamp with time zone,
-                            "Score" double precision NOT NULL,
-                            "EmployeeUserId" text,
-                            "EmployeeId" text,
-                            "PersonUserId" text,
-                            "PersonId" text,
-                            CONSTRAINT "PK_Sessions" PRIMARY KEY ("Id"),
-                            CONSTRAINT "FK_Sessions_AspNetUsers_EmployeeId" FOREIGN KEY ("EmployeeId") REFERENCES "AspNetUsers" ("Id"),
-                            CONSTRAINT "FK_Sessions_AspNetUsers_PersonId" FOREIGN KEY ("PersonId") REFERENCES "AspNetUsers" ("Id"),
-                            CONSTRAINT "FK_Sessions_Tokens_TokenId" FOREIGN KEY ("TokenId") REFERENCES "Tokens" ("Id") ON DELETE CASCADE
+create index if not exists "IX_Answers_QuestionId"
+    on "Answers" ("QuestionId");
+
+create table if not exists "UserAnswers"
+(
+    "Id"         serial
+        constraint "PK_UserAnswers"
+            primary key,
+    "SessionId"  integer                  not null
+        constraint "FK_UserAnswers_Sessions_SessionId"
+            references "Sessions"
+            on delete cascade,
+    "QuestionId" integer                  not null
+        constraint "FK_UserAnswers_Questions_QuestionId"
+            references "Questions"
+            on delete cascade,
+    "TimeSpent"  double precision         not null,
+    "Score"      double precision         not null,
+    "AnswerTime" timestamp with time zone not null
 );
 
-CREATE TABLE "Answers" (
-                           "Id" serial NOT NULL,
-                           "QuestionId" integer NOT NULL,
-                           "Content" text NOT NULL,
-                           "IsCorrect" boolean NOT NULL,
-                           CONSTRAINT "PK_Answers" PRIMARY KEY ("Id"),
-                           CONSTRAINT "FK_Answers_Questions_QuestionId" FOREIGN KEY ("QuestionId") REFERENCES "Questions" ("Id") ON DELETE CASCADE
+create index if not exists "IX_UserAnswers_QuestionId"
+    on "UserAnswers" ("QuestionId");
+
+create index if not exists "IX_UserAnswers_SessionId"
+    on "UserAnswers" ("SessionId");
+
+create table if not exists "UserTopics"
+(
+    "Id"          serial
+        constraint "PK_UserTopics"
+            primary key,
+    "SessionId"   integer          not null
+        constraint "FK_UserTopics_Sessions_SessionId"
+            references "Sessions"
+            on delete cascade,
+    "TopicId"     integer          not null
+        constraint "FK_UserTopics_Topics_TopicId"
+            references "Topics"
+            on delete cascade,
+    "GradeId"     integer          not null
+        constraint "FK_UserTopics_Grades_GradeId"
+            references "Grades"
+            on delete cascade,
+    "Weight"      double precision not null,
+    "IsFinished"  boolean          not null,
+    "WasPrevious" boolean          not null,
+    "Actual"      boolean          not null,
+    "Count"       integer          not null
 );
 
-CREATE TABLE "UserAnswers" (
-                               "Id" serial NOT NULL,
-                               "SessionId" integer NOT NULL,
-                               "QuestionId" integer NOT NULL,
-                               "TimeSpent" double precision NOT NULL,
-                               "Score" double precision NOT NULL,
-                               "AnswerTime" timestamp with time zone NOT NULL,
-                               CONSTRAINT "PK_UserAnswers" PRIMARY KEY ("Id"),
-                               CONSTRAINT "FK_UserAnswers_Questions_QuestionId" FOREIGN KEY ("QuestionId") REFERENCES "Questions" ("Id") ON DELETE CASCADE,
-                               CONSTRAINT "FK_UserAnswers_Sessions_SessionId" FOREIGN KEY ("SessionId") REFERENCES "Sessions" ("Id") ON DELETE CASCADE
+create index if not exists "IX_UserTopics_GradeId"
+    on "UserTopics" ("GradeId");
+
+create index if not exists "IX_UserTopics_SessionId"
+    on "UserTopics" ("SessionId");
+
+create index if not exists "IX_UserTopics_TopicId"
+    on "UserTopics" ("TopicId");
+
+create table if not exists "Times"
+(
+    "Id"          serial
+        constraint "PK_Times"
+            primary key,
+    "Code"        text             not null,
+    "Description" text             not null,
+    "Value"       double precision not null
 );
 
-CREATE TABLE "UserTopics" (
-                              "Id" serial NOT NULL,
-                              "SessionId" integer NOT NULL,
-                              "TopicId" integer NOT NULL,
-                              "GradeId" integer NOT NULL,
-                              "Weight" double precision NOT NULL,
-                              "IsFinished" boolean NOT NULL,
-                              "WasPrevious" boolean NOT NULL,
-                              "Actual" boolean NOT NULL,
-                              "Count" integer NOT NULL,
-                              CONSTRAINT "PK_UserTopics" PRIMARY KEY ("Id"),
-                              CONSTRAINT "FK_UserTopics_Grades_GradeId" FOREIGN KEY ("GradeId") REFERENCES "Grades" ("Id") ON DELETE CASCADE,
-                              CONSTRAINT "FK_UserTopics_Sessions_SessionId" FOREIGN KEY ("SessionId") REFERENCES "Sessions" ("Id") ON DELETE CASCADE,
-                              CONSTRAINT "FK_UserTopics_Topics_TopicId" FOREIGN KEY ("TopicId") REFERENCES "Topics" ("Id") ON DELETE CASCADE
+create table if not exists "RefreshTokens"
+(
+    "Id"      serial
+        constraint "PK_RefreshTokens"
+            primary key,
+    "Token"   text                     not null,
+    "Expires" timestamp with time zone not null,
+    "Created" timestamp with time zone not null,
+    "Revoked" timestamp with time zone,
+    "UserId"  text                     not null
+        constraint "FK_RefreshTokens_AspNetUsers_UserId"
+            references "AspNetUsers"
+            on delete cascade
 );
 
-CREATE INDEX "IX_AdministratorProfiles_UserId" ON "AdministratorProfiles" ("UserId");
-
-CREATE INDEX "IX_Answers_QuestionId" ON "Answers" ("QuestionId");
-
-CREATE INDEX "IX_AnswerTimes_GradeId" ON "AnswerTimes" ("GradeId");
-
-CREATE INDEX "IX_AspNetRoleClaims_RoleId" ON "AspNetRoleClaims" ("RoleId");
-
-CREATE UNIQUE INDEX "RoleNameIndex" ON "AspNetRoles" ("NormalizedName");
-
-CREATE INDEX "IX_AspNetUserClaims_UserId" ON "AspNetUserClaims" ("UserId");
-
-CREATE INDEX "IX_AspNetUserLogins_UserId" ON "AspNetUserLogins" ("UserId");
-
-CREATE INDEX "IX_AspNetUserRoles_RoleId" ON "AspNetUserRoles" ("RoleId");
-
-CREATE INDEX "EmailIndex" ON "AspNetUsers" ("NormalizedEmail");
-
-CREATE UNIQUE INDEX "UserNameIndex" ON "AspNetUsers" ("NormalizedUserName");
-
-CREATE UNIQUE INDEX "IX_CompanyProfiles_UserId" ON "CompanyProfiles" ("UserId");
-
-CREATE UNIQUE INDEX "IX_Directions_Name" ON "Directions" ("Name");
-
-CREATE INDEX "IX_DiscountRules_MinQuantity" ON "DiscountRules" ("MinQuantity");
-
-CREATE INDEX "IX_EmployeeProfiles_CompanyProfileId" ON "EmployeeProfiles" ("CompanyProfileId");
-
-CREATE UNIQUE INDEX "IX_EmployeeProfiles_UserId" ON "EmployeeProfiles" ("UserId");
-
-CREATE INDEX "IX_GradeLevels_GradeId" ON "GradeLevels" ("GradeId");
-
-CREATE INDEX "IX_GradeRelations_EndId" ON "GradeRelations" ("EndId");
-
-CREATE INDEX "IX_GradeRelations_StartId" ON "GradeRelations" ("StartId");
-
-CREATE UNIQUE INDEX "IX_PersonProfiles_UserId" ON "PersonProfiles" ("UserId");
-
-CREATE INDEX "IX_Questions_TopicId" ON "Questions" ("TopicId");
-
-CREATE INDEX "IX_RefreshTokens_UserId" ON "RefreshTokens" ("UserId");
-
-CREATE INDEX "IX_Reports_GradeId" ON "Reports" ("GradeId");
-
-CREATE INDEX "IX_Reports_TokenId" ON "Reports" ("TokenId");
-
-CREATE INDEX "IX_Sessions_EmployeeId" ON "Sessions" ("EmployeeId");
-
-CREATE INDEX "IX_Sessions_PersonId" ON "Sessions" ("PersonId");
-
-CREATE INDEX "IX_Sessions_TokenId" ON "Sessions" ("TokenId");
-
-CREATE INDEX "IX_Tokens_DirectionId" ON "Tokens" ("DirectionId");
-
-CREATE INDEX "IX_Tokens_EmployeeId" ON "Tokens" ("EmployeeId");
-
-CREATE INDEX "IX_Tokens_OrderId" ON "Tokens" ("OrderId");
-
-CREATE INDEX "IX_Tokens_PersonId" ON "Tokens" ("PersonId");
-
-CREATE INDEX "IX_Topics_DirectionId" ON "Topics" ("DirectionId");
-
-CREATE INDEX "IX_UserAnswers_QuestionId" ON "UserAnswers" ("QuestionId");
-
-CREATE INDEX "IX_UserAnswers_SessionId" ON "UserAnswers" ("SessionId");
-
-CREATE INDEX "IX_UserTopics_GradeId" ON "UserTopics" ("GradeId");
-
-CREATE INDEX "IX_UserTopics_SessionId" ON "UserTopics" ("SessionId");
-
-CREATE INDEX "IX_UserTopics_TopicId" ON "UserTopics" ("TopicId");
-
-CREATE INDEX "IX_Weights_GradeId" ON "Weights" ("GradeId");
-
-INSERT INTO "__EFMigrationsHistory" ("MigrationId", "ProductVersion")
-VALUES ('20250613210751_InitialCreate', '9.0.4');
-
-COMMIT;
+create index if not exists "IX_RefreshTokens_UserId"
+    on "RefreshTokens" ("UserId");
 
 /*  
 Конфигурация Counts 
