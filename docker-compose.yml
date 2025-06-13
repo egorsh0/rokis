@@ -1,19 +1,5 @@
 services:
   # ───── Vault ────────────────────────────────────────────────────────────────
-  vault:
-    image: hashicorp/vault:latest
-    container_name: vault
-    cap_add: [ "IPC_LOCK" ]
-    ports:
-      - "8200:8200"
-    volumes:
-      - ./vault/config:/vault/config:ro
-      - certbot_conf:/vault/certs:ro
-      - vault-data:/vault/data
-    command: vault server -config=/vault/config/vault.hcl
-    healthcheck:
-      test: [ "CMD", "vault", "status" ]
-  
   vault-agent:
     image: hashicorp/vault:latest
     container_name: vault-agent
