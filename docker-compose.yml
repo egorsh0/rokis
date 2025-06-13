@@ -155,11 +155,10 @@ services:
     ports: ["5000:5000"]
     networks: [ internal ]
     logging:
-      driver: loki
+      driver: "json-file"
       options:
-        loki-url: "http://loki:3100/loki/api/v1/push"
-        max-size: "10m"
-        max-file: "3"
+        max-size: "200k"
+        max-file: "10"
     entrypoint: >
       sh -c '
         echo "⏳ Waiting for /vault/agent/secrets/secrets.env...";
@@ -180,6 +179,17 @@ services:
       - ./config/monitoring:/etc/prometheus:ro
     ports:
       - "9090:9090"
+    networks: [ internal ]
+  
+  # ───── Promtail ───────────────────────
+  promtail:
+    image: grafana/promtail:2.9.2
+    volumes:
+      - /var/log:/var/log
+      - /etc/machine-id:/etc/machine-id
+      - ./config/promtail:/etc/promtail
+      - /var/lib/docker/containers:/var/lib/docker/containers:ro
+    command: -config.file=/etc/promtail/promtail.yaml
     networks: [ internal ]
   
   loki:
