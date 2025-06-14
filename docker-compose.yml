@@ -157,13 +157,22 @@ services:
     container_name: postgres-exporter
     env_file:
       - ./vault/agent/secrets/secrets.env
-    environment:
-      DATA_SOURCE_NAME: ${DATA_SOURCE_NAME}
     depends_on:
       - db
       - vault-agent
+    entrypoint: >
+      sh -c '
+        echo "⏳ Waiting for secrets.env...";
+        while [ ! -f /vault/agent/secrets/secrets.env ]; do
+          sleep 1;
+        done;
+        echo "✅ secrets.env found";
+        export $(cat /vault/agent/secrets/secrets.env | xargs);
+        exec /bin/postgres_exporter'
     ports:
       - "9187:9187"
+    volumes:
+      - ./vault/agent/secrets:/vault/agent/secrets:ro
     networks: [ internal ]
   
   redis-exporter:
