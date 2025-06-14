@@ -206,6 +206,7 @@ services:
     networks: [ internal ]
     
   node_exporter:
+    container_name: node_exporter
     image: prom/node-exporter
     ports: [ "9100:9100" ]
     networks: [ internal ]
