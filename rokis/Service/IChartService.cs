@@ -12,30 +12,29 @@ public interface IChartService
 
 public class ChartService : IChartService
 {
-private const int width = 800;
-    private const int height = 1000;
+    private const int width = 1200;
+    private const int height = 800;
     private const float maxRadius = 280;
 
     private readonly Dictionary<string, SKColor> gradeColors = new()
     {
-        ["Junior"] = new SKColor(204, 255, 204, 40),
-        ["Middle"] = new SKColor(255, 236, 179, 40),
-        ["Senior"] = new SKColor(255, 204, 204, 40),
+        ["Junior"] = new SKColor(144, 238, 144, 60),
+        ["Middle"] = new SKColor(255, 223, 102, 60),
+        ["Senior"] = new SKColor(255, 160, 160, 60)
     };
 
     public byte[] DrawUserProfile(List<FinalTopicData> topicData, string userGrade, ThinkingPattern thinkingPattern, double cognitiveStabilityIndex)
     {
-        var sortedTopicData = topicData.OrderBy(td => td.Topic).ToList();
-        int N = sortedTopicData.Count;
+        var list = topicData.OrderBy(td => td.Topic).ToList();
+        int N = list.Count;
         var center = new SKPoint(width / 2f, height / 2f - 50);
-
+    
         using var bitmap = new SKBitmap(width, height);
         using var canvas = new SKCanvas(bitmap);
         canvas.Clear(SKColors.White);
-
+    
         var angleStep = 2 * Math.PI / N;
-
-        // Отрисовка фона
+    
         foreach (var (grade, color) in gradeColors)
         {
             float ring = grade switch
@@ -45,7 +44,7 @@ private const int width = 800;
                 "Senior" => 1.0f,
                 _ => 0.5f
             };
-
+    
             var path = new SKPath();
             for (int j = 0; j < N; j++)
             {
@@ -56,13 +55,25 @@ private const int width = 800;
                 else path.LineTo(x, y);
             }
             path.Close();
-            canvas.DrawPath(path, new SKPaint { Color = color, Style = SKPaintStyle.Fill, IsAntialias = true });
+            canvas.DrawPath(path, new SKPaint { Color = color.WithAlpha(60), Style = SKPaintStyle.Fill, IsAntialias = true });
         }
-
+    
+        for (int j = 0; j < N; j++)
+        {
+            var angle = j * angleStep;
+            var x = center.X + maxRadius * (float)Math.Cos(angle);
+            var y = center.Y + maxRadius * (float)Math.Sin(angle);
+            canvas.DrawLine(center, new SKPoint(x, y), new SKPaint
+            {
+                Color = SKColors.LightGray,
+                StrokeWidth = 1,
+                IsAntialias = true
+            });
+        }
+    
         var pathFilled = new SKPath();
         var labelPaint = new SKPaint { Color = SKColors.Black, TextSize = 12, IsAntialias = true, TextAlign = SKTextAlign.Center };
-
-        // Примерная шкала успешности
+    
         for (float i = 0.2f; i <= 1.0f; i += 0.2f)
         {
             var path = new SKPath();
@@ -75,7 +86,7 @@ private const int width = 800;
                 else path.LineTo(x, y);
             }
             path.Close();
-
+    
             canvas.DrawPath(path, new SKPaint
             {
                 Color = SKColors.LightGray,
@@ -83,8 +94,7 @@ private const int width = 800;
                 StrokeWidth = 1,
                 IsAntialias = true
             });
-
-            // Подпись на первом радиусе
+    
             canvas.DrawText($"{i:F1}", center.X, center.Y - maxRadius * i - 4, new SKPaint
             {
                 Color = SKColors.Gray,
@@ -93,27 +103,41 @@ private const int width = 800;
                 IsAntialias = true
             });
         }
-        
+    
+        var maxTopic = list.OrderByDescending(ComputeWeightedRadius).First();
+        var minTopic = list.OrderBy(ComputeWeightedRadius).First();
+    
         for (int i = 0; i < N; i++)
         {
-            var topic = sortedTopicData[i].Topic;
-            var radius = ComputeWeightedRadius(sortedTopicData[i]);
+            var topic = list[i].Topic;
+            var data = list[i];
+            var radius = ComputeWeightedRadius(data);
             var angle = i * angleStep;
-
+    
             var r = maxRadius * radius;
             var x = center.X + r * (float)Math.Cos(angle);
             var y = center.Y + r * (float)Math.Sin(angle);
-
+    
             if (i == 0) pathFilled.MoveTo(x, y);
             else pathFilled.LineTo(x, y);
-
-            var scoreColor = ComputeColor(sortedTopicData[i]);
-            var pointPaint = new SKPaint { Style = SKPaintStyle.Fill, Color = scoreColor };
-            canvas.DrawCircle(x, y, 3, pointPaint);
-
-            var lx = center.X + (maxRadius + 20) * (float)Math.Cos(angle);
-            var ly = center.Y + (maxRadius + 20) * (float)Math.Sin(angle);
-            
+    
+            var pointColor = topic == maxTopic.Topic ? SKColors.DarkGreen :
+                             topic == minTopic.Topic ? SKColors.DarkRed :
+                             ComputeColor(data);
+    
+            canvas.DrawCircle(x, y, 3, new SKPaint { Style = SKPaintStyle.Fill, Color = pointColor });
+    
+            canvas.DrawText($"{data.Grade}", x, y - 8, new SKPaint
+            {
+                Color = SKColors.Black,
+                TextSize = 10,
+                IsAntialias = true,
+                TextAlign = SKTextAlign.Center
+            });
+    
+            var lx = center.X + (maxRadius + 30) * (float)Math.Cos(angle);
+            var ly = center.Y + (maxRadius + 30) * (float)Math.Sin(angle);
+    
             foreach (var line in BreakText(topic, 20))
             {
                 canvas.DrawText(line, lx, ly, labelPaint);
@@ -121,19 +145,30 @@ private const int width = 800;
             }
         }
         pathFilled.Close();
-
+    
+        var shadowPaint = new SKPaint { Color = SKColors.Gray.WithAlpha(50), Style = SKPaintStyle.Fill, IsAntialias = true };
+        canvas.DrawPath(pathFilled, shadowPaint);
+    
         var fillPaint = new SKPaint { Color = SKColors.SkyBlue.WithAlpha(100), Style = SKPaintStyle.Fill, IsAntialias = true };
-        var strokePaint = new SKPaint { Color = SKColors.DeepSkyBlue, Style = SKPaintStyle.Stroke, StrokeWidth = 2, IsAntialias = true };
-
+        var strokePaint = new SKPaint { Color = SKColors.DeepSkyBlue, Style = SKPaintStyle.Stroke, StrokeWidth = 3, IsAntialias = true };
+    
         canvas.DrawPath(pathFilled, fillPaint);
         canvas.DrawPath(pathFilled, strokePaint);
-
+    
+        canvas.DrawText($"Общий грейд: {userGrade}", center.X, center.Y, new SKPaint
+        {
+            Color = SKColors.Black,
+            TextSize = 14,
+            TextAlign = SKTextAlign.Center,
+            IsAntialias = true
+        });
+    
         DrawLegend(canvas, cognitiveStabilityIndex, thinkingPattern, userGrade);
-
+    
         using var image = SKImage.FromBitmap(bitmap);
-        using var data = image.Encode(SKEncodedImageFormat.Png, 100);
+        using var dataOut = image.Encode(SKEncodedImageFormat.Png, 100);
         using var ms = new MemoryStream();
-        data.SaveTo(ms);
+        dataOut.SaveTo(ms);
         return ms.ToArray();
     }
 
@@ -183,18 +218,28 @@ private const int width = 800;
     private void DrawLegend(SKCanvas canvas, double cognitiveStabilityIndex, ThinkingPattern thinkingPattern, string userGrade)
     {
         var legendPaint = new SKPaint { Color = SKColors.Black, TextSize = 16, IsAntialias = true };
-        float legendStartY = height - 120;
-        canvas.DrawText($"Индекс стабильности: {cognitiveStabilityIndex:F2}", 20, legendStartY, legendPaint);
-        canvas.DrawText($"Тип мышления: {GetThinkingPatternText(thinkingPattern)}", 20, legendStartY + 25, legendPaint);
-        canvas.DrawText($"Грейд: {GetGradeText(userGrade)}", 20, legendStartY + 50, legendPaint);
+        float legendStartX = width - 330;
+        float legendStartY = 100;
 
-        int offset = 0;
+        // Информация о профиле
+        canvas.DrawText($"Индекс стабильности:", legendStartX, legendStartY, legendPaint);
+        canvas.DrawText($"{cognitiveStabilityIndex:F2}", legendStartX + 180, legendStartY, legendPaint);
+
+        canvas.DrawText($"Тип мышления:", legendStartX, legendStartY + 30, legendPaint);
+        canvas.DrawText(GetThinkingPatternText(thinkingPattern), legendStartX + 180, legendStartY + 30, legendPaint);
+
+        canvas.DrawText($"Грейд:", legendStartX, legendStartY + 60, legendPaint);
+        canvas.DrawText(GetGradeText(userGrade), legendStartX + 180, legendStartY + 60, legendPaint);
+
+        // Цветовая легенда по зонам
+        float offsetY = legendStartY + 100;
         foreach (var pair in gradeColors)
         {
             var rectPaint = new SKPaint { Color = pair.Value, Style = SKPaintStyle.Fill };
-            canvas.DrawRect(600, legendStartY + offset, 15, 15, rectPaint);
-            canvas.DrawText(pair.Key, 620, legendStartY + offset + 12, legendPaint);
-            offset += 20;
+            canvas.DrawRect(legendStartX, offsetY, 20, 20, rectPaint);
+
+            canvas.DrawText(pair.Key, legendStartX + 30, offsetY + 16, legendPaint);
+            offsetY += 30;
         }
     }
 
