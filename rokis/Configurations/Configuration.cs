@@ -33,26 +33,10 @@ public static class Configuration
         builder.Services.AddControllers()
             .AddJsonOptions(options =>
                 options.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter()));
-        var connectionString = builder.Configuration.GetConnectionString("rokisDb");
-        
         builder.Services.Configure<AdminOptions>(builder.Configuration.GetSection("Admin"));
         
-        // Подключение БД через env
-        var dbConnection = Environment.GetEnvironmentVariable("DB_CONN");
-        Console.WriteLine($"[DEBUG] DBCONN: {dbConnection}");
-        if (!string.IsNullOrWhiteSpace(dbConnection))
-        {
-            connectionString = dbConnection;
-        }
-        
-        // Подключение Redis через env
-        var redisConnectionString = builder.Configuration.GetConnectionString("RadisConnection");
-        var redisConnection = Environment.GetEnvironmentVariable("CACHE_CONN");
-        if (!string.IsNullOrWhiteSpace(redisConnection))
-        {
-            redisConnectionString = redisConnection;
-        }
         // 0. Подключаем кэширование.
+        var redisConnectionString = builder.Configuration.GetConnectionString("RadisConnection");
         builder.Services.AddFusionCache()
             .WithDefaultEntryOptions(options => options.Duration = TimeSpan.FromMinutes(5))
             .WithSerializer(new FusionCacheSystemTextJsonSerializer())
@@ -69,28 +53,13 @@ public static class Configuration
         var smtpSettings = builder.Configuration.GetSection("Smtp").Get<SmtpSettings>();
         if (smtpSettings != null)
         {
-            // Подключение Smtp через env
-            var smtpHost = Environment.GetEnvironmentVariable("SMTP_HOST");
-            var smtpUser = Environment.GetEnvironmentVariable("SMTP_USER");
-            var smtpPass = Environment.GetEnvironmentVariable("SMTP_PASS");
-            var smtpFrom = Environment.GetEnvironmentVariable("SMTP_FROM");
-            if (!string.IsNullOrWhiteSpace(smtpHost) &&
-                !string.IsNullOrWhiteSpace(smtpUser) &&
-                !string.IsNullOrWhiteSpace(smtpPass) &&
-                !string.IsNullOrWhiteSpace(smtpFrom))
-            {
-                smtpSettings.Host = smtpHost;
-                smtpSettings.Username = smtpUser;
-                smtpSettings.Password = smtpPass;
-                smtpSettings.FromEmail = smtpFrom;
-            }
-            
             builder.Services.AddSingleton(smtpSettings);
             builder.Services.AddScoped<IEmailService, MailKitEmailService>();
             builder.Services.AddScoped<IInviteService, InviteService>();
         }
 
         // 1. Подключаем EF Core (PostgreSQL)
+        var connectionString = builder.Configuration.GetConnectionString("rokisDb");
         builder.Services.AddDbContext<RokisContext>(options =>
         {
             options.UseLazyLoadingProxies();
@@ -124,11 +93,6 @@ public static class Configuration
         
         // 3. Подключаем аутентификацию через JWT
         var jwtSecret = builder.Configuration["Jwt:Secret"];
-        var envJwtSecret = Environment.GetEnvironmentVariable("JWT");
-        if (!string.IsNullOrWhiteSpace(envJwtSecret))
-        {
-            jwtSecret = envJwtSecret;
-        }
         
         Console.WriteLine($"[DEBUG] Jwt:Secret from config: {builder.Configuration["Jwt:Secret"]}");
         Console.WriteLine($"[DEBUG] JWT from env: {Environment.GetEnvironmentVariable("JWT")}");

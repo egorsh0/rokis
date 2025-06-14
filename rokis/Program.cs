@@ -9,18 +9,13 @@ var builder = WebApplication.CreateBuilder(args);
 
 builder.RegisterServices();
 
-var connectionString = "http://loki:3100";
-var lokiConnection = Environment.GetEnvironmentVariable("LOKI");
-if (!string.IsNullOrWhiteSpace(lokiConnection))
-{
-    connectionString = lokiConnection;
-}
+var lokiConnection = builder.Configuration.GetConnectionString("loki") ?? "http://loki:3100";
 builder.Host.UseSerilog((_, lc) =>
 {
     lc
         .MinimumLevel.Debug()
         .WriteTo.Console()
-        .WriteTo.GrafanaLoki(connectionString, labels:
+        .WriteTo.GrafanaLoki(lokiConnection, labels:
         [
             new LokiLabel { Key = "app", Value = "rokis" },
             new LokiLabel { Key = "env", Value = "production" }
