@@ -10,7 +10,7 @@ namespace rokis.Endpoints;
 
 /// <summary>Действия физического лица с токенами.</summary>
 [ApiController]
-[Route("api/person/tokens")]
+[Route("person/tokens")]
 [Authorize(Roles = "Person")]
 public class PersonTokensController : ControllerBase
 {

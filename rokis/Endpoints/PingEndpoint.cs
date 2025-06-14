@@ -4,7 +4,7 @@ public static class PingEndpoint
 {
     public static void RegisterPingEndpoints(this IEndpointRouteBuilder routes)
     {
-        var pings = routes.MapGroup("/api/ping");
+        var pings = routes.MapGroup("/ping");
       
         pings.MapGet("", () => Results.Ok("Pong"));
     }

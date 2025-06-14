@@ -6,7 +6,7 @@ using rokis.Filters;
 namespace rokis.Endpoints;
 
 [ApiController]
-[Route("api/administator")]
+[Route("administator")]
 [ServiceFilter(typeof(AdminSecretFilter))]
 public class AdministatorController : ControllerBase
 {

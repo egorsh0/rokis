@@ -11,7 +11,7 @@ using Microsoft.AspNetCore.Mvc;
 namespace rokis.Endpoints;
 
 [ApiController]
-[Route("api/session")]
+[Route("session")]
 [Authorize(Roles = "Employee,Person")]
 public class SessionController : ControllerBase
 {

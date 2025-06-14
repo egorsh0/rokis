@@ -16,7 +16,7 @@ namespace rokis.Endpoints;
 /// </summary>
 [ApiController]
 [Authorize]
-[Route("api/report")]
+[Route("report")]
 [Tags("Report")]
 public class ReportController : ControllerBase
 {

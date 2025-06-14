@@ -13,7 +13,7 @@ namespace rokis.Endpoints;
 
 /// <summary>Методы, доступные компании-владельцу токенов.</summary>
 [ApiController]
-[Route("api/company")]
+[Route("company")]
 [Authorize(Roles = "Company")]
 public class CompanyController : ControllerBase
 {

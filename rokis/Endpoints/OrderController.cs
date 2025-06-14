@@ -9,7 +9,7 @@ using Microsoft.AspNetCore.Mvc;
 namespace rokis.Endpoints;
 
 [ApiController]
-[Route("api/order")]
+[Route("order")]
 [Authorize(Roles = "Company,Person")]
 public class OrderController : ControllerBase
 {

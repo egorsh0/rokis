@@ -7,7 +7,7 @@ namespace rokis.Endpoints;
 /// <summary>Читает справочники / конфигурационные данные, которые редко меняются.</summary>
 /// <remarks>Каждый метод использует HybridCache (In-Memory + Redis). TTL указан в конфигурации.</remarks>
 [ApiController]
-[Route("api/config")]
+[Route("config")]
 public class ConfigController : ControllerBase
 {
     private IConfigService _configService;

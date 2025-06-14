@@ -12,7 +12,7 @@ namespace rokis.Endpoints;
 
 /// <summary>Методы, доступные сотруднику-владельцу токенов.</summary>
 [ApiController]
-[Route("api/employee")]
+[Route("employee")]
 [Authorize(Roles = "Employee")]
 public class EmployeeController : ControllerBase
 {

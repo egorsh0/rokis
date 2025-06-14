@@ -15,7 +15,7 @@ namespace rokis.Endpoints;
 
 /// <summary>Регистрация и аутентификация пользователей (Company / Employee / Person).</summary>
 [ApiController]
-[Route("api/register")]
+[Route("register")]
 public class RegisterController : ControllerBase
 {
     private readonly IJwtTokenService _jwtTokenService;

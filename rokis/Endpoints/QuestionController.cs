@@ -11,7 +11,7 @@ namespace rokis.Endpoints;
 /// Работа с вопросами и ответами во время прохождения теста.
 /// </summary>
 [ApiController]
-[Route("api/question")]
+[Route("question")]
 [Authorize(Roles = "Employee,Person")]
 public class QuestionController : ControllerBase
 {
