@@ -187,8 +187,6 @@ services:
     ports:
       - "9121:9121"
     networks: [ internal ]
-    volumes:
-      - ./vault/agent/secrets:/vault/agent/secrets:ro
   
   # ───── Promtail ───────────────────────
   promtail:
