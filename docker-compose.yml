@@ -179,8 +179,6 @@ services:
     container_name: redis_exporter
     env_file:
       - ./vault/agent/secrets/secrets.env
-    environment:
-      REDIS_ADDR: ${REDIS_ADDR}
     depends_on:
       - cache
       - vault-agent
