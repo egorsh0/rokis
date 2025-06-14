@@ -161,16 +161,13 @@ services:
       - db
       - vault-agent
     entrypoint: >
-      sh -c '
-        echo "⏳ Waiting for secrets.env...";
-        while [ ! -f /vault/agent/secrets/secrets.env ]; do
-          sleep 1;
-        done;
-        echo "✅ secrets.env found";
-        export $(cat /vault/agent/secrets/secrets.env | xargs);
-        exec /bin/postgres_exporter
-      '
-
+      sh -c 'echo "⏳ Waiting for secrets.env..."; \
+        while [ ! -f /vault/agent/secrets/secrets.env ]; do \
+          sleep 1; \
+        done; \
+        echo "✅ secrets.env found"; \
+        export $(cat /vault/agent/secrets/secrets.env | xargs); \
+        exec /bin/postgres_exporter'
     ports:
       - "9187:9187"
     volumes:
