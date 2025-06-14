@@ -12,7 +12,7 @@ public interface IChartService
 
 public class ChartService : IChartService
 {
-    private const int width = 1200;
+    private const int width = 1400;
     private const int height = 800;
     private const float maxRadius = 280;
 
@@ -27,7 +27,7 @@ public class ChartService : IChartService
     {
         var list = topicData.OrderBy(td => td.Topic).ToList();
         int N = list.Count;
-        var center = new SKPoint(width / 2f, height / 2f - 50);
+        var center = new SKPoint(width / 2f, height / 2f + 30);
     
         using var bitmap = new SKBitmap(width, height);
         using var canvas = new SKCanvas(bitmap);
@@ -72,16 +72,23 @@ public class ChartService : IChartService
         }
     
         var pathFilled = new SKPath();
-        var labelPaint = new SKPaint { Color = SKColors.Black, TextSize = 12, IsAntialias = true, TextAlign = SKTextAlign.Center };
+        var labelPaint = new SKPaint
+        {
+            Color = SKColors.Black, 
+            TextSize = 10, 
+            IsAntialias = true, 
+            TextAlign = SKTextAlign.Center
+        };
     
+        float labelOffset = maxRadius + 50;
         for (float i = 0.2f; i <= 1.0f; i += 0.2f)
         {
             var path = new SKPath();
             for (int j = 0; j < N; j++)
             {
                 var angle = j * angleStep;
-                var x = center.X + maxRadius * i * (float)Math.Cos(angle);
-                var y = center.Y + maxRadius * i * (float)Math.Sin(angle);
+                var x = center.X + labelOffset * i * (float)Math.Cos(angle);
+                var y = center.Y + labelOffset * i * (float)Math.Sin(angle);
                 if (j == 0) path.MoveTo(x, y);
                 else path.LineTo(x, y);
             }
@@ -158,7 +165,7 @@ public class ChartService : IChartService
         canvas.DrawText($"Общий грейд: {userGrade}", center.X, center.Y, new SKPaint
         {
             Color = SKColors.Black,
-            TextSize = 14,
+            TextSize = 10,
             TextAlign = SKTextAlign.Center,
             IsAntialias = true
         });
@@ -218,7 +225,7 @@ public class ChartService : IChartService
     private void DrawLegend(SKCanvas canvas, double cognitiveStabilityIndex, ThinkingPattern thinkingPattern, string userGrade)
     {
         var legendPaint = new SKPaint { Color = SKColors.Black, TextSize = 16, IsAntialias = true };
-        float legendStartX = width - 330;
+        float legendStartX = width - 300;
         float legendStartY = 100;
 
         // Информация о профиле
