@@ -157,6 +157,8 @@ services:
     container_name: postgres-exporter
     env_file:
       - ./vault/agent/secrets/secrets.env
+    environment:
+      DATA_SOURCE_NAME: ${DATA_SOURCE_NAME}
     depends_on:
       - db
       - vault-agent
@@ -169,6 +171,8 @@ services:
     container_name: redis_exporter
     env_file:
       - ./vault/agent/secrets/secrets.env
+    environment:
+      REDIS_ADDR: ${REDIS_ADDR}
     depends_on:
       - cache
       - vault-agent
