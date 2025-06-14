@@ -168,7 +168,9 @@ services:
         done;
         echo "✅ secrets.env found";
         export $(cat /vault/agent/secrets/secrets.env | xargs);
-        exec /bin/postgres_exporter'
+        exec /bin/postgres_exporter
+      '
+
     ports:
       - "9187:9187"
     volumes:
