@@ -18,5 +18,5 @@ LOKI={{ with secret "kv/data/rokis/loki" }}{{ .Data.data.url }}{{ end }}
 POSTGRES_EXPLORER={{ with secret "kv/data/rokis/postgres_exporter" }}{{ .Data.data.conn }}{{ end }}
 REDIS_ADDR={{ with secret "kv/data/rokis/redis_addr" }}{{ .Data.data.addr }}{{ end }}
 
-GF_USER={{ with secret "kv/data/rokis/grafana" }}{{ .Data.data.user }}{{ end }}
-GF_PASS={{ with secret "kv/data/rokis/grafana" }}{{ .Data.data.pass }}{{ end }}
+GF_SECURITY_ADMIN_USER={{ with secret "kv/data/rokis/grafana" }}{{ .Data.data.user }}{{ end }}
+GF_SECURITY_ADMIN_PASSWORD={{ with secret "kv/data/rokis/grafana" }}{{ .Data.data.pass }}{{ end }}

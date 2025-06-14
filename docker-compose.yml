@@ -89,20 +89,6 @@ services:
         max-size: "200k"
         max-file: "10"
   
-  postgres-exporter:
-    image: prometheuscommunity/postgres-exporter
-    container_name: postgres-exporter
-    env_file:
-      - ./vault/agent/secrets/secrets.env
-    environment:
-      DATA_SOURCE_NAME: ${POSTGRES_EXPORTER}
-    depends_on:
-      - db
-      - vault-agent
-    ports:
-      - "9187:9187"
-    networks: [ internal ]
-  
   # ───── Redis ────────────────────────────────────────────────────────────────
   cache:
     image: redis:7.0.4-alpine
@@ -115,22 +101,6 @@ services:
       options:
         max-size: "200k"
         max-file: "10"
-    volumes:
-      - ./vault/agent/secrets:/vault/agent/secrets:ro
-  
-  redis-exporter:
-    image: oliver006/redis_exporter
-    container_name: redis_exporter
-    env_file:
-      - ./vault/agent/secrets/secrets.env
-    environment:
-      REDIS_ADDR: ${REDIS_ADDR}
-    depends_on:
-      - cache
-      - vault-agent
-    ports:
-      - "9121:9121"
-    networks: [ internal ]
     volumes:
       - ./vault/agent/secrets:/vault/agent/secrets:ro
   
@@ -169,7 +139,8 @@ services:
         exec dotnet rokis.dll'
     volumes:
       - ./vault/agent/secrets:/vault/agent/secrets:ro
-
+  
+  # ───── Monitoring ───────────────────────
   # ───── Prometheus ───────────────────────
   prometheus:
     image: prom/prometheus
@@ -180,6 +151,36 @@ services:
     ports:
       - "9090:9090"
     networks: [ internal ]
+  
+  postgres-exporter:
+    image: prometheuscommunity/postgres-exporter
+    container_name: postgres-exporter
+    env_file:
+      - ./vault/agent/secrets/secrets.env
+    environment:
+      DATA_SOURCE_NAME: ${POSTGRES_EXPORTER}
+    depends_on:
+      - db
+      - vault-agent
+    ports:
+      - "9187:9187"
+    networks: [ internal ]
+  
+  redis-exporter:
+    image: oliver006/redis_exporter
+    container_name: redis_exporter
+    env_file:
+      - ./vault/agent/secrets/secrets.env
+    environment:
+      REDIS_ADDR: ${REDIS_ADDR}
+    depends_on:
+      - cache
+      - vault-agent
+    ports:
+      - "9121:9121"
+    networks: [ internal ]
+    volumes:
+      - ./vault/agent/secrets:/vault/agent/secrets:ro
   
   # ───── Promtail ───────────────────────
   promtail:
@@ -204,7 +205,12 @@ services:
       - loki-data:/loki
     networks: [ internal ]
     
+  node_exporter:
+    image: prom/node-exporter
+    ports: [ "9100:9100" ]
+    networks: [ internal ]
   # ───── Grafana ──────────────────────────
+  
   grafana:
     image: grafana/grafana
     container_name: grafana
@@ -213,13 +219,15 @@ services:
     restart: always
     ports:
       - "3000:3000"
-    environment:
-      - GF_SECURITY_ADMIN_USER=${GF_USER}
-      - GF_SECURITY_ADMIN_PASSWORD=${GF_PASS}
     depends_on:
         - loki
         - rokis
         - vault-agent
+        - node_exporter
+        - promtail
+        - redis-exporter
+        - postgres-exporter
+        - prometheus
     volumes:
       - ./vault/agent/secrets:/vault/agent/secrets:ro
       - grafana-data:/var/lib/grafana

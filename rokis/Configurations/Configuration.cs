@@ -93,11 +93,6 @@ public static class Configuration
         
         // 3. Подключаем аутентификацию через JWT
         var jwtSecret = builder.Configuration["Jwt:Secret"];
-        
-        Console.WriteLine($"[DEBUG] Jwt:Secret from config: {builder.Configuration["Jwt:Secret"]}");
-        Console.WriteLine($"[DEBUG] JWT from env: {Environment.GetEnvironmentVariable("JWT")}");
-        Console.WriteLine($"[DEBUG] Final secret: {jwtSecret}");
-        
         var key = Encoding.UTF8.GetBytes(jwtSecret ?? throw new InvalidOperationException("JWT secret not configured"));
 
         builder.Services
