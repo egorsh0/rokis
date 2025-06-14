@@ -39,6 +39,7 @@ public static class Configuration
         
         // Подключение БД через env
         var dbConnection = Environment.GetEnvironmentVariable("DB_CONN");
+        Console.WriteLine($"[DEBUG] DBCONN: {dbConnection}");
         if (!string.IsNullOrWhiteSpace(dbConnection))
         {
             connectionString = dbConnection;
@@ -120,6 +121,7 @@ public static class Configuration
             .AddEntityFrameworkStores<RokisContext>()
             .AddDefaultTokenProviders();
 
+        
         // 3. Подключаем аутентификацию через JWT
         var jwtSecret = builder.Configuration["Jwt:Secret"];
         var envJwtSecret = Environment.GetEnvironmentVariable("JWT");
@@ -127,6 +129,11 @@ public static class Configuration
         {
             jwtSecret = envJwtSecret;
         }
+        
+        Console.WriteLine($"[DEBUG] Jwt:Secret from config: {builder.Configuration["Jwt:Secret"]}");
+        Console.WriteLine($"[DEBUG] JWT from env: {Environment.GetEnvironmentVariable("JWT")}");
+        Console.WriteLine($"[DEBUG] Final secret: {jwtSecret}");
+        
         var key = Encoding.UTF8.GetBytes(jwtSecret ?? throw new InvalidOperationException("JWT secret not configured"));
 
         builder.Services
