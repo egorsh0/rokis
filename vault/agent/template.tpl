@@ -8,7 +8,7 @@ JWT__SECRET={{ with secret "kv/data/rokis/jwt" }}{{ .Data.data.jwt }}{{ end }}
 
 ConnectionStrings__rokisDb={{ with secret "kv/data/rokis/db_conn" }}{{ .Data.data.db_conn }}{{ end }}
 ConnectionStrings__RadisConnection={{ with secret "kv/data/rokis/cache_conn" }}{{ .Data.data.cache_conn }}{{ end }}
-ConnectionStrings__loki={{ with secret "kv/data/rokis/loki" }}{{ .Data.data.cache_conn }}{{ end }}
+ConnectionStrings__loki={{ with secret "kv/data/rokis/loki" }}{{ .Data.data.url }}{{ end }}
 
 Smtp__Host={{ with secret "kv/data/rokis/smtp" }}{{ .Data.data.host }}{{ end }}
 Smtp__UserName={{ with secret "kv/data/rokis/smtp" }}{{ .Data.data.user }}{{ end }}
